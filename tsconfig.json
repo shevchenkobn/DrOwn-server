@@ -20,6 +20,7 @@
     "inlineSources": false,
     "isolatedModules": false,
     "keyofStringsOnly": false,
+    "lib": ["es2018"],
     "listEmittedFiles": true,
     "maxNodeModuleJsDepth": 0,
     "module": "commonjs",
