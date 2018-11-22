@@ -31,13 +31,9 @@ const argv = yargs
     const {knex} = new DbConnection();
     if (argv.drop) {
       console.log('Dropping tables....');
-      await Promise.all(dropTables(knex, true, argv.tables, (table, builder) => {
-        builder.then(() => {
-          console.log(`Dropped ${table}`);
-        }).catch(err => {
-          console.error(`Error with ${table}: ${err.message}`);
-        }).then(() => console.debug(`\n${builder.toQuery()}\n`));
-      }));
+      await dropTables(knex, true, argv.tables, (table, sql) => {
+        console.log(`Dropped "${table}" with """${sql}"""`);
+      });
     }
     // return;
     console.log('Creating tables...');
@@ -45,18 +41,18 @@ const argv = yargs
     // for (const promise of tablePromises) {
     //   const builder =
     // }
-    await Promise.all(await createTables(knex, true, argv.tables, (table, builder) => {
-      if (!builder) {
+    await createTables(knex, true, argv.tables, (table, exists, sql) => {
+      if (exists) {
         console.log(`${table} already exists`);
         return;
       }
-      console.log(`Creating ${table}`);
+      console.log(`Creating "${table}" with """${sql}"""`);
       // builder.then(() => {
       //   console.log(`Created ${table}`);
       // }).catch(err => {
       //   console.error(`Error with ${table}: ${err.message}`);
       // }).then(() => console.debug(`\n${builder.toQuery()}\n`));
-    }));
+    });
     console.log('Done. Bye!');
   } catch (err) {
     console.error('Error occured: ');

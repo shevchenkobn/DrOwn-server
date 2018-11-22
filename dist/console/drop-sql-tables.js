@@ -28,13 +28,9 @@ const argv = yargs
         console.log('Tables to work with: ' + argv.tables.join(', '));
         const { knex } = new db_connection_class_1.DbConnection();
         console.log('Dropping tables....');
-        await Promise.all(table_schemas_service_2.dropTables(knex, !argv.unsafe, argv.tables, (table, builder) => {
-            builder.then(() => {
-                console.log(`Dropped ${table}`);
-            }).catch(err => {
-                console.error(`Error with ${table}: ${err.message}`);
-            }).then(() => console.debug(`\n${builder.toQuery()}\n`));
-        }));
+        await table_schemas_service_2.dropTables(knex, true, argv.tables, (table, sql) => {
+            console.log(`Dropped "${table}" with """${sql}"""`);
+        });
         console.log('Done. Bye!');
     }
     catch (err) {

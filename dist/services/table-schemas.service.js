@@ -132,43 +132,29 @@ const tablesToCreate = new Map([
             });
         }],
 ]);
-function dropTables(knex, safe = true, tables = exports.TableNames, forEachCb) {
-    return exports.TableNames.slice().filter(t => tables.includes(t)).reverse().map(table => {
-        const result = safe ? knex.schema.dropTableIfExists(table) : knex.schema.dropTable(table);
-        forEachCb && forEachCb(table, result);
-        return result;
-    }).reverse();
+async function dropTables(knex, safe = true, tables = exports.TableNames, forEachCb) {
+    const orderedTables = exports.TableNames.slice().filter(t => tables.includes(t)).reverse();
+    let builder = null;
+    for (let i = 0; i < orderedTables.length; i++) {
+        const table = orderedTables[i];
+        builder = safe ? knex.schema.dropTableIfExists(table) : knex.schema.dropTable(table);
+        await builder;
+        forEachCb && forEachCb(table, builder ? builder.toQuery() : '');
+    }
 }
 exports.dropTables = dropTables;
 async function createTables(knex, safe = true, tables = exports.TableNames, forEachCb) {
     const orderedTables = exports.TableNames.slice().filter(t => tables.includes(t));
-    const results = [];
+    let builder = null;
     for (let i = 0; i < orderedTables.length; i++) {
         const table = orderedTables[i];
-        if (i > 0) {
-            await results[i - 1];
-        }
-        let builder = null;
-        if (!safe || !(await knex.schema.hasTable(table))) {
+        const exists = await knex.schema.hasTable(table);
+        if (!safe || !exists) {
             builder = tablesToCreate.get(table)(knex);
+            await builder;
         }
-        forEachCb && forEachCb(table, builder);
-        results.push(builder);
+        forEachCb && forEachCb(table, exists, builder ? builder.toQuery() : '');
     }
-    return results;
-    // return tables.map((table, i) => (
-    //   new Promise<Knex.SchemaBuilder | null>(async (resolve, reject) => {
-    //     if (i > 0) {
-    //
-    //     }
-    //     let builder = null;
-    //     if (!safe || !(await knex.schema.hasTable(table))) {
-    //       builder = tablesToCreate.get(table)!(knex);
-    //     }
-    //     forEachCb && forEachCb(table, builder);
-    //     resolve(tablesToCreate.get(table)!(knex));
-    //   })
-    // ));
 }
 exports.createTables = createTables;
 //# sourceMappingURL=table-schemas.service.js.map
