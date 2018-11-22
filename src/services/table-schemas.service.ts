@@ -11,14 +11,14 @@ export enum TableName {
   Notifications = 'reports',
 }
 
-const tablesToCreate = new Map<string, (knex: Knex) => Knex.SchemaBuilder>([
+const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   [TableName.Users, knex => {
     return knex.schema.createTable(TableName.Users, table => {
       table.bigIncrements('userId')
         .primary(`pk_${TableName.Users}`);
 
       table.string('email', 60).notNullable();
-      table.string('password', 60).notNullable();
+      table.string('passwordHash', 60).notNullable();
       table.integer('role').notNullable().defaultTo(0);
 
       table.string('name', 120).notNullable();
@@ -26,6 +26,7 @@ const tablesToCreate = new Map<string, (knex: Knex) => Knex.SchemaBuilder>([
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
       table.string('address', 150).nullable();
       table.string('phoneNumber', 15).nullable();
+      table.decimal('cash', 9, 2).notNullable().defaultTo(0);
 
       table.string('refreshToken').nullable();
       table.date('refreshTokenExpiration').nullable();
@@ -62,6 +63,7 @@ const tablesToCreate = new Map<string, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigInteger('ownerId')
         .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
 
+      table.string('passwordHash').notNullable();
       table.string('producer', 120).nullable();
       table.string('model', 120).notNullable();
       table.string('serialNumber', 120).notNullable();
@@ -95,11 +97,13 @@ const tablesToCreate = new Map<string, (knex: Knex) => Knex.SchemaBuilder>([
         .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
 
+      table.integer('status').notNullable();
       table.integer('batteryPower').notNullable();
       table.decimal('longitude', 9, 6).notNullable();
       table.decimal('latitude', 9, 6).notNullable();
       table.integer('batteryCharge').notNullable();
       table.integer('problemCodes').notNullable().defaultTo(0);
+
     });
   }],
   [TableName.Transactions, knex => {
@@ -150,3 +154,18 @@ const tablesToCreate = new Map<string, (knex: Knex) => Knex.SchemaBuilder>([
     });
   }],
 ]);
+
+export function dropTables(knex: Knex, safe = true, tables: TableName[] = Object.values(TableName)) {
+  return tables.map(table => safe ? knex.schema.dropTableIfExists(table) : knex.schema.dropTable(table));
+}
+
+export function createTables(knex: Knex, safe = true, tables: TableName[] = Object.values(TableName)) {
+  return tables.map(table => new Promise<Knex.TableBuilder | null>(async (resolve, reject) => {
+    if (safe && await knex.schema.hasTable(table)) {
+      resolve(null);
+    }
+    resolve(tablesToCreate.get(table)!(knex));
+  }));
+}
+
+

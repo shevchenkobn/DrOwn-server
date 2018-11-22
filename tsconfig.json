@@ -20,7 +20,7 @@
     "inlineSources": false,
     "isolatedModules": false,
     "keyofStringsOnly": false,
-    "lib": ["es2018"],
+//    "lib": ["es2018"],
     "listEmittedFiles": true,
     "maxNodeModuleJsDepth": 0,
     "module": "commonjs",
@@ -47,6 +47,6 @@
     "strictPropertyInitialization": true,
     "suppressExcessPropertyErrors": false,
     "suppressImplicitAnyIndexErrors": false,
-    "target": "es2018"
+    "target": "esnext"
   }
 }
