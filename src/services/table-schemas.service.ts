@@ -1,6 +1,6 @@
 import * as Knex from 'knex';
 
-export enum TableName {
+export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
   Users = 'users',
   Employees = 'employees',
   Drones = 'drones',
@@ -8,8 +8,10 @@ export enum TableName {
   DroneMeasurements = 'droneMeasurements',
   Transactions = 'transactions',
   Reports = 'reports',
-  Notifications = 'reports',
+  Notifications = 'notifications',
 }
+
+export const TableNames: ReadonlyArray<TableName> = Object.values(TableName);
 
 const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   [TableName.Users, knex => {
@@ -19,10 +21,10 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
 
       table.string('email', 60).notNullable();
       table.string('passwordHash', 60).notNullable();
-      table.integer('role').notNullable().defaultTo(0);
+      table.integer('role').unsigned().notNullable().defaultTo(0);
 
       table.string('name', 120).notNullable();
-      table.bigInteger('companyId').nullable()
+      table.bigInteger('companyId').unsigned().nullable()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
       table.string('address', 150).nullable();
       table.string('phoneNumber', 15).nullable();
@@ -34,46 +36,32 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   }],
   [TableName.Employees, knex => {
     return knex.schema.createTable(TableName.Employees, table => {
-      table.bigIncrements('employeeId')
-        .references(`${TableName.Users}.userId`).onDelete('DELETE');
-      table.bigIncrements('companyId')
-        .references(`${TableName.Users}.userId`).onDelete('DELETE');
-
-      table.string('email', 60).notNullable();
-      table.string('password', 60).notNullable();
-      table.integer('role').notNullable().defaultTo(0);
-      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-
-      table.string('name', 120).notNullable();
-      table.bigInteger('companyId').nullable()
+      table.bigInteger('employeeId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.string('address', 150).nullable();
-      table.string('phoneNumber', 15).nullable();
-
-      table.string('refreshToken').nullable();
-      table.date('refreshTokenExpiration').nullable();
+      table.bigInteger('companyId').unsigned()
+        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
     });
   }],
   [TableName.Drones, knex => {
     return knex.schema.createTable(TableName.Drones, table => {
-      table.bigIncrements('droneId')
+      table.bigIncrements('droneId').unsigned()
         .primary(`pk_${TableName.Drones}`);
-      table.bigInteger('producerId')
+      table.bigInteger('producerId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
-      table.bigInteger('ownerId')
+      table.bigInteger('ownerId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
 
       table.string('passwordHash').notNullable();
       table.string('producer', 120).nullable();
       table.string('model', 120).notNullable();
       table.string('serialNumber', 120).notNullable();
-      table.integer('status').notNullable();
+      table.integer('status').unsigned().notNullable();
       table.decimal('baseLongitude', 9, 6).notNullable();
       table.decimal('baseLatitude', 9, 6).notNullable();
 
-      table.integer('batteryPower').notNullable();
-      table.integer('enginePower').notNullable();
-      table.integer('loadCapacity').notNullable();
+      table.integer('batteryPower').unsigned().notNullable();
+      table.integer('enginePower').unsigned().notNullable();
+      table.integer('loadCapacity').unsigned().notNullable();
       table.boolean('canCarryLiquids').notNullable();
 
       table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
@@ -81,91 +69,130 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   }],
   [TableName.DroneOrders, knex => {
     return knex.schema.createTable(TableName.DroneOrders, table => {
-      table.bigIncrements('droneId')
+      table.bigInteger('droneId').unsigned()
         .primary(`pk_${TableName.Drones}`);
-      table.bigInteger('userId')
+      table.bigInteger('userId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
 
-      table.integer('action').notNullable();
+      table.integer('action').unsigned().notNullable();
       table.decimal('longitude', 9, 6).nullable();
       table.decimal('latitude', 9, 6).nullable();
     });
   }],
   [TableName.DroneMeasurements, knex => {
     return knex.schema.createTable(TableName.DroneMeasurements, table => {
-      table.bigIncrements('droneId')
+      table.bigInteger('droneId').unsigned()
         .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
 
-      table.integer('status').notNullable();
-      table.integer('batteryPower').notNullable();
+      table.integer('status').unsigned().notNullable();
+      table.integer('batteryPower').unsigned().notNullable();
       table.decimal('longitude', 9, 6).notNullable();
       table.decimal('latitude', 9, 6).notNullable();
-      table.integer('batteryCharge').notNullable();
-      table.integer('problemCodes').notNullable().defaultTo(0);
+      table.integer('batteryCharge').unsigned().notNullable();
+      table.integer('problemCodes').unsigned().notNullable().defaultTo(0);
 
     });
   }],
   [TableName.Transactions, knex => {
     return knex.schema.createTable(TableName.Transactions, table => {
-      table.bigInteger('transactionId')
+      table.bigIncrements('transactionId')
         .primary(`pk_${TableName.Transactions}`);
-      table.bigIncrements('droneId')
+      table.bigInteger('droneId').unsigned()
         .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.integer('actionType').notNullable();
-      table.bigInteger('user1Id')
+      table.integer('actionType').unsigned().notNullable();
+      table.bigInteger('user1Id').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.bigInteger('user2Id').nullable()
+      table.bigInteger('user2Id').unsigned().nullable()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.integer('status').notNullable();
+      table.integer('status').unsigned().notNullable();
       table.decimal('sum', 8, 2).nullable();
-      table.integer('period').notNullable().defaultTo(0);
+      table.integer('period').unsigned().notNullable().defaultTo(0);
       // table.text('additionalInfo').nullable();
     });
   }],
   [TableName.Reports, knex => {
     return knex.schema.createTable(TableName.Reports, table => {
-      table.bigInteger('reportId')
+      table.bigIncrements('reportId')
         .primary(`pk_${TableName.Reports}`);
-      table.bigIncrements('reporterId')
+      table.bigInteger('reporterId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
-      table.bigIncrements('droneId').notNullable()
+      table.bigInteger('droneId').unsigned().notNullable()
         .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
-      table.bigIncrements('reportedId').nullable()
+      table.bigInteger('reportedId').unsigned().nullable()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
-      table.bigIncrements('adminId').nullable()
+      table.bigInteger('adminId').unsigned().nullable()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
-      table.integer('type').notNullable();
-      table.integer('status').notNullable();
+      table.integer('type').unsigned().notNullable();
+      table.integer('status').unsigned().notNullable();
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
       table.string('title', 256).notNullable();
       table.text('text').notNullable();
-      table.integer('mark').nullable();
+      table.integer('mark').unsigned().nullable();
     });
   }],
   [TableName.Notifications, knex => {
     return knex.schema.createTable(TableName.Notifications, table => {
-      table.bigIncrements('userId')
+      table.bigInteger('userId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.integer('type').notNullable();
+      table.integer('type').unsigned().notNullable();
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.bigIncrements('entityId').nullable();
+      table.bigInteger('entityId').unsigned().nullable();
     });
   }],
 ]);
 
-export function dropTables(knex: Knex, safe = true, tables: TableName[] = Object.values(TableName)) {
-  return tables.map(table => safe ? knex.schema.dropTableIfExists(table) : knex.schema.dropTable(table));
+export function dropTables(
+  knex: Knex,
+  safe = true,
+  tables = TableNames,
+  forEachCb?: (tableName: string, builder: Knex.SchemaBuilder) => any
+) {
+  return TableNames.slice().filter(t => tables.includes(t)).reverse().map(table => {
+    const result = safe ? knex.schema.dropTableIfExists(table) : knex.schema.dropTable(table);
+    forEachCb && forEachCb(table, result);
+    return result;
+  }).reverse();
 }
 
-export function createTables(knex: Knex, safe = true, tables: TableName[] = Object.values(TableName)) {
-  return tables.map(table => new Promise<Knex.TableBuilder | null>(async (resolve, reject) => {
-    if (safe && await knex.schema.hasTable(table)) {
-      resolve(null);
+export async function createTables(
+  knex: Knex,
+  safe = true,
+  tables = TableNames,
+  forEachCb?: (tableName: string, builder: Knex.SchemaBuilder | null) => any
+) {
+  const orderedTables = TableNames.slice().filter(t => tables.includes(t));
+
+  const results: Array<Knex.SchemaBuilder | null> = [];
+
+  for (let i = 0; i < orderedTables.length; i++) {
+    const table = orderedTables[i];
+    if (i > 0) {
+      await results[i - 1];
     }
-    resolve(tablesToCreate.get(table)!(knex));
-  }));
+    let builder = null;
+    if (!safe || !(await knex.schema.hasTable(table))) {
+      builder = tablesToCreate.get(table)!(knex);
+    }
+    forEachCb && forEachCb(table, builder);
+    results.push(builder)
+  }
+  return results;
+
+  // return tables.map((table, i) => (
+  //   new Promise<Knex.SchemaBuilder | null>(async (resolve, reject) => {
+  //     if (i > 0) {
+  //
+  //     }
+  //     let builder = null;
+  //     if (!safe || !(await knex.schema.hasTable(table))) {
+  //       builder = tablesToCreate.get(table)!(knex);
+  //     }
+  //     forEachCb && forEachCb(table, builder);
+  //     resolve(tablesToCreate.get(table)!(knex));
+  //   })
+  // ));
 }
 
 

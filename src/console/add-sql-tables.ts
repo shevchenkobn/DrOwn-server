@@ -3,10 +3,8 @@
 import * as yargs from 'yargs';
 
 import { DbConnection } from '../services/db-connection.class'
-import { TableName } from '../services/table-schemas.service';
+import { TableNames } from '../services/table-schemas.service';
 import { dropTables, createTables } from '../services/table-schemas.service';
-
-const tableNames = Object.values(TableName);
 
 const argv = yargs
   .usage(`Run it to create or recreate tables in database.`)
@@ -14,8 +12,8 @@ const argv = yargs
   .option('tables', {
     alias: 't',
     array: true,
-    choices: tableNames,
-    default: tableNames,
+    choices: TableNames as any,
+    default: TableNames,
     desc: 'Specify tables to operate.',
   })
   .option('drop', {
@@ -28,16 +26,42 @@ const argv = yargs
   .argv;
 
 (async () => {
-  console.log('Tables to work with: ' + argv.tables.join(', '));
-  const { knex } = new DbConnection();
-  if (argv.drop) {
-    console.log('Dropping tables....');
-    await Promise.all(dropTables(knex, argv.tables));
+  try {
+    console.log('Tables to work with: ' + argv.tables.join(', '));
+    const {knex} = new DbConnection();
+    if (argv.drop) {
+      console.log('Dropping tables....');
+      await Promise.all(dropTables(knex, true, argv.tables, (table, builder) => {
+        builder.then(() => {
+          console.log(`Dropped ${table}`);
+        }).catch(err => {
+          console.error(`Error with ${table}: ${err.message}`);
+        }).then(() => console.debug(`\n${builder.toQuery()}\n`));
+      }));
+    }
+    // return;
+    console.log('Creating tables...');
+    // const tablePromises = createTables(knex, true, argv.tables);
+    // for (const promise of tablePromises) {
+    //   const builder =
+    // }
+    await Promise.all(await createTables(knex, true, argv.tables, (table, builder) => {
+      if (!builder) {
+        console.log(`${table} already exists`);
+        return;
+      }
+      console.log(`Creating ${table}`);
+      // builder.then(() => {
+      //   console.log(`Created ${table}`);
+      // }).catch(err => {
+      //   console.error(`Error with ${table}: ${err.message}`);
+      // }).then(() => console.debug(`\n${builder.toQuery()}\n`));
+    }));
+    console.log('Done. Bye!');
+  } catch (err) {
+    console.error('Error occured: ');
+    console.error(err.message);
+  } finally {
+    process.emit('SIGINT', 'SIGINT');
   }
-  console.log('Creating tables...');
-  await Promise.all(createTables(knex, argv.tables));
-  console.log('Done. Bye!');
-})().catch(err => {
-  console.error('Error occured: ');
-  console.error(err.stack);
-});
+})();
