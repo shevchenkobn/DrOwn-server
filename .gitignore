@@ -140,3 +140,9 @@ fabric.properties
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+###
+# Custom files
+###
+
+config/local-*
