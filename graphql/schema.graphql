@@ -1,0 +1,27 @@
+type Query {
+    userRoles: UserRoleValues
+    users: [User]! @authorized
+}
+
+type Mutation {
+    registerUser(userSeed: RegisterUser): User
+}
+
+input RegisterUser {
+    email: String! @string(
+        maxLength: 15
+        type: EMAIL
+    )
+    password: String! @string(
+        maxLength: 43
+        regex: "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{4,}$"
+    )
+    role: UserRoles!
+    name: String! @string(maxLength: 120)
+    address: String @string(maxLength: 150)
+    phoneNumber: String @string(
+        maxLength: 15
+        type: PHONE
+    )
+    cash: Decimal @decimal(fraction: 2)
+}

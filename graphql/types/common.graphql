@@ -1,0 +1,7 @@
+scalar BigInt
+
+scalar Decimal
+directive @decimal(
+    int: Int
+    fraction: Int
+) on FIELD_DEFINITION
