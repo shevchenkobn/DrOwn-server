@@ -5,27 +5,34 @@ const yargs = require("yargs");
 const db_connection_class_1 = require("../services/db-connection.class");
 const table_schemas_service_1 = require("../services/table-schemas.service");
 const table_schemas_service_2 = require("../services/table-schemas.service");
+const table_schemas_service_3 = require("../services/table-schemas.service");
 const argv = yargs
     .usage(`Run it to create or recreate tables in database.`)
     .version().alias('v', 'version')
     .option('tables', {
     alias: 't',
     array: true,
-    choices: table_schemas_service_1.TableNames,
-    default: table_schemas_service_1.TableNames,
+    choices: table_schemas_service_1.tableNames,
+    default: table_schemas_service_1.tableNames,
     desc: 'Specify tables to operate.',
 })
     .option('drop', {
     alias: 'd',
     boolean: true,
     default: false,
-    description: 'Checks if tables should be dropped before recreating'
+    description: 'Checks if tables should be dropped before recreating',
+})
+    .option('no-seed', {
+    alias: 'S',
+    boolean: true,
+    default: false,
+    description: 'Don\'t add minimal necessary data to database',
 })
     .help('help').alias('h', 'help')
     .argv;
 (async () => {
     try {
-        console.log('Tables to work with: ' + argv.tables.join(', '));
+        console.log(`Tables to work with: ${argv.tables.join(', ')}`);
         const { knex } = new db_connection_class_1.DbConnection();
         if (argv.drop) {
             console.log('Dropping tables....');
@@ -33,24 +40,18 @@ const argv = yargs
                 console.log(`Dropped "${table}" with """${sql}"""`);
             });
         }
-        // return;
         console.log('Creating tables...');
-        // const tablePromises = createTables(knex, true, argv.tables);
-        // for (const promise of tablePromises) {
-        //   const builder =
-        // }
         await table_schemas_service_2.createTables(knex, true, argv.tables, (table, exists, sql) => {
             if (exists) {
                 console.log(`${table} already exists`);
                 return;
             }
             console.log(`Creating "${table}" with """${sql}"""`);
-            // builder.then(() => {
-            //   console.log(`Created ${table}`);
-            // }).catch(err => {
-            //   console.error(`Error with ${table}: ${err.message}`);
-            // }).then(() => console.debug(`\n${builder.toQuery()}\n`));
         });
+        if (!argv.noSeed) {
+            console.log('Seeding database...');
+            await table_schemas_service_3.seedDatabase(knex);
+        }
         console.log('Done. Bye!');
     }
     catch (err) {

@@ -1,5 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const config = require("config");
+const users_model_1 = require("../models/users.model");
+const users_model_2 = require("../models/users.model");
 var TableName;
 (function (TableName) {
     TableName["Users"] = "users";
@@ -11,13 +14,13 @@ var TableName;
     TableName["Reports"] = "reports";
     TableName["Notifications"] = "notifications";
 })(TableName = exports.TableName || (exports.TableName = {}));
-exports.TableNames = Object.values(TableName);
+exports.tableNames = Object.values(TableName);
 const tablesToCreate = new Map([
     [TableName.Users, knex => {
             return knex.schema.createTable(TableName.Users, table => {
                 table.bigIncrements('userId')
                     .primary(`pk_${TableName.Users}`);
-                table.string('email', 60).notNullable();
+                table.string('email', 60).notNullable().unique(`unique_${TableName.Users}`);
                 table.string('passwordHash', 60).notNullable();
                 table.integer('role').unsigned().notNullable().defaultTo(0);
                 table.string('name', 120).notNullable();
@@ -58,6 +61,7 @@ const tablesToCreate = new Map([
                 table.integer('loadCapacity').unsigned().notNullable();
                 table.boolean('canCarryLiquids').notNullable();
                 table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
+                table.unique(['producer', 'model', 'serialNumber'], `unique_${TableName.Drones}`);
             });
         }],
     [TableName.DroneOrders, knex => {
@@ -132,10 +136,10 @@ const tablesToCreate = new Map([
             });
         }],
 ]);
-async function dropTables(knex, safe = true, tables = exports.TableNames, forEachCb) {
-    const orderedTables = exports.TableNames.slice().filter(t => tables.includes(t)).reverse();
+async function dropTables(knex, safe = true, tables = exports.tableNames, forEachCb) {
+    const orderedTables = exports.tableNames.slice().filter(t => tables.includes(t)).reverse();
     let builder = null;
-    for (let i = 0; i < orderedTables.length; i++) {
+    for (let i = 0; i < orderedTables.length; i += 1) {
         const table = orderedTables[i];
         builder = safe ? knex.schema.dropTableIfExists(table) : knex.schema.dropTable(table);
         await builder;
@@ -143,10 +147,10 @@ async function dropTables(knex, safe = true, tables = exports.TableNames, forEac
     }
 }
 exports.dropTables = dropTables;
-async function createTables(knex, safe = true, tables = exports.TableNames, forEachCb) {
-    const orderedTables = exports.TableNames.slice().filter(t => tables.includes(t));
+async function createTables(knex, safe = true, tables = exports.tableNames, forEachCb) {
+    const orderedTables = exports.tableNames.slice().filter(t => tables.includes(t));
     let builder = null;
-    for (let i = 0; i < orderedTables.length; i++) {
+    for (let i = 0; i < orderedTables.length; i += 1) {
         const table = orderedTables[i];
         const exists = await knex.schema.hasTable(table);
         if (!safe || !exists) {
@@ -157,4 +161,13 @@ async function createTables(knex, safe = true, tables = exports.TableNames, forE
     }
 }
 exports.createTables = createTables;
+async function seedDatabase(knex) {
+    const adminData = config.get('server.admin');
+    const adminUser = {
+        ...adminData,
+        role: users_model_1.UserRoles.Admin | users_model_1.UserRoles.Company,
+    };
+    await users_model_2.createUser(knex, adminUser);
+}
+exports.seedDatabase = seedDatabase;
 //# sourceMappingURL=table-schemas.service.js.map

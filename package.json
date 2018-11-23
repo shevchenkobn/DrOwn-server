@@ -26,7 +26,10 @@
   },
   "homepage": "https://github.com/shevchenkobn/DrOwn-server#readme",
   "dependencies": {
+    "@types/ajv": "^1.0.0",
+    "ajv": "^6.5.5",
     "app-root-path": "^2.1.0",
+    "bcrypt": "^3.0.2",
     "body-parser": "^1.18.3",
     "brcypt": "^1.0.1",
     "config": "^2.0.1",
@@ -40,6 +43,7 @@
     "jsonwebtoken": "^8.4.0",
     "knex": "^0.15.2",
     "mysql": "^2.16.0",
+    "randomatic": "^3.1.1",
     "yargs": "^12.0.5"
   },
   "devDependencies": {

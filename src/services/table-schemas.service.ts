@@ -1,4 +1,8 @@
 import * as Knex from 'knex';
+import * as config from 'config';
+import { IUserSeed } from '../models/users.model';
+import { UserRoles } from '../models/users.model';
+import { createUser } from '../models/users.model';
 
 export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
   Users = 'users',
@@ -11,7 +15,7 @@ export enum TableName { // NOTE: the order is important otherwise errors with fo
   Notifications = 'notifications',
 }
 
-export const TableNames: ReadonlyArray<TableName> = Object.values(TableName);
+export const tableNames: ReadonlyArray<TableName> = Object.values(TableName);
 
 const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   [TableName.Users, knex => {
@@ -19,7 +23,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigIncrements('userId')
         .primary(`pk_${TableName.Users}`);
 
-      table.string('email', 60).notNullable();
+      table.string('email', 60).notNullable().unique(`unique_${TableName.Users}`);
       table.string('passwordHash', 60).notNullable();
       table.integer('role').unsigned().notNullable().defaultTo(0);
 
@@ -65,6 +69,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.boolean('canCarryLiquids').notNullable();
 
       table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
+
+      table.unique(['producer', 'model', 'serialNumber'], `unique_${TableName.Drones}`);
     });
   }],
   [TableName.DroneOrders, knex => {
@@ -146,14 +152,14 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
 export async function dropTables(
   knex: Knex,
   safe = true,
-  tables = TableNames,
-  forEachCb?: (tableName: string, sql: string) => any
+  tables = tableNames,
+  forEachCb?: (tableName: string, sql: string) => any,
 ) {
-  const orderedTables = TableNames.slice().filter(t => tables.includes(t)).reverse();
+  const orderedTables = tableNames.slice().filter(t => tables.includes(t)).reverse();
 
   let builder: Knex.SchemaBuilder | null = null;
 
-  for (let i = 0; i < orderedTables.length; i++) {
+  for (let i = 0; i < orderedTables.length; i += 1) {
     const table = orderedTables[i];
     builder = safe ? knex.schema.dropTableIfExists(table) : knex.schema.dropTable(table);
     await builder;
@@ -164,14 +170,14 @@ export async function dropTables(
 export async function createTables(
   knex: Knex,
   safe = true,
-  tables = TableNames,
-  forEachCb?: (tableName: string, exists: boolean, sql: string) => any
+  tables = tableNames,
+  forEachCb?: (tableName: string, exists: boolean, sql: string) => any,
 ) {
-  const orderedTables = TableNames.slice().filter(t => tables.includes(t));
+  const orderedTables = tableNames.slice().filter(t => tables.includes(t));
 
   let builder: Knex.SchemaBuilder | null = null;
 
-  for (let i = 0; i < orderedTables.length; i++) {
+  for (let i = 0; i < orderedTables.length; i += 1) {
     const table = orderedTables[i];
     const exists = await knex.schema.hasTable(table);
     if (!safe || !exists) {
@@ -182,4 +188,12 @@ export async function createTables(
   }
 }
 
+export async function seedDatabase(knex: Knex) {
+  const adminData = config.get<{ name: string, password: string, email: string }>('server.admin');
+  const adminUser: IUserSeed = {
+    ...adminData,
+    role: UserRoles.Admin | UserRoles.Company,
+  };
 
+  await createUser(knex, adminUser);
+}

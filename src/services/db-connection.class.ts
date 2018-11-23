@@ -6,13 +6,22 @@ export class DbConnection {
   public readonly config: Readonly<Knex.Config>;
   public readonly knex: Knex;
 
-  constructor(knexConfig = config.get<Knex.Config>('knex')) {
-    this.config = knexConfig;
-    this.knex = Knex(knexConfig);
+  constructor(knexConfig = config.get<{
+    host: string, user: string, password: string, database: string
+  }>('dbConnection')) {
+    this.config = {
+      client: 'mysql',
+      connection: {
+        ...knexConfig,
+        supportBigNumbers: true,
+        bigNumberStrings: true,
+      },
+    };
+    this.knex = Knex(this.config);
     bindCallbackOnExit(() => {
       // TODO: add logging
-      console.log(`Closing database connection for ${knexConfig.client} mysql at ${(knexConfig.connection as any).host} to ${(knexConfig.connection as any).database}`);
-      this.knex.destroy(() => console.log(`Closed database connection for ${knexConfig.client} mysql at ${(knexConfig.connection as any).host} to ${(knexConfig.connection as any).database}`));
+      console.log(`Closing database connection for ${this.config.client} at ${(this.config.connection as any).host} to ${(this.config.connection as any).database}`);
+      this.knex.destroy(() => console.log(`Closed database connection for ${this.config.client} mysql at ${(this.config.connection as any).host} to ${(this.config.connection as any).database}`));
     });
   }
 }

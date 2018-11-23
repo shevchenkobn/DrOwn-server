@@ -11,8 +11,8 @@ const argv = yargs
     .option('tables', {
     alias: 't',
     array: true,
-    choices: table_schemas_service_1.TableNames,
-    default: table_schemas_service_1.TableNames,
+    choices: table_schemas_service_1.tableNames,
+    default: table_schemas_service_1.tableNames,
     desc: 'Specify tables to operate.',
 })
     .option('unsafe', {

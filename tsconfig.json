@@ -47,6 +47,7 @@
     "strictPropertyInitialization": true,
     "suppressExcessPropertyErrors": false,
     "suppressImplicitAnyIndexErrors": false,
-    "target": "esnext"
+    "target": "esnext",
+    "typeRoots": ["@types"]
   }
 }

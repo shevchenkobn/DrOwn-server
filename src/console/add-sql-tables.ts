@@ -3,8 +3,9 @@
 import * as yargs from 'yargs';
 
 import { DbConnection } from '../services/db-connection.class'
-import { TableNames } from '../services/table-schemas.service';
+import { tableNames } from '../services/table-schemas.service';
 import { dropTables, createTables } from '../services/table-schemas.service';
+import { seedDatabase } from '../services/table-schemas.service';
 
 const argv = yargs
   .usage(`Run it to create or recreate tables in database.`)
@@ -12,22 +13,28 @@ const argv = yargs
   .option('tables', {
     alias: 't',
     array: true,
-    choices: TableNames as any,
-    default: TableNames,
+    choices: tableNames as any,
+    default: tableNames,
     desc: 'Specify tables to operate.',
   })
   .option('drop', {
     alias: 'd',
     boolean: true,
     default: false,
-    description: 'Checks if tables should be dropped before recreating'
+    description: 'Checks if tables should be dropped before recreating',
+  })
+  .option('no-seed', {
+    alias: 'S',
+    boolean: true,
+    default: false,
+    description: 'Don\'t add minimal necessary data to database',
   })
   .help('help').alias('h', 'help')
   .argv;
 
 (async () => {
   try {
-    console.log('Tables to work with: ' + argv.tables.join(', '));
+    console.log(`Tables to work with: ${argv.tables.join(', ')}`);
     const {knex} = new DbConnection();
     if (argv.drop) {
       console.log('Dropping tables....');
@@ -35,24 +42,18 @@ const argv = yargs
         console.log(`Dropped "${table}" with """${sql}"""`);
       });
     }
-    // return;
     console.log('Creating tables...');
-    // const tablePromises = createTables(knex, true, argv.tables);
-    // for (const promise of tablePromises) {
-    //   const builder =
-    // }
     await createTables(knex, true, argv.tables, (table, exists, sql) => {
       if (exists) {
         console.log(`${table} already exists`);
         return;
       }
       console.log(`Creating "${table}" with """${sql}"""`);
-      // builder.then(() => {
-      //   console.log(`Created ${table}`);
-      // }).catch(err => {
-      //   console.error(`Error with ${table}: ${err.message}`);
-      // }).then(() => console.debug(`\n${builder.toQuery()}\n`));
     });
+    if (!argv.noSeed) {
+      console.log('Seeding database...');
+      await seedDatabase(knex);
+    }
     console.log('Done. Bye!');
   } catch (err) {
     console.error('Error occured: ');

@@ -1,7 +1,13 @@
-knex:
-  client: mysql
-  connection:
-    host: 127.0.0.1
-    user: yourUser
-    password: yourPassword
-    database: drones
+dbConnection:
+  host: 127.0.0.1
+  user: yourUser
+  password: yourPassword
+  database: drones
+server:
+  host: localhost
+  port: 5000
+  admin:
+    name: Master Admin
+    password: "-==> isFlash"
+    email: "master.admin@localhost"
+

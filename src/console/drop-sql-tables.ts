@@ -3,7 +3,7 @@
 import * as yargs from 'yargs';
 
 import { DbConnection } from '../services/db-connection.class'
-import { TableNames } from '../services/table-schemas.service';
+import { tableNames } from '../services/table-schemas.service';
 import { dropTables } from '../services/table-schemas.service';
 
 const argv = yargs
@@ -12,8 +12,8 @@ const argv = yargs
   .option('tables', {
     alias: 't',
     array: true,
-    choices: TableNames as any,
-    default: TableNames,
+    choices: tableNames as any,
+    default: tableNames,
     desc: 'Specify tables to operate.',
   })
   .option('unsafe', {
