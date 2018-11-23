@@ -1,8 +1,11 @@
 // import { isUser } from '../services/validators.service';
+import { injectable, inject } from 'inversify';
+import { TYPES } from '../di/types';
 import * as Knex from 'knex';
-import { genSalt, hash } from 'bcrypt';
+import { hash } from 'bcrypt';
 import { TableName } from '../services/table-schemas.service';
 import randomatic from 'randomatic';
+import { DbConnection } from '../services/db-connection.class';
 
 export const maxPasswordLength = 72 - 29;
 
@@ -42,23 +45,36 @@ export interface IUser {
   refreshTokenExpiration?: Date | null;
 }
 
-export async function createUser(knex: Knex, userSeed: IUserSeed, changeSeed = false) {
-  const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
+@injectable()
+export class UserModel {
+  private _connection: DbConnection;
+  private _table: Knex.QueryBuilder;
 
-  const user: IUser = {
-    email: userSeed.name,
-    role: userSeed.role,
-    name: userSeed.name,
-    companyId: userSeed.companyId,
-    address: userSeed.address,
-    phoneNumber: userSeed.phoneNumber,
-    cash: userSeed.cash,
-  } as any;
-
-  if (!editedUserSeed.password) {
-    editedUserSeed.password = randomatic('aA0!', maxPasswordLength);
+  constructor(
+    @inject(TYPES.DbConnection) connection: DbConnection,
+  ) {
+    this._connection = connection;
+    this._table = this._connection.knex(TableName.Users);
   }
-  user.passwordHash = await hash(editedUserSeed.password, 13);
-  await knex(TableName.Users).insert(user);
-  return editedUserSeed;
+
+  async create(userSeed: IUserSeed, changeSeed = false) {
+    const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
+
+    const user: IUser = {
+      email: userSeed.name,
+      role: userSeed.role,
+      name: userSeed.name,
+      companyId: userSeed.companyId,
+      address: userSeed.address,
+      phoneNumber: userSeed.phoneNumber,
+      cash: userSeed.cash,
+    } as any;
+
+    if (!editedUserSeed.password) {
+      editedUserSeed.password = randomatic('aA0!', maxPasswordLength);
+    }
+    user.passwordHash = await hash(editedUserSeed.password, 13);
+    await this._table.insert(user);
+    return editedUserSeed;
+  }
 }

@@ -1,9 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const tslib_1 = require("tslib");
 const Knex = require("knex");
 const config = require("config");
 const util_service_1 = require("./util.service");
-class DbConnection {
+const inversify_1 = require("inversify");
+let DbConnection = class DbConnection {
     constructor(knexConfig = config.get('dbConnection')) {
         this.config = {
             client: 'mysql',
@@ -20,6 +22,10 @@ class DbConnection {
             this.knex.destroy(() => console.log(`Closed database connection for ${this.config.client} mysql at ${this.config.connection.host} to ${this.config.connection.database}`));
         });
     }
-}
+};
+DbConnection = tslib_1.__decorate([
+    inversify_1.injectable(),
+    tslib_1.__metadata("design:paramtypes", [Object])
+], DbConnection);
 exports.DbConnection = DbConnection;
 //# sourceMappingURL=db-connection.class.js.map

@@ -2,12 +2,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const yargs = require("yargs");
-const db_connection_class_1 = require("../services/db-connection.class");
+const types_1 = require("../di/types");
+const container_1 = require("../di/container");
 const table_schemas_service_1 = require("../services/table-schemas.service");
 const table_schemas_service_2 = require("../services/table-schemas.service");
 const table_schemas_service_3 = require("../services/table-schemas.service");
 const argv = yargs
-    .usage(`Run it to create or recreate tables in database.`)
+    .usage('Run it to create or recreate tables in database.')
     .version().alias('v', 'version')
     .option('tables', {
     alias: 't',
@@ -33,7 +34,7 @@ const argv = yargs
 (async () => {
     try {
         console.log(`Tables to work with: ${argv.tables.join(', ')}`);
-        const { knex } = new db_connection_class_1.DbConnection();
+        const { knex } = container_1.container.get(types_1.TYPES.DbConnection);
         if (argv.drop) {
             console.log('Dropping tables....');
             await table_schemas_service_2.dropTables(knex, true, argv.tables, (table, sql) => {

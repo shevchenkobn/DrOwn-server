@@ -1,8 +1,10 @@
 import * as Knex from 'knex';
 import * as config from 'config';
+import { TYPES } from '../di/types';
+import { container } from '../di/container';
 import { IUserSeed } from '../models/users.model';
 import { UserRoles } from '../models/users.model';
-import { createUser } from '../models/users.model';
+import { UserModel } from '../models/users.model';
 
 export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
   Users = 'users',
@@ -195,5 +197,5 @@ export async function seedDatabase(knex: Knex) {
     role: UserRoles.Admin | UserRoles.Company,
   };
 
-  await createUser(knex, adminUser);
+  await container.get<UserModel>(TYPES.UserModel).create(adminUser);
 }

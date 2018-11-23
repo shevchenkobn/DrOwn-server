@@ -1,7 +1,9 @@
 import * as Knex from 'knex';
 import * as config from 'config';
 import { bindCallbackOnExit } from './util.service';
+import { injectable } from 'inversify';
 
+@injectable()
 export class DbConnection {
   public readonly config: Readonly<Knex.Config>;
   public readonly knex: Knex;

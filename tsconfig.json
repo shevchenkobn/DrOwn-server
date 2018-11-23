@@ -20,13 +20,13 @@
     "inlineSources": false,
     "isolatedModules": false,
     "keyofStringsOnly": false,
-//    "lib": ["es2018"],
+    "lib": ["esnext", "es6"],
     "listEmittedFiles": true,
     "maxNodeModuleJsDepth": 0,
     "module": "commonjs",
     "moduleResolution": "node",
     "newLine": "lf",
-    //    "noEmitHelpers": false,
+    "noEmitHelpers": true,
     "noEmitOnError": true,
     "noErrorTruncation": true,
     "noFallthroughCasesInSwitch": false,
@@ -48,6 +48,7 @@
     "suppressExcessPropertyErrors": false,
     "suppressImplicitAnyIndexErrors": false,
     "target": "esnext",
-    "typeRoots": ["@types"]
+    "typeRoots": ["@types"],
+    "types": ["reflect-metadata"]
   }
 }

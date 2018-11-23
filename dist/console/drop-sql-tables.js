@@ -2,11 +2,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const yargs = require("yargs");
-const db_connection_class_1 = require("../services/db-connection.class");
+const types_1 = require("../di/types");
+const container_1 = require("../di/container");
 const table_schemas_service_1 = require("../services/table-schemas.service");
 const table_schemas_service_2 = require("../services/table-schemas.service");
 const argv = yargs
-    .usage(`Run it to drop tables in database.`)
+    .usage('Run it to drop tables in database.')
     .version().alias('v', 'version')
     .option('tables', {
     alias: 't',
@@ -19,14 +20,14 @@ const argv = yargs
     alias: 'S',
     boolean: true,
     default: false,
-    description: 'Don\'t check if tables exist'
+    description: 'Don\'t check if tables exist',
 })
     .help('help').alias('h', 'help')
     .argv;
 (async () => {
     try {
-        console.log('Tables to work with: ' + argv.tables.join(', '));
-        const { knex } = new db_connection_class_1.DbConnection();
+        console.log(`Tables to work with: ${argv.tables.join(', ')}`);
+        const { knex } = container_1.container.get(types_1.TYPES.DbConnection);
         console.log('Dropping tables....');
         await table_schemas_service_2.dropTables(knex, true, argv.tables, (table, sql) => {
             console.log(`Dropped "${table}" with """${sql}"""`);

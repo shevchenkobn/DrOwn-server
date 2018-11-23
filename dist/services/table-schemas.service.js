@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const config = require("config");
+const types_1 = require("../di/types");
+const container_1 = require("../di/container");
 const users_model_1 = require("../models/users.model");
-const users_model_2 = require("../models/users.model");
 var TableName;
 (function (TableName) {
     TableName["Users"] = "users";
@@ -167,7 +168,7 @@ async function seedDatabase(knex) {
         ...adminData,
         role: users_model_1.UserRoles.Admin | users_model_1.UserRoles.Company,
     };
-    await users_model_2.createUser(knex, adminUser);
+    await container_1.container.get(types_1.TYPES.UserModel).create(adminUser);
 }
 exports.seedDatabase = seedDatabase;
 //# sourceMappingURL=table-schemas.service.js.map

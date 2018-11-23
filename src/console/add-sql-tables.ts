@@ -2,13 +2,15 @@
 
 import * as yargs from 'yargs';
 
-import { DbConnection } from '../services/db-connection.class'
+import { TYPES } from '../di/types';
+import { container } from '../di/container';
+import { DbConnection } from '../services/db-connection.class';
 import { tableNames } from '../services/table-schemas.service';
 import { dropTables, createTables } from '../services/table-schemas.service';
 import { seedDatabase } from '../services/table-schemas.service';
 
 const argv = yargs
-  .usage(`Run it to create or recreate tables in database.`)
+  .usage('Run it to create or recreate tables in database.')
   .version().alias('v', 'version')
   .option('tables', {
     alias: 't',
@@ -35,7 +37,7 @@ const argv = yargs
 (async () => {
   try {
     console.log(`Tables to work with: ${argv.tables.join(', ')}`);
-    const {knex} = new DbConnection();
+    const { knex } = container.get<DbConnection>(TYPES.DbConnection);
     if (argv.drop) {
       console.log('Dropping tables....');
       await dropTables(knex, true, argv.tables, (table, sql) => {
