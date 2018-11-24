@@ -5,23 +5,34 @@ type Query {
 
 type Mutation {
     registerUser(userSeed: RegisterUser): User
+    authenticate(
+        email: String! @string(
+            maxLength: 15
+            regex: "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+        )
+        password: String! @string(
+            maxLength: 43
+            regex: "^(?=.*[A-Z].*[A-Z])(?=.*[!@#$&*])(?=.*[0-9].*[0-9])(?=.*[a-z].*[a-z].*[a-z]).{6,}$"
+        )
+    ): Tokens!
+    refreshToken(refreshToken: String): Tokens! @authorized
 }
 
 input RegisterUser {
     email: String! @string(
         maxLength: 15
-        type: EMAIL
+        regex: "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
     )
     password: String! @string(
         maxLength: 43
-        regex: "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{4,}$"
+        regex: "^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,}$"
     )
     role: UserRoles!
     name: String! @string(maxLength: 120)
     address: String @string(maxLength: 150)
     phoneNumber: String @string(
         maxLength: 15
-        type: PHONE
+        regex: "^[\\d]{1,15}$"
     )
     cash: Decimal @decimal(fraction: 2)
 }

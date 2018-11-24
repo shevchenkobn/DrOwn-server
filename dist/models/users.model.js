@@ -19,7 +19,7 @@ var UserRoles;
     UserRoles[UserRoles["Company"] = 32] = "Company";
     UserRoles[UserRoles["Moderator"] = 64] = "Moderator";
     UserRoles[UserRoles["Admin"] = 128] = "Admin";
-})(UserRoles = exports.UserRoles || (exports.UserRoles = {}));
+})({}));
 let UserModel = class UserModel {
     constructor(connection) {
         this._connection = connection;

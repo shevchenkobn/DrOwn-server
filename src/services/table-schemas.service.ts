@@ -25,7 +25,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigIncrements('userId')
         .primary(`pk_${TableName.Users}`);
 
-      table.string('email', 60).notNullable().unique(`unique_${TableName.Users}`);
+      table.string('email', 120).notNullable().unique(`unique_${TableName.Users}`);
       table.string('passwordHash', 60).notNullable();
       table.integer('role').unsigned().notNullable().defaultTo(0);
 

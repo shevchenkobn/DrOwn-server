@@ -20,6 +20,10 @@ export enum UserRoles {
   Admin = 0x80, // Can CRUD all tables + moderate
 }
 
+export function isValidRole(role: any): role is UserRoles {
+  return typeof role === 'number' && role >= UserRoles.Customer && role <= UserRoles.Admin;
+}
+
 export interface IUserSeed {
   email: string;
   password?: string | null;

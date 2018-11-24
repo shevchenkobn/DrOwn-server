@@ -1,11 +1,5 @@
-enum StringType {
-    PHONE
-    EMAIL
-}
-
 directive @string(
     maxLength: Int
-    type: StringType
     regex: String
 ) on INPUT_FIELD_DEFINITION
 
