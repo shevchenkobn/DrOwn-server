@@ -54,11 +54,22 @@ export class UserModel {
   private _connection: DbConnection;
   private _table: Knex.QueryBuilder;
 
+  public get table() {
+    return this._table;
+  }
+
   constructor(
     @inject(TYPES.DbConnection) connection: DbConnection,
   ) {
     this._connection = connection;
     this._table = this._connection.knex(TableName.Users);
+  }
+
+  select(columns?: keyof IUser) {
+    if (columns && columns.length > 0) {
+      return this._table.select(columns);
+    }
+    return this._table.select();
   }
 
   async create(userSeed: IUserSeed, changeSeed = false) {

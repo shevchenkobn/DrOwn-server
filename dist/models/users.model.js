@@ -19,11 +19,24 @@ var UserRoles;
     UserRoles[UserRoles["Company"] = 32] = "Company";
     UserRoles[UserRoles["Moderator"] = 64] = "Moderator";
     UserRoles[UserRoles["Admin"] = 128] = "Admin";
-})({}));
+})(UserRoles = exports.UserRoles || (exports.UserRoles = {}));
+function isValidRole(role) {
+    return typeof role === 'number' && role >= UserRoles.Customer && role <= UserRoles.Admin;
+}
+exports.isValidRole = isValidRole;
 let UserModel = class UserModel {
     constructor(connection) {
         this._connection = connection;
         this._table = this._connection.knex(table_schemas_service_1.TableName.Users);
+    }
+    get table() {
+        return this._table;
+    }
+    select(columns) {
+        if (columns && columns.length > 0) {
+            return this._table.select(columns);
+        }
+        return this._table.select();
     }
     async create(userSeed, changeSeed = false) {
         const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;

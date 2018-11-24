@@ -85,7 +85,7 @@ class ConstrainedDecimal extends GraphQLScalarType {
   }
 }
 
-export const directiveResolvers = {
+export const schemaDirectives = {
   decimal: class DecimalDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field: GraphQLField<any, any>) {
       if (field.type !== resolvers.Decimal) {

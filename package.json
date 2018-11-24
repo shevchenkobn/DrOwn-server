@@ -60,6 +60,7 @@
     "@types/knex": "^0.15.1",
     "@types/mysql2": "github:types/mysql2",
     "@types/node": "^10.12.9",
+    "@types/reflect-metadata": "^0.1.0",
     "@types/yargs": "^12.0.1",
     "tslib": "^1.9.3"
   },

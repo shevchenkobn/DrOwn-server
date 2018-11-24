@@ -4,7 +4,7 @@ directive @string(
 ) on INPUT_FIELD_DEFINITION
 
 directive @authorized(
-    role: UserRoles
+    roles: UserRoles
 ) on QUERY
 | MUTATION
 | SUBSCRIPTION

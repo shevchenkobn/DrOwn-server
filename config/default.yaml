@@ -8,6 +8,13 @@ server:
   port: 5000
   admin:
     name: Master Admin
-    password: "-==> isFlash"
+    password: "admin"
     email: "master.admin@localhost"
+jwt:
+  secret: "-==> isFlash"
+  expiration:
+    access: 7200000 # 2 hours: 1000 * 60 * 60 * 2
+    refresh: 15811200000 # half of year: 1000 * 60 * 60 * 24 * (366 / 2)
+  issuer: SuperAdmin
+  refreshLength: 128
 

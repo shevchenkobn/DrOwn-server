@@ -1,4 +1,4 @@
-import { GraphQLScalarType } from 'graphql';
+import { GraphQLScalarType, validate } from 'graphql';
 import { Kind } from 'graphql';
 import { ErrorCode, LogicError } from '../../services/error.service';
 import { isValidRole } from '../../models/users.model';
@@ -60,22 +60,18 @@ export const resolvers = {
   }),
 };
 
-export const directiveResolvers = {
-  notRoles: class NotRolesDirective extends SchemaDirectiveVisitor {
-    visitInputFieldDefinition(field: GraphQLInputField) {
-      if (field.type !== resolvers.UserRoles) {
-        throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
-      }
-      const excludeRoles = this.args.roles;
-      const { resolve = defaultFieldResolver } = field;
-      field.resolve = async function (...args) {
-        const result = await resolve.apply(this, args);
-        if (typeof result !== 'number') {
+class ConstrainedUserRoles extends GraphQLScalarType {
+  constructor(type: GraphQLScalarType, excludeRoles: UserRoles[]) {
+    super({
+      name: 'ConstrainedDecimal',
+      parseValue(value) {
+        const parsed = type.parseValue(value);
+        if (typeof parsed !== 'number') {
           throw new LogicError(ErrorCode.GQL_VALUE_BAD);
         }
         let rolesAreGood = true;
         for (const role of excludeRoles) {
-          if (result & role) {
+          if (parsed & role) {
             rolesAreGood = false;
             break;
           }
@@ -83,8 +79,42 @@ export const directiveResolvers = {
         if (!rolesAreGood) {
           throw new LogicError(ErrorCode.GQL_VALUE_BAD);
         }
-        return result;
-      };
+        return parsed;
+      },
+      serialize(value) {
+        return type.serialize(value);
+      },
+      parseLiteral(ast, ...args) {
+        const parsed = type.parseLiteral(ast, ...args);
+        if (typeof parsed !== 'number') {
+          throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+        }
+        let rolesAreGood = true;
+        for (const role of excludeRoles) {
+          if (parsed & role) {
+            rolesAreGood = false;
+            break;
+          }
+        }
+        if (!rolesAreGood) {
+          throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+        }
+        return parsed;
+      },
+    });
+  }
+}
+
+export const schemaDirectives = {
+  notRoles: class NotRolesDirective extends SchemaDirectiveVisitor {
+    visitInputFieldDefinition(field: GraphQLInputField) {
+      if (field.type !== resolvers.UserRoles) {
+        throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
+      }
+      const excludeRoles = this.args.roles;
+
+      // FIXME: Ensure it works as intended
+      field.type = new ConstrainedUserRoles(field.type as any, excludeRoles);
     }
   },
 };
