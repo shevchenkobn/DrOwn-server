@@ -6,6 +6,7 @@ import { ErrorCode, LogicError } from '../../services/error.service';
 import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { defaultFieldResolver } from 'graphql';
 import { GraphQLInputField } from 'graphql';
+import { GraphQLScalarTypeConfig } from 'graphql';
 
 export const resolvers = {
   BigInt: new GraphQLScalarType({
@@ -59,6 +60,31 @@ export const resolvers = {
   }),
 };
 
+class ConstrainedDecimal extends GraphQLScalarType {
+  constructor(type: GraphQLScalarType, regex: RegExp) {
+    super({
+      name: 'ConstrainedDecimal',
+      parseValue(value) {
+        const parsed = type.parseValue(value);
+        if (typeof parsed === 'string' && regex.test(parsed)) {
+          return parsed;
+        }
+        throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+      },
+      serialize(value) {
+        return type.serialize(value);
+      },
+      parseLiteral(ast, ...args) {
+        const parsed = type.parseLiteral(ast, ...args);
+        if (typeof parsed === 'string' && regex.test(parsed)) {
+          return parsed;
+        }
+        throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+      },
+    });
+  }
+}
+
 export const directiveResolvers = {
   decimal: class DecimalDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field: GraphQLField<any, any>) {
@@ -86,14 +112,8 @@ export const directiveResolvers = {
       const f = this.args.fraction;
       const regex = new RegExp(`^\\d{1,${i}}(\\.\\d{0,${f})?'`);
 
-      const { resolve = defaultFieldResolver } = field;
-      field.resolve = async function (...args: any[]) {
-        const result = await resolve.apply(this, args);
-        if (typeof result === 'string' && regex.test(result)) {
-          return result;
-        }
-        throw new LogicError(ErrorCode.GQL_VALUE_BAD);
-      };
+      // FIXME: Ensure it works as intended
+      field.type = new ConstrainedDecimal(field.type as any, regex);
     }
   },
 };
