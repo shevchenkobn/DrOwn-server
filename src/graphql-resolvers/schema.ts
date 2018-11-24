@@ -24,7 +24,7 @@ export const resolvers: IResolvers = {
       return UserRoles;
     },
     async users(_, args) {
-      return userModel.select(); // FIXME: optimize retrieval of
+      return userModel.select(); // FIXME: optimize retrieval of specific fields
     },
   },
 
@@ -37,7 +37,6 @@ export const resolvers: IResolvers = {
         throw new LogicError(ErrorCode.AUTH_BAD);
       }
 
-      const now = Date.now();
       const accessToken = encodeJwt(user);
 
       const updateData: {[column: string]: any} = {
@@ -57,7 +56,7 @@ export const resolvers: IResolvers = {
     },
 
     registerUser(_, { userSeed }) {
-
+      return userModel.create(userSeed); // FIXME: optimize retrieval of specific fields
     },
   },
 };
