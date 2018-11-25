@@ -1,3 +1,6 @@
+import { GraphQLResolveInfo } from 'graphql';
+import { FieldNode } from 'graphql';
+
 export function bindCallbackOnExit(callback: (...args: any[]) => any) {
   const events = ['SIGTERM', 'SIGINT', 'SIGQUIT', 'beforeExit'];
   const cb = (...args: any[]) => {
@@ -11,3 +14,6 @@ export function bindCallbackOnExit(callback: (...args: any[]) => any) {
   }
 }
 
+export function getSelectColumns(info: GraphQLResolveInfo) {
+  return (info.fieldNodes[0].selectionSet!.selections as FieldNode[]).map(s => s.name.value);
+}

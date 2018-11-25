@@ -7,6 +7,9 @@ import { ErrorCode, LogicError } from '../services/error.service';
 import * as jwt from 'jsonwebtoken';
 import * as config from 'config';
 import { encodeJwt, getRefreshToken } from '../services/authentication.service';
+import { decodeJwt } from '../services/authentication.service';
+import { getSelectColumns } from '../services/util.service';
+import { getRefreshTokenExpiration } from '../services/authentication.service';
 
 const userModel = container.get<UserModel>(TYPES.UserModel);
 const jwtConfig = config.get<{
@@ -23,8 +26,9 @@ export const resolvers: IResolvers = {
     userRoles() {
       return UserRoles;
     },
-    async users(_, args) {
-      return userModel.select(); // FIXME: optimize retrieval of specific fields
+    users(_, args, ctx, info) {
+      // FIXME: check optimized retrieval of specific fields
+      return userModel.select(getSelectColumns(info) as any);
     },
   },
 
@@ -40,10 +44,10 @@ export const resolvers: IResolvers = {
       const accessToken = encodeJwt(user);
 
       const updateData: {[column: string]: any} = {
-        refreshTokenExpiration: new Date(Date.now() + jwtConfig.expiration.refresh),
+        refreshTokenExpiration: getRefreshTokenExpiration(),
       };
       if (!user.refreshToken) {
-        updateData.refreshToken = await getRefreshToken();
+        updateData.refreshToken = await getRefreshToken(user);
       }
       await userModel.table.where({
         userId: user.userId,
@@ -55,8 +59,48 @@ export const resolvers: IResolvers = {
       };
     },
 
-    registerUser(_, { userSeed }) {
-      return userModel.create(userSeed); // FIXME: optimize retrieval of specific fields
+    registerUser(_, { userSeed }, ctx, info) {
+      // FIXME: check optimized retrieval of specific fields
+      return userModel.create(userSeed, true, getSelectColumns(info) as any);
+    },
+
+    async getAccessToken(_, { refreshToken, accessToken }) {
+      // NOTE: only 2 fields are retrieved, should be changed if auth algos changed
+      const dbResult = await userModel.select(
+        ['email', 'refreshTokenExpiration'],
+        { refreshToken },
+      );
+      if (!dbResult || dbResult.length === 0) {
+        throw new LogicError(ErrorCode.AUTH_BAD);
+      }
+      const user = dbResult[0] as IUser;
+      const { userId, email, refreshTokenExpiration } = user;
+
+      const now = Date.now();
+      if (now >= refreshTokenExpiration!.getTime()) {
+        throw new LogicError(ErrorCode.AUTH_EXPIRED);
+      }
+
+      let decodedId: string;
+      try {
+        decodedId = decodeJwt(accessToken).id;
+      } catch (err) {
+        throw new LogicError(ErrorCode.AUTH_BAD);
+      }
+      if (userId !== decodedId) {
+        throw new LogicError(ErrorCode.AUTH_BAD);
+      }
+
+      await userModel.table.where({
+        userId,
+      }).update({
+        refreshTokenExpiration: getRefreshTokenExpiration(),
+      });
+
+      return {
+        refreshToken,
+        accessToken: encodeJwt(user),
+      };
     },
   },
 };

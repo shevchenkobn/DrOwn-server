@@ -3,6 +3,7 @@ import { resolvers as userResolvers } from './types/user.type';
 import { IDirectiveResolvers } from 'graphql-tools';
 import { IUser } from '../models/users.model';
 import { ErrorCode, LogicError } from '../services/error.service';
+import { getUserFromRequest } from '../services/authentication.service';
 
 export const resolvers = {
   authorized: new GraphQLDirective({
@@ -36,13 +37,20 @@ export const resolvers = {
 };
 
 export const directiveResolvers: IDirectiveResolvers = {
-  authorized: (next, source, { roles }, ctx) => {
+  authorized: async (next, source, { roles }, ctx) => {
     let user: IUser;
-    try {
-      // TODO: get user from context
-      user = {} as any;
-    } catch (err) {
-      throw new LogicError(ErrorCode.AUTH_NO);
+    if (typeof ctx.user === 'object') {
+      user = ctx.user;
+    } else {
+      try {
+        user = await getUserFromRequest(ctx.req);
+      } catch (err) {
+        if (err.name === 'TokenExpiredError') {
+          throw new LogicError(ErrorCode.AUTH_EXPIRED);
+        }
+        throw new LogicError(ErrorCode.AUTH_NO);
+      }
+      ctx.user = user;
     }
     if (roles && roles.length > 0) {
       for (const role of roles) {

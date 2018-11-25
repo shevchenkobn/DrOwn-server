@@ -33,6 +33,6 @@ type User {
     phoneNumber: String
     cash: Decimal @decimal(fraction: 2)
     companyId: BigInt
-    company: User
-    employees: [User!]
+#    company: User # FIXME: add resolvers
+#    employees: [User!]
 }

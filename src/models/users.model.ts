@@ -1,11 +1,13 @@
 // import { isUser } from '../services/validators.service';
-import { injectable, inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { TYPES } from '../di/types';
 import * as Knex from 'knex';
 import { hash } from 'bcrypt';
 import { TableName } from '../services/table-schemas.service';
 import randomatic from 'randomatic';
 import { DbConnection } from '../services/db-connection.class';
+import { LogicError } from '../services/error.service';
+import { ErrorCode } from '../services/error.service';
 
 export const maxPasswordLength = 72 - 29;
 
@@ -51,8 +53,8 @@ export interface IUser {
 
 @injectable()
 export class UserModel {
-  private _connection: DbConnection;
-  private _table: Knex.QueryBuilder;
+  private readonly _connection: DbConnection;
+  private readonly _table: Knex.QueryBuilder;
 
   public get table() {
     return this._table;
@@ -65,14 +67,12 @@ export class UserModel {
     this._table = this._connection.knex(TableName.Users);
   }
 
-  select(columns?: keyof IUser) {
-    if (columns && columns.length > 0) {
-      return this._table.select(columns);
-    }
-    return this._table.select();
+  select(columns?: Array<keyof IUser>, where?: any) {
+    const query = where ? this._table.where(where) : this._table;
+    return columns && columns.length > 0 ? query.select(columns) : query.select();
   }
 
-  async create(userSeed: IUserSeed, changeSeed = false) {
+  async create(userSeed: IUserSeed, changeSeed = false, selectColumns?: Array<keyof IUser>) {
     const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
 
     const user: IUser = {
@@ -86,10 +86,21 @@ export class UserModel {
     } as any;
 
     if (!editedUserSeed.password) {
+      if (!editedUserSeed.companyId) {
+        throw new LogicError(ErrorCode.USER_NO_REGISTER_DATA);
+      }
       editedUserSeed.password = randomatic('aA0!', maxPasswordLength);
     }
     user.passwordHash = await hash(editedUserSeed.password, 13);
-    await this._table.insert(user);
+    try {
+      await this._table.insert(user);
+    } catch (err) {
+      // FIXME: throw  duplicate name or some other error
+      throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
+    }
+    if (selectColumns) {
+      return (await this.select(selectColumns, { email: editedUserSeed.email }))[0] as IUser;
+    }
     return editedUserSeed;
   }
 }
