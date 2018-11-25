@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
+require("../di/types");
 const Knex = require("knex");
 const config = require("config");
 const util_service_1 = require("./util.service");

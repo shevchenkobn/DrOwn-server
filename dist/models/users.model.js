@@ -8,6 +8,8 @@ const bcrypt_1 = require("bcrypt");
 const table_schemas_service_1 = require("../services/table-schemas.service");
 const randomatic_1 = require("randomatic");
 const db_connection_class_1 = require("../services/db-connection.class");
+const error_service_1 = require("../services/error.service");
+const error_service_2 = require("../services/error.service");
 exports.maxPasswordLength = 72 - 29;
 var UserRoles;
 (function (UserRoles) {
@@ -32,13 +34,11 @@ let UserModel = class UserModel {
     get table() {
         return this._table;
     }
-    select(columns) {
-        if (columns && columns.length > 0) {
-            return this._table.select(columns);
-        }
-        return this._table.select();
+    select(columns, where) {
+        const query = where ? this._table.where(where) : this._table;
+        return columns && columns.length > 0 ? query.select(columns) : query.select();
     }
-    async create(userSeed, changeSeed = false) {
+    async create(userSeed, changeSeed = false, selectColumns) {
         const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
         const user = {
             email: userSeed.name,
@@ -50,10 +50,22 @@ let UserModel = class UserModel {
             cash: userSeed.cash,
         };
         if (!editedUserSeed.password) {
+            if (!editedUserSeed.companyId) {
+                throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_NO_REGISTER_DATA);
+            }
             editedUserSeed.password = randomatic_1.default('aA0!', exports.maxPasswordLength);
         }
         user.passwordHash = await bcrypt_1.hash(editedUserSeed.password, 13);
-        await this._table.insert(user);
+        try {
+            await this._table.insert(user);
+        }
+        catch (err) {
+            // FIXME: throw  duplicate name or some other error
+            throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_DUPLICATE_EMAIL);
+        }
+        if (selectColumns) {
+            return (await this.select(selectColumns, { email: editedUserSeed.email }))[0];
+        }
         return editedUserSeed;
     }
 };

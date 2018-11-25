@@ -1,3 +1,4 @@
+import '../di/types';
 import * as Knex from 'knex';
 import * as config from 'config';
 import { bindCallbackOnExit } from './util.service';

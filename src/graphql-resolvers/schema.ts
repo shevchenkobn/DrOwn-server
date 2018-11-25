@@ -4,22 +4,12 @@ import { container } from '../di/container';
 import { IResolvers } from 'graphql-tools';
 import { compare } from 'bcrypt';
 import { ErrorCode, LogicError } from '../services/error.service';
-import * as jwt from 'jsonwebtoken';
-import * as config from 'config';
 import { encodeJwt, getRefreshToken } from '../services/authentication.service';
 import { decodeJwt } from '../services/authentication.service';
 import { getSelectColumns } from '../services/util.service';
 import { getRefreshTokenExpiration } from '../services/authentication.service';
 
 const userModel = container.get<UserModel>(TYPES.UserModel);
-const jwtConfig = config.get<{
-  secret: string;
-  expiration: {
-    access: number;
-    refresh: number;
-  },
-  issuer: string;
-}>('jwt');
 
 export const resolvers: IResolvers = {
   Query: {
@@ -67,17 +57,18 @@ export const resolvers: IResolvers = {
     async getAccessToken(_, { refreshToken, accessToken }) {
       // NOTE: only 2 fields are retrieved, should be changed if auth algos changed
       const dbResult = await userModel.select(
-        ['email', 'refreshTokenExpiration'],
+        ['userId', 'refreshTokenExpiration'],
         { refreshToken },
       );
       if (!dbResult || dbResult.length === 0) {
         throw new LogicError(ErrorCode.AUTH_BAD);
       }
       const user = dbResult[0] as IUser;
-      const { userId, email, refreshTokenExpiration } = user;
+      const { userId, refreshTokenExpiration } = user;
 
       const now = Date.now();
       if (now >= refreshTokenExpiration!.getTime()) {
+        await userModel.table.where({ userId }).update({ refreshToken: null });
         throw new LogicError(ErrorCode.AUTH_EXPIRED);
       }
 

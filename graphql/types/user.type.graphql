@@ -1,5 +1,8 @@
 scalar UserRoles
 
+"""
+Type-representer of role values
+"""
 type UserRoleValues {
     Customer: Int
     Owner: Int
@@ -10,6 +13,9 @@ type UserRoleValues {
     Moderator: Int
 }
 
+"""
+Hacky representation of `UserRoles` to be used as argument for particular roles
+"""
 enum UserRole {
     Customer
     Owner
@@ -20,7 +26,11 @@ enum UserRole {
     Moderator
 }
 
+"""
+A directive prohibiting particular roles
+"""
 directive @notRoles(
+    "Roles to exclude"
     roles: [UserRole!]!
 ) on INPUT_FIELD_DEFINITION
 

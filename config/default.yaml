@@ -4,8 +4,9 @@ dbConnection:
   password: yourPassword
   database: drones
 server:
-  host: localhost
+  host: 0.0.0.0
   port: 5000
+  gqlPath: /graphql
   admin:
     name: Master Admin
     password: "admin"

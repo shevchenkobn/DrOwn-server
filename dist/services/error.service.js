@@ -7,6 +7,10 @@ var ErrorCode;
     ErrorCode["AUTH_NO"] = "AUTH_NO";
     ErrorCode["AUTH_ROLE"] = "AUTH_ROLE";
     ErrorCode["AUTH_BAD"] = "AUTH_BAD";
+    ErrorCode["AUTH_EXPIRED"] = "AUTH_EXPIRED";
+    ErrorCode["USER_NO_COMPANY"] = "USER_NO_COMPANY";
+    ErrorCode["USER_NO_REGISTER_DATA"] = "USER_NO_REGISTER_DATA";
+    ErrorCode["USER_DUPLICATE_EMAIL"] = "USER_DUPLICATE_EMAIL";
 })(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
 class LogicError extends TypeError {
     constructor(code, message) {

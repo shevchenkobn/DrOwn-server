@@ -10,22 +10,29 @@ import { SchemaDirectiveVisitor } from 'graphql-tools';
 import { GraphQLField } from 'graphql';
 import { defaultFieldResolver } from 'graphql';
 import { GraphQLInputField } from 'graphql';
+import { IResolvers } from 'graphql-tools';
 
-const UserRole = new GraphQLEnumType({
-  name: 'UserRole',
-  values: Object.keys(UserRoles).reduce((values, key) => {
+// const UserRole = new GraphQLEnumType({
+//   name: 'UserRole',
+//   values: Object.keys(UserRoles).reduce((values, key) => {
+//     if (Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
+//       return values;
+//     }
+//     values[key] = {
+//       value: UserRoles[key as any] as any,
+//     };
+//     return values;
+//   }, {} as {[role: string]: { value: number }}),
+// });
+
+export const resolvers = {
+  UserRole: Object.keys(UserRoles).reduce((values, key) => {
     if (Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
       return values;
     }
-    values[key] = {
-      value: UserRoles[key as any] as any,
-    };
+    values[key] = UserRoles[key as any] as any;
     return values;
-  }, {} as {[role: string]: { value: number }}),
-});
-
-export const resolvers = {
-  UserRole,
+  }, {} as {[role: string]: number}),
 
   UserRoles: new GraphQLScalarType({
     name: 'UserRoles',
@@ -47,17 +54,17 @@ export const resolvers = {
     },
   }),
 
-  notRoles: new GraphQLDirective({
-    name: 'notRoles',
-    description: 'A directive prohibiting particular roles',
-    locations: ['INPUT_FIELD_DEFINITION'],
-    args: {
-      roles: {
-        type: new GraphQLList(UserRole),
-        description: 'Roles to exclude',
-      },
-    },
-  }),
+  // notRoles: new GraphQLDirective({
+  //   name: 'notRoles',
+  //   description: 'A directive prohibiting particular roles',
+  //   locations: ['INPUT_FIELD_DEFINITION'],
+  //   args: {
+  //     roles: {
+  //       type: new GraphQLList(UserRole),
+  //       description: 'Roles to exclude',
+  //     },
+  //   },
+  // }),
 };
 
 class ConstrainedUserRoles extends GraphQLScalarType {

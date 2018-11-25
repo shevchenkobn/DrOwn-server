@@ -4,24 +4,28 @@ const graphql_1 = require("graphql");
 const graphql_2 = require("graphql");
 const error_service_1 = require("../../services/error.service");
 const users_model_1 = require("../../models/users.model");
-const graphql_3 = require("graphql");
-const graphql_4 = require("graphql");
 const users_model_2 = require("../../models/users.model");
 const graphql_tools_1 = require("graphql-tools");
-const UserRole = new graphql_4.GraphQLEnumType({
-    name: 'UserRole',
-    values: Object.keys(users_model_2.UserRoles).reduce((values, key) => {
+// const UserRole = new GraphQLEnumType({
+//   name: 'UserRole',
+//   values: Object.keys(UserRoles).reduce((values, key) => {
+//     if (Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
+//       return values;
+//     }
+//     values[key] = {
+//       value: UserRoles[key as any] as any,
+//     };
+//     return values;
+//   }, {} as {[role: string]: { value: number }}),
+// });
+exports.resolvers = {
+    UserRole: Object.keys(users_model_2.UserRoles).reduce((values, key) => {
         if (Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
             return values;
         }
-        values[key] = {
-            value: users_model_2.UserRoles[key],
-        };
+        values[key] = users_model_2.UserRoles[key];
         return values;
     }, {}),
-});
-exports.resolvers = {
-    UserRole,
     UserRoles: new graphql_1.GraphQLScalarType({
         name: 'UserRoles',
         description: 'A bitmask field describing user roles',
@@ -39,17 +43,6 @@ exports.resolvers = {
                 return ast.value;
             }
             throw new error_service_1.LogicError(error_service_1.ErrorCode.GQL_VALUE_BAD);
-        },
-    }),
-    notRoles: new graphql_3.GraphQLDirective({
-        name: 'notRoles',
-        description: 'A directive prohibiting particular roles',
-        locations: ['INPUT_FIELD_DEFINITION'],
-        args: {
-            roles: {
-                type: new graphql_3.GraphQLList(UserRole),
-                description: 'Roles to exclude',
-            },
         },
     }),
 };

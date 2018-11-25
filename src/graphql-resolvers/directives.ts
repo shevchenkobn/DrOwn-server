@@ -6,34 +6,34 @@ import { ErrorCode, LogicError } from '../services/error.service';
 import { getUserFromRequest } from '../services/authentication.service';
 
 export const resolvers = {
-  authorized: new GraphQLDirective({
-    name: 'authorized',
-    description: 'A directive managing roles and scopes',
-    locations: [
-      'QUERY',
-      'MUTATION',
-      'SUBSCRIPTION',
-      'FIELD',
-      'FRAGMENT_DEFINITION',
-      'FRAGMENT_SPREAD',
-      'INLINE_FRAGMENT',
-      'SCHEMA',
-      'SCALAR',
-      'OBJECT',
-      'FIELD_DEFINITION',
-      'ARGUMENT_DEFINITION',
-      'INTERFACE',
-      'UNION',
-      'ENUM',
-      'ENUM_VALUE',
-    ],
-    args: {
-      roles: {
-        type: userResolvers.UserRoles,
-        description: 'Bitmask of allowed roles',
-      },
-    },
-  }),
+  // authorized: new GraphQLDirective({
+  //   name: 'authorized',
+  //   description: 'A directive managing roles and scopes',
+  //   locations: [
+  //     'QUERY',
+  //     'MUTATION',
+  //     'SUBSCRIPTION',
+  //     'FIELD',
+  //     'FRAGMENT_DEFINITION',
+  //     'FRAGMENT_SPREAD',
+  //     'INLINE_FRAGMENT',
+  //     'SCHEMA',
+  //     'SCALAR',
+  //     'OBJECT',
+  //     'FIELD_DEFINITION',
+  //     'ARGUMENT_DEFINITION',
+  //     'INTERFACE',
+  //     'UNION',
+  //     'ENUM',
+  //     'ENUM_VALUE',
+  //   ],
+  //   args: {
+  //     roles: {
+  //       type: userResolvers.UserRoles,
+  //       description: 'Bitmask of allowed roles',
+  //     },
+  //   },
+  // }),
 };
 
 export const directiveResolvers: IDirectiveResolvers = {

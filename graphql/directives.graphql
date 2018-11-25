@@ -3,7 +3,11 @@ directive @string(
     regex: String
 ) on INPUT_FIELD_DEFINITION
 
+"""
+A directive managing roles and scopes
+"""
 directive @authorized(
+    "Bitmask of allowed roles"
     roles: UserRoles
 ) on QUERY
 | MUTATION

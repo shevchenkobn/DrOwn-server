@@ -21,7 +21,7 @@ const tablesToCreate = new Map([
             return knex.schema.createTable(TableName.Users, table => {
                 table.bigIncrements('userId')
                     .primary(`pk_${TableName.Users}`);
-                table.string('email', 120).notNullable().unique(`unique_${TableName.Users}`);
+                table.string('email', 120).notNullable().unique(`unique_email_${TableName.Users}`);
                 table.string('passwordHash', 60).notNullable();
                 table.integer('role').unsigned().notNullable().defaultTo(0);
                 table.string('name', 120).notNullable();
@@ -30,7 +30,7 @@ const tablesToCreate = new Map([
                 table.string('address', 150).nullable();
                 table.string('phoneNumber', 15).nullable();
                 table.decimal('cash', 9, 2).notNullable().defaultTo(0);
-                table.string('refreshToken').nullable();
+                table.string('refreshToken').nullable().unique(`unique_refreshToken_${TableName.Users}`);
                 table.date('refreshTokenExpiration').nullable();
             });
         }],

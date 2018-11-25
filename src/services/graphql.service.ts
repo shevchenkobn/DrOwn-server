@@ -7,12 +7,12 @@ const { readFile } = fsPromises;
 export async function loadTypeSystem() {
   const fileNames = await globby(resolve('graphql/{,**/}*.graphql'));
 
-  const fileResult = fileNames.map(n => readFile(n));
+  const fileResult = fileNames.map(n => readFile(n, 'utf8'));
 
   const filesContent = [];
-  for (const content of await fileResult) {
+  for (const content of await Promise.all(fileResult)) {
     filesContent.push(content);
   }
 
-  return filesContent.join('\n');
+  return filesContent; // filesContent.join('\n');
 }

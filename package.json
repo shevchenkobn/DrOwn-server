@@ -9,6 +9,7 @@
     "npm:g:dev:win": "npm i rimraf tslint typescript nodemon tslint-config-airbnb -g -D",
     "build": "rimraf ./dist && tsc",
     "start": "node ./dist",
+    "start:brk": "node --inspect-brk ./dist",
     "start:dev": "npm run build && node --inspect=9229 ./dist",
     "watch": "nodemon -w src/**/*.* -x \"npm run start:dev\""
   },

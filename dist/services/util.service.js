@@ -13,4 +13,8 @@ function bindCallbackOnExit(callback) {
     }
 }
 exports.bindCallbackOnExit = bindCallbackOnExit;
+function getSelectColumns(info) {
+    return info.fieldNodes[0].selectionSet.selections.map(s => s.name.value);
+}
+exports.getSelectColumns = getSelectColumns;
 //# sourceMappingURL=util.service.js.map

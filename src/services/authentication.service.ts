@@ -69,7 +69,7 @@ export function getRefreshToken(user: IUser) {
       resolve(data.toString('base64'));
     });
 
-    hasher.write(user.email + Date.now().toString());
+    hasher.write(user.userId + Date.now().toString());
     hasher.end();
 
   });
