@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+require("./di/container");
 const express = require("express");
 const config = require("config");
 const graphql_resolvers_1 = require("./graphql-resolvers");
