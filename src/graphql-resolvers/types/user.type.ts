@@ -27,7 +27,7 @@ import { IResolvers } from 'graphql-tools';
 
 export const resolvers = {
   UserRole: Object.keys(UserRoles).reduce((values, key) => {
-    if (Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
+    if (!Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
       return values;
     }
     values[key] = UserRoles[key as any] as any;

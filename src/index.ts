@@ -1,4 +1,4 @@
-import './di/container';
+import './di/container'; // Just to initialize all dependencies
 import * as express from 'express';
 import * as config from 'config';
 import { getGraphqlHandler } from './graphql-resolvers';

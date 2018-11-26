@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-require("./di/container");
+require("./di/container"); // Just to initialize all dependencies
 const express = require("express");
 const config = require("config");
 const graphql_resolvers_1 = require("./graphql-resolvers");

@@ -1,7 +1,11 @@
+"""
+A string validation directive
+"""
 directive @string(
     maxLength: Int
     regex: String
 ) on INPUT_FIELD_DEFINITION
+| ARGUMENT_DEFINITION
 
 """
 A directive managing roles and scopes

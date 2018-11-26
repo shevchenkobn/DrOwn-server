@@ -20,7 +20,7 @@ const graphql_tools_1 = require("graphql-tools");
 // });
 exports.resolvers = {
     UserRole: Object.keys(users_model_2.UserRoles).reduce((values, key) => {
-        if (Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
+        if (!Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
             return values;
         }
         values[key] = users_model_2.UserRoles[key];
