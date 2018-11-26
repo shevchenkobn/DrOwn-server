@@ -6,13 +6,16 @@ const config = require("config");
 const graphql_resolvers_1 = require("./graphql-resolvers");
 const { host, port, gqlPath } = config.get('server');
 const app = express();
-graphql_resolvers_1.getGraphqlHandler().catch(err => {
+graphql_resolvers_1.getGraphqlHandler(process.env.NODE_ENV !== 'production').catch(err => {
     console.error(err);
     process.emit('SIGINT', 'SIGINT');
     setImmediate(() => process.exit(1));
 }).then(handler => {
-    app.post(gqlPath, handler);
+    app.get(gqlPath, handler);
     app.listen(port, host);
     console.log(`Listening at ${host}:${port}`);
+    if (global.gc) {
+        global.gc();
+    }
 });
 //# sourceMappingURL=index.js.map

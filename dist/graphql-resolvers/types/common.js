@@ -6,6 +6,7 @@ const graphql_3 = require("graphql");
 const error_service_1 = require("../../services/error.service");
 const graphql_tools_1 = require("graphql-tools");
 const graphql_4 = require("graphql");
+const DECIMAL_TYPE_NAME = 'Decimal';
 exports.resolvers = {
     BigInt: new graphql_1.GraphQLScalarType({
         name: 'BigInt',
@@ -23,22 +24,22 @@ exports.resolvers = {
             throw new error_service_1.LogicError(error_service_1.ErrorCode.GQL_VALUE_BAD);
         },
     }),
-    Decimal: new graphql_1.GraphQLScalarType({
-        name: 'Decimal',
-        description: 'A Decimal type (safe for storing floats) in string format',
-        parseValue(value) {
-            return value;
-        },
-        serialize(value) {
-            return value;
-        },
-        parseLiteral(ast) {
-            if (ast.kind === graphql_2.Kind.STRING) {
-                return ast.value;
-            }
-            throw new error_service_1.LogicError(error_service_1.ErrorCode.GQL_VALUE_BAD);
-        },
-    }),
+    //  Decimal: new GraphQLScalarType({
+    //    name: 'Decimal',
+    //    description: 'A Decimal type (safe for storing floats) in string format',
+    //    parseValue(value) {
+    //      return value;
+    //    },
+    //    serialize(value) {
+    //      return value;
+    //    },
+    //    parseLiteral(ast) {
+    //      if (ast.kind === Kind.STRING) {
+    //        return ast.value;
+    //      }
+    //      throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+    //    },
+    //  }),
     decimal: new graphql_3.GraphQLDirective({
         name: 'decimal',
         description: 'A directive declaring precision of Decimal scalar',
@@ -82,7 +83,7 @@ class ConstrainedDecimal extends graphql_1.GraphQLScalarType {
 exports.schemaDirectives = {
     decimal: class DecimalDirective extends graphql_tools_1.SchemaDirectiveVisitor {
         visitFieldDefinition(field) {
-            if (field.type !== exports.resolvers.Decimal) {
+            if (field.type.toString() !== DECIMAL_TYPE_NAME) {
                 throw new error_service_1.LogicError(error_service_1.ErrorCode.GQL_DIRECTIVE_TARGED);
             }
             const i = this.args.int;
@@ -98,7 +99,7 @@ exports.schemaDirectives = {
             };
         }
         visitInputFieldDefinition(field) {
-            if (field.type !== exports.resolvers.Decimal) {
+            if (field.type.toString() !== DECIMAL_TYPE_NAME) {
                 throw new error_service_1.LogicError(error_service_1.ErrorCode.GQL_DIRECTIVE_TARGED);
             }
             const i = this.args.int;

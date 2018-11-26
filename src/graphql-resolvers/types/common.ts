@@ -8,6 +8,8 @@ import { defaultFieldResolver } from 'graphql';
 import { GraphQLInputField } from 'graphql';
 import { GraphQLScalarTypeConfig } from 'graphql';
 
+const DECIMAL_TYPE_NAME = 'Decimal';
+
 export const resolvers = {
   BigInt: new GraphQLScalarType({
     name: 'BigInt',
@@ -26,22 +28,22 @@ export const resolvers = {
     },
   }),
 
-  Decimal: new GraphQLScalarType({
-    name: 'Decimal',
-    description: 'A Decimal type (safe for storing floats) in string format',
-    parseValue(value) {
-      return value;
-    },
-    serialize(value) {
-      return value;
-    },
-    parseLiteral(ast) {
-      if (ast.kind === Kind.STRING) {
-        return ast.value;
-      }
-      throw new LogicError(ErrorCode.GQL_VALUE_BAD);
-    },
-  }),
+//  Decimal: new GraphQLScalarType({
+//    name: 'Decimal',
+//    description: 'A Decimal type (safe for storing floats) in string format',
+//    parseValue(value) {
+//      return value;
+//    },
+//    serialize(value) {
+//      return value;
+//    },
+//    parseLiteral(ast) {
+//      if (ast.kind === Kind.STRING) {
+//        return ast.value;
+//      }
+//      throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+//    },
+//  }),
 
   decimal: new GraphQLDirective({
     name: 'decimal',
@@ -88,7 +90,7 @@ class ConstrainedDecimal extends GraphQLScalarType {
 export const schemaDirectives = {
   decimal: class DecimalDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field: GraphQLField<any, any>) {
-      if (field.type !== resolvers.Decimal) {
+      if (field.type.toString() !== DECIMAL_TYPE_NAME) {
         throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
       }
       const i = this.args.int;
@@ -105,7 +107,7 @@ export const schemaDirectives = {
     }
 
     visitInputFieldDefinition(field: GraphQLInputField) {
-      if (field.type !== resolvers.Decimal) {
+      if (field.type.toString() !== DECIMAL_TYPE_NAME) {
         throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
       }
       const i = this.args.int;

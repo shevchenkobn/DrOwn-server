@@ -8,7 +8,7 @@ const user_type_1 = require("./types/user.type");
 const schema_1 = require("./schema");
 const directives_1 = require("./directives");
 // import {} from './types/authentication.type';
-async function getGraphqlHandler() {
+async function getGraphqlHandler(serveGraphiql = false) {
     const typeDefs = await graphql_service_1.loadTypeSystem();
     const schema = graphql_tools_1.makeExecutableSchema({
         typeDefs,
@@ -22,7 +22,7 @@ async function getGraphqlHandler() {
             req,
             res,
         },
-        graphiql: process.env.NODE_ENV !== 'production',
+        graphiql: serveGraphiql,
         pretty: true,
     }));
 }

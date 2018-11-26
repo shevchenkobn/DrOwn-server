@@ -1,8 +1,13 @@
 scalar BigInt
 
+"""
+A directive declaring precision of Decimal scalar
+"""
 scalar Decimal
 directive @decimal(
+    "Length of int part"
     int: Int
+    "Length of fraction part"
     fraction: Int
 ) on FIELD_DEFINITION
 | INPUT_FIELD_DEFINITION

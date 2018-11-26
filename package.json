@@ -10,8 +10,11 @@
     "build": "rimraf ./dist && tsc",
     "start": "node ./dist",
     "start:brk": "node --inspect-brk ./dist",
+    "start:b:brk": "npm run build && node --inspect-brk ./dist",
     "start:dev": "npm run build && node --inspect=9229 ./dist",
-    "watch": "nodemon -w src/**/*.* -x \"npm run start:dev\""
+    "watch": "nodemon -w src/**/*.* -x \"npm run start:dev\"",
+    "db:clear": "node dist/console/drop-sql-tables",
+    "db:add": "node dist/console/add-sql-tables"
   },
   "engines": {
     "node": "^10.12"

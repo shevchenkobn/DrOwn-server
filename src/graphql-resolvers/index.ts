@@ -11,6 +11,7 @@ import { resolvers as schemaResolvers } from './schema';
 import { resolvers as directiveTypeResolvers, directiveResolvers } from './directives';
 import { Request } from 'express';
 import { Response } from 'express';
+import * as graphqlHTTP from 'express-graphql';
 // import {} from './types/authentication.type';
 
 export async function getGraphqlHandler() {
@@ -22,13 +23,13 @@ export async function getGraphqlHandler() {
     schemaDirectives: { ...commonSchemaDirectives, ...userSchemaDirectives },
   });
 
-  return graphqlExpress((req, res) => ({
+  return (serveGraphiql = false) => graphqlExpress((req, res) => ({
     schema,
     context: {
       req,
       res,
     },
-    graphiql: process.env.NODE_ENV !== 'production',
+    graphiql: serveGraphiql,
     pretty: true,
   }));
 }
