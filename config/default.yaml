@@ -17,7 +17,7 @@ jwt:
     private: "id_rsa"
     public: "id_rsa.pub"
   expiration:
-    access: 7200000 # 2 hours: 1000 * 60 * 60 * 2
+    access: "2h" # 2 hours: 1000 * 60 * 60 * 2
     refresh: 15811200000 # half of year: 1000 * 60 * 60 * 24 * (366 / 2)
   issuer: SuperAdmin
   refreshLength: 128

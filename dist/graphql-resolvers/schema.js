@@ -46,27 +46,32 @@ exports.resolvers = {
             // FIXME: check optimized retrieval of specific fields
             return userModel.create(userSeed, true, util_service_1.getSelectColumns(info));
         },
-        async getAccessToken(_, { refreshToken, accessToken }, ctx) {
+        async getAccessToken(_, { refreshToken }) {
             // NOTE: only 2 fields are retrieved, should be changed if auth algos changed
-            if (refreshToken !== ctx.user.refreshToken) {
+            const users = await userModel.table.where({ refreshToken }).select();
+            if (!users || users.length === 0) {
+                throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_BAD);
+            }
+            const user = users[0];
+            if (refreshToken !== user.refreshToken) {
                 throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_BAD);
             }
             const now = Date.now();
-            if (now >= ctx.user.refreshTokenExpiration.getTime()) {
-                await userModel.table.where({ userId: ctx.user.userId }).update({
+            if (now >= user.refreshTokenExpiration.getTime()) {
+                await userModel.table.where({ userId: user.userId }).update({
                     refreshToken: null,
                     refreshTokenExpiration: null,
                 });
                 throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_EXPIRED);
             }
             await userModel.table.where({
-                userId: ctx.user.userId,
+                userId: user.userId,
             }).update({
                 refreshTokenExpiration: authentication_service_1.getRefreshTokenExpiration(),
             });
             return {
                 refreshToken,
-                accessToken: jwt.encode(ctx.user),
+                accessToken: jwt.encode(user),
             };
         },
     },

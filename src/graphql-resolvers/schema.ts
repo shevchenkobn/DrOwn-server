@@ -56,15 +56,22 @@ export const resolvers: IResolvers = {
       return userModel.create(userSeed, true, getSelectColumns(info) as any);
     },
 
-    async getAccessToken(_, { refreshToken, accessToken }, ctx) {
+    async getAccessToken(_, { refreshToken }) {
       // NOTE: only 2 fields are retrieved, should be changed if auth algos changed
-      if (refreshToken !== ctx.user.refreshToken) {
+      const users = await userModel.table.where({ refreshToken }).select();
+
+      if (!users || users.length === 0) {
+        throw new LogicError(ErrorCode.AUTH_BAD);
+      }
+
+      const user = users[0];
+      if (refreshToken !== user.refreshToken) {
         throw new LogicError(ErrorCode.AUTH_BAD);
       }
 
       const now = Date.now();
-      if (now >= ctx.user.refreshTokenExpiration!.getTime()) {
-        await userModel.table.where({ userId: ctx.user.userId }).update({
+      if (now >= user.refreshTokenExpiration!.getTime()) {
+        await userModel.table.where({ userId: user.userId }).update({
           refreshToken: null,
           refreshTokenExpiration: null,
         });
@@ -72,14 +79,14 @@ export const resolvers: IResolvers = {
       }
 
       await userModel.table.where({
-        userId: ctx.user.userId,
+        userId: user.userId,
       }).update({
         refreshTokenExpiration: getRefreshTokenExpiration(),
       });
 
       return {
         refreshToken,
-        accessToken: jwt.encode(ctx.user),
+        accessToken: jwt.encode(user),
       };
     },
   },

@@ -3,3 +3,6 @@ dbConnection:
   user: bogdan
   password: bogdan@mysql
   database: drones
+jwt:
+  expiration:
+    refresh: 10000
