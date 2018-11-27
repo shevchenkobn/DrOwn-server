@@ -2,9 +2,7 @@ import * as Knex from 'knex';
 import * as config from 'config';
 import { TYPES } from '../di/types';
 import { container } from '../di/container';
-import { IUserSeed } from '../models/users.model';
-import { UserRoles } from '../models/users.model';
-import { UserModel } from '../models/users.model';
+import { IUserSeed, UserModel, UserRoles } from '../models/users.model';
 
 export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
   Users = 'users',
@@ -37,7 +35,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.decimal('cash', 9, 2).notNullable().defaultTo(0);
 
       table.string('refreshToken').nullable().unique(`unique_refreshToken_${TableName.Users}`);
-      table.date('refreshTokenExpiration').nullable();
+      table.dateTime('refreshTokenExpiration').nullable();
     });
   }],
   [TableName.Employees, knex => {
@@ -57,6 +55,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigInteger('ownerId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
 
+      table.string('deviceId').notNullable();
       table.string('passwordHash').notNullable();
       table.string('producer', 120).nullable();
       table.string('model', 120).notNullable();
@@ -73,6 +72,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
 
       table.unique(['producer', 'model', 'serialNumber'], `unique_${TableName.Drones}`);
+      table.unique(['deviceId', 'passwordHash'], `unique_${TableName.Drones}_auth`);
     });
   }],
   [TableName.DroneOrders, knex => {
@@ -117,7 +117,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.integer('status').unsigned().notNullable();
       table.decimal('sum', 8, 2).nullable();
       table.integer('period').unsigned().notNullable().defaultTo(0);
-      // table.text('additionalInfo').nullable();
+      // knex.text('additionalInfo').nullable();
     });
   }],
   [TableName.Reports, knex => {
@@ -194,7 +194,14 @@ export async function seedDatabase(knex: Knex) {
   const adminData = config.get<{ name: string, password: string, email: string }>('server.admin');
   const adminUser: IUserSeed = {
     ...adminData,
-    role: UserRoles.Admin | UserRoles.Company,
+    role: UserRoles.Customer
+      | UserRoles.Owner
+      | UserRoles.Landlord
+      | UserRoles.Producer
+      | UserRoles.Maintainer
+      | UserRoles.Moderator
+      | UserRoles.Admin
+      | UserRoles.Company,
   };
 
   await container.get<UserModel>(TYPES.UserModel).create(adminUser);

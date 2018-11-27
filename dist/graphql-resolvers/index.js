@@ -8,7 +8,7 @@ const user_type_1 = require("./types/user.type");
 const schema_1 = require("./schema");
 const directives_1 = require("./directives");
 // import {} from './types/authentication.type';
-async function getGraphqlHandler(serveGraphiql = false) {
+async function getGraphqlHandler() {
     const typeDefs = await graphql_service_1.loadTypeSystem();
     const schema = graphql_tools_1.makeExecutableSchema({
         typeDefs,
@@ -16,7 +16,7 @@ async function getGraphqlHandler(serveGraphiql = false) {
         resolvers: [user_type_1.resolvers, schema_1.resolvers, directives_1.resolvers],
         schemaDirectives: { ...common_1.schemaDirectives, ...user_type_1.schemaDirectives },
     });
-    return graphqlExpress((req, res) => ({
+    return (serveGraphiql = false) => graphqlExpress((req, res) => ({
         schema,
         context: {
             req,

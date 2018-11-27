@@ -12,7 +12,10 @@ server:
     password: "admin"
     email: "master.admin@localhost"
 jwt:
-  secret: "-==> isFlash"
+  keys:
+    folder: "keys/"
+    private: "id_rsa"
+    public: "id_rsa.pub"
   expiration:
     access: 7200000 # 2 hours: 1000 * 60 * 60 * 2
     refresh: 15811200000 # half of year: 1000 * 60 * 60 * 24 * (366 / 2)

@@ -59,7 +59,7 @@ exports.resolvers = {
 class ConstrainedDecimal extends graphql_1.GraphQLScalarType {
     constructor(type, regex) {
         super({
-            name: 'ConstrainedDecimal',
+            name: DECIMAL_TYPE_NAME,
             parseValue(value) {
                 const parsed = type.parseValue(value);
                 if (typeof parsed === 'string' && regex.test(parsed)) {
@@ -83,7 +83,7 @@ class ConstrainedDecimal extends graphql_1.GraphQLScalarType {
 exports.schemaDirectives = {
     decimal: class DecimalDirective extends graphql_tools_1.SchemaDirectiveVisitor {
         visitFieldDefinition(field) {
-            if (field.type.toString() !== DECIMAL_TYPE_NAME) {
+            if (!this.testType(field.type)) {
                 throw new error_service_1.LogicError(error_service_1.ErrorCode.GQL_DIRECTIVE_TARGED);
             }
             const i = this.args.int;
@@ -99,7 +99,7 @@ exports.schemaDirectives = {
             };
         }
         visitInputFieldDefinition(field) {
-            if (field.type.toString() !== DECIMAL_TYPE_NAME) {
+            if (!this.testType(field.type)) {
                 throw new error_service_1.LogicError(error_service_1.ErrorCode.GQL_DIRECTIVE_TARGED);
             }
             const i = this.args.int;
@@ -107,6 +107,15 @@ exports.schemaDirectives = {
             const regex = new RegExp(`^\\d{1,${i}}(\\.\\d{0,${f})?'`);
             // FIXME: Ensure it works as intended
             field.type = new ConstrainedDecimal(field.type, regex);
+        }
+        testType(type) {
+            try {
+                return (type.name === DECIMAL_TYPE_NAME
+                    || type.ofType.name === DECIMAL_TYPE_NAME);
+            }
+            catch (err) {
+                return false;
+            }
         }
     },
 };

@@ -4,12 +4,15 @@ import { container } from '../di/container';
 import { IResolvers } from 'graphql-tools';
 import { compare } from 'bcrypt';
 import { ErrorCode, LogicError } from '../services/error.service';
-import { encodeJwt, getRefreshToken } from '../services/authentication.service';
-import { decodeJwt } from '../services/authentication.service';
+import {
+  getRefreshToken,
+  getRefreshTokenExpiration
+} from '../services/authentication.service';
 import { getSelectColumns } from '../services/util.service';
-import { getRefreshTokenExpiration } from '../services/authentication.service';
+import { JwtAuthetication } from '../services/authentication.class';
 
 const userModel = container.get<UserModel>(TYPES.UserModel);
+const jwt = container.get<JwtAuthetication>(TYPES.JwtAuthorization);
 
 export const resolvers: IResolvers = {
   Query: {
@@ -24,14 +27,13 @@ export const resolvers: IResolvers = {
 
   Mutation: {
     async authenticate(_, { email, password }) {
-      const user: IUser = await userModel.table.where({
+      const users: IUser[] = await userModel.table.where({
         email,
       }).select();
-      if (!await compare(password, user.passwordHash)) {
+      if (users.length === 0 || !await compare(password, users[0].passwordHash)) {
         throw new LogicError(ErrorCode.AUTH_BAD);
       }
-
-      const accessToken = encodeJwt(user);
+      const user = users[0];
 
       const updateData: {[column: string]: any} = {
         refreshTokenExpiration: getRefreshTokenExpiration(),
@@ -44,7 +46,7 @@ export const resolvers: IResolvers = {
       }).update(updateData);
 
       return {
-        accessToken,
+        accessToken: jwt.encode(user),
         refreshToken: updateData.refreshToken || user.refreshToken,
       };
     },
@@ -54,43 +56,30 @@ export const resolvers: IResolvers = {
       return userModel.create(userSeed, true, getSelectColumns(info) as any);
     },
 
-    async getAccessToken(_, { refreshToken, accessToken }) {
+    async getAccessToken(_, { refreshToken, accessToken }, ctx) {
       // NOTE: only 2 fields are retrieved, should be changed if auth algos changed
-      const dbResult = await userModel.select(
-        ['userId', 'refreshTokenExpiration'],
-        { refreshToken },
-      );
-      if (!dbResult || dbResult.length === 0) {
+      if (refreshToken !== ctx.user.refreshToken) {
         throw new LogicError(ErrorCode.AUTH_BAD);
       }
-      const user = dbResult[0] as IUser;
-      const { userId, refreshTokenExpiration } = user;
 
       const now = Date.now();
-      if (now >= refreshTokenExpiration!.getTime()) {
-        await userModel.table.where({ userId }).update({ refreshToken: null });
+      if (now >= ctx.user.refreshTokenExpiration!.getTime()) {
+        await userModel.table.where({ userId: ctx.user.userId }).update({
+          refreshToken: null,
+          refreshTokenExpiration: null,
+        });
         throw new LogicError(ErrorCode.AUTH_EXPIRED);
       }
 
-      let decodedId: string;
-      try {
-        decodedId = decodeJwt(accessToken).id;
-      } catch (err) {
-        throw new LogicError(ErrorCode.AUTH_BAD);
-      }
-      if (userId !== decodedId) {
-        throw new LogicError(ErrorCode.AUTH_BAD);
-      }
-
       await userModel.table.where({
-        userId,
+        userId: ctx.user.userId,
       }).update({
         refreshTokenExpiration: getRefreshTokenExpiration(),
       });
 
       return {
         refreshToken,
-        accessToken: encodeJwt(user),
+        accessToken: jwt.encode(ctx.user),
       };
     },
   },

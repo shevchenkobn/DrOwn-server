@@ -1,4 +1,4 @@
-import { GraphQLScalarType } from 'graphql';
+import { GraphQLNonNull, GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql';
 import { GraphQLDirective, GraphQLInt } from 'graphql';
 import { GraphQLField } from 'graphql';
@@ -65,7 +65,7 @@ export const resolvers = {
 class ConstrainedDecimal extends GraphQLScalarType {
   constructor(type: GraphQLScalarType, regex: RegExp) {
     super({
-      name: 'ConstrainedDecimal',
+      name: DECIMAL_TYPE_NAME,
       parseValue(value) {
         const parsed = type.parseValue(value);
         if (typeof parsed === 'string' && regex.test(parsed)) {
@@ -90,7 +90,7 @@ class ConstrainedDecimal extends GraphQLScalarType {
 export const schemaDirectives = {
   decimal: class DecimalDirective extends SchemaDirectiveVisitor {
     visitFieldDefinition(field: GraphQLField<any, any>) {
-      if (field.type.toString() !== DECIMAL_TYPE_NAME) {
+      if (!this.testType(field.type)) {
         throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
       }
       const i = this.args.int;
@@ -107,7 +107,7 @@ export const schemaDirectives = {
     }
 
     visitInputFieldDefinition(field: GraphQLInputField) {
-      if (field.type.toString() !== DECIMAL_TYPE_NAME) {
+      if (!this.testType(field.type)) {
         throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
       }
       const i = this.args.int;
@@ -116,6 +116,17 @@ export const schemaDirectives = {
 
       // FIXME: Ensure it works as intended
       field.type = new ConstrainedDecimal(field.type as any, regex);
+    }
+
+    testType(type: any) {
+      try {
+        return (
+          type.name === DECIMAL_TYPE_NAME
+          || type.ofType.name === DECIMAL_TYPE_NAME
+        );
+      } catch (err) {
+        return false;
+      }
     }
   },
 };

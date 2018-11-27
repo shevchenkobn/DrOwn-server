@@ -43,7 +43,7 @@ type User {
     name: String!
     address: String
     phoneNumber: String
-    cash: Decimal @decimal(fraction: 2)
+    cash: Decimal! @decimal(fraction: 2)
     companyId: BigInt
 #    company: User # FIXME: add resolvers
 #    employees: [User!]

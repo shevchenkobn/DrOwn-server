@@ -31,7 +31,7 @@ const tablesToCreate = new Map([
                 table.string('phoneNumber', 15).nullable();
                 table.decimal('cash', 9, 2).notNullable().defaultTo(0);
                 table.string('refreshToken').nullable().unique(`unique_refreshToken_${TableName.Users}`);
-                table.date('refreshTokenExpiration').nullable();
+                table.dateTime('refreshTokenExpiration').nullable();
             });
         }],
     [TableName.Employees, knex => {
@@ -50,6 +50,7 @@ const tablesToCreate = new Map([
                     .references(`${TableName.Users}.userId`).onDelete('SET NULL');
                 table.bigInteger('ownerId').unsigned()
                     .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
+                table.string('deviceId').notNullable();
                 table.string('passwordHash').notNullable();
                 table.string('producer', 120).nullable();
                 table.string('model', 120).notNullable();
@@ -63,6 +64,7 @@ const tablesToCreate = new Map([
                 table.boolean('canCarryLiquids').notNullable();
                 table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
                 table.unique(['producer', 'model', 'serialNumber'], `unique_${TableName.Drones}`);
+                table.unique(['deviceId', 'passwordHash'], `unique_${TableName.Drones}_auth`);
             });
         }],
     [TableName.DroneOrders, knex => {
@@ -104,7 +106,7 @@ const tablesToCreate = new Map([
                 table.integer('status').unsigned().notNullable();
                 table.decimal('sum', 8, 2).nullable();
                 table.integer('period').unsigned().notNullable().defaultTo(0);
-                // table.text('additionalInfo').nullable();
+                // knex.text('additionalInfo').nullable();
             });
         }],
     [TableName.Reports, knex => {
@@ -166,7 +168,14 @@ async function seedDatabase(knex) {
     const adminData = config.get('server.admin');
     const adminUser = {
         ...adminData,
-        role: users_model_1.UserRoles.Admin | users_model_1.UserRoles.Company,
+        role: users_model_1.UserRoles.Customer
+            | users_model_1.UserRoles.Owner
+            | users_model_1.UserRoles.Landlord
+            | users_model_1.UserRoles.Producer
+            | users_model_1.UserRoles.Maintainer
+            | users_model_1.UserRoles.Moderator
+            | users_model_1.UserRoles.Admin
+            | users_model_1.UserRoles.Company,
     };
     await container_1.container.get(types_1.TYPES.UserModel).create(adminUser);
 }

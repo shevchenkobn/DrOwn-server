@@ -146,3 +146,5 @@ fabric.properties
 ###
 
 config/local*
+keys/*
+!keys/.gitkeep

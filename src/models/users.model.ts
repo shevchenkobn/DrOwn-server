@@ -54,21 +54,21 @@ export interface IUser {
 @injectable()
 export class UserModel {
   private readonly _connection: DbConnection;
-  private readonly _table: Knex.QueryBuilder;
+  private readonly _knex: Knex;
 
   public get table() {
-    return this._table;
+    return this._knex(TableName.Users);
   }
 
   constructor(
     @inject(TYPES.DbConnection) connection: DbConnection,
   ) {
     this._connection = connection;
-    this._table = this._connection.knex(TableName.Users);
+    this._knex = this._connection.knex;
   }
 
   select(columns?: Array<keyof IUser>, where?: any) {
-    const query = where ? this._table.where(where) : this._table;
+    const query = where ? this.table.where(where) : this.table;
     return columns && columns.length > 0 ? query.select(columns) : query.select();
   }
 
@@ -76,7 +76,7 @@ export class UserModel {
     const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
 
     const user: IUser = {
-      email: userSeed.name,
+      email: userSeed.email,
       role: userSeed.role,
       name: userSeed.name,
       companyId: userSeed.companyId,
@@ -93,7 +93,7 @@ export class UserModel {
     }
     user.passwordHash = await hash(editedUserSeed.password, 13);
     try {
-      await this._table.insert(user);
+      await this.table.insert(user);
     } catch (err) {
       // FIXME: throw  duplicate name or some other error
       throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);

@@ -1,47 +1,41 @@
-import { TYPES } from '../di/types';
-import { IUser } from '../models/users.model';
+import { ASYNC_INIT, TYPES } from '../di/types';
+import { IUser, UserModel } from '../models/users.model';
 import { IncomingMessage } from 'http';
-import { createHash, randomBytes } from 'crypto';
+import {
+  createHash,
+  randomBytes,
+} from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import * as config from 'config';
-import { LogicError } from '../services/error.service';
-import { ErrorCode } from '../services/error.service';
+import { LogicError, ErrorCode } from './error.service';
+import { JwtAuthetication } from './authentication.class';
 import { container } from '../di/container';
-import { UserModel } from '../models/users.model';
-import { hash } from 'bcrypt';
+import { getKeyPaths, KeyPaths, Keys, loadKeys } from './key.service';
+import { injectable } from 'inversify';
 
-const jwtConfig = config.get<{
+const jwtConfig = config.get<JwtConfig>('jwt');
+
+export interface JwtConfig {
   secret: string;
+  keys: {
+    folder: string;
+    private: string;
+    public: string;
+  };
   expiration: {
-    access: number;
+    access: number | string;
     refresh: number;
-  },
+  };
   issuer: string;
-  refreshLength: 128;
-}>('jwt');
-
-export function encodeJwt(user: IUser) {
-  return jwt.sign({
-    id: user.userId,
-  }, jwtConfig.secret, {
-    algorithm: 'RS256',
-    expiresIn: jwtConfig.expiration.access,
-    issuer: jwtConfig.issuer,
-  });
+  refreshLength: number;
 }
 
+const jwtAuth = container.get<JwtAuthetication>(TYPES.JwtAuthorization);
 const userModel = container.get<UserModel>(TYPES.UserModel);
-export async function getUserFromRequest(request: IncomingMessage) {
-  const { id: userId } = decodeJwt(getTokenFromRequest(request));
-  return (await userModel.select([], { userId }))[0] as IUser;
-}
 
-export function decodeJwt(token: string): { id: string } {
-  return jwt.verify(token, jwtConfig.secret, {
-    algorithms: ['RS256'],
-    issuer: jwtConfig.issuer,
-    ignoreExpiration: false,
-  }) as any;
+export async function getUserFromRequest(request: IncomingMessage) {
+  const { id: userId } = jwtAuth.decode(getTokenFromRequest(request));
+  return (await userModel.select([], { userId }))[0] as IUser;
 }
 
 const bearerRegex = /^Bearer +/;

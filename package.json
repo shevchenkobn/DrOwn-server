@@ -11,7 +11,8 @@
     "start": "node ./dist",
     "start:brk": "node --inspect-brk ./dist",
     "start:b:brk": "npm run build && node --inspect-brk ./dist",
-    "start:dev": "npm run build && node --inspect=9229 ./dist",
+    "start:dev": "node --inspect=9229 ./dist",
+    "start:b:dev": "npm run build && node --inspect=9229 ./dist",
     "watch": "nodemon -w src/**/*.* -x \"npm run start:dev\"",
     "db:clear": "node dist/console/drop-sql-tables",
     "db:add": "node dist/console/add-sql-tables"
@@ -50,6 +51,7 @@
     "mysql": "^2.16.0",
     "randomatic": "^3.1.1",
     "reflect-metadata": "^0.1.12",
+    "tslib": "^1.9.3",
     "yargs": "^12.0.5"
   },
   "devDependencies": {

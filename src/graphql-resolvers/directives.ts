@@ -1,7 +1,7 @@
 import { GraphQLDirective } from 'graphql';
 import { resolvers as userResolvers } from './types/user.type';
 import { IDirectiveResolvers } from 'graphql-tools';
-import { IUser } from '../models/users.model';
+import { IUser, UserRoles } from '../models/users.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { getUserFromRequest } from '../services/authentication.service';
 
@@ -37,7 +37,7 @@ export const resolvers = {
 };
 
 export const directiveResolvers: IDirectiveResolvers = {
-  authorized: async (next, source, { roles }, ctx) => {
+  authorized: async (next, source, { roles: roleNames }, ctx) => {
     let user: IUser;
     if (typeof ctx.user === 'object') {
       user = ctx.user;
@@ -52,12 +52,15 @@ export const directiveResolvers: IDirectiveResolvers = {
       }
       ctx.user = user;
     }
-    if (roles && roles.length > 0) {
+    if (roleNames && roleNames.length > 0) {
+      const roles: number[] = roleNames.map((name: any) => UserRoles[name as any]);
       for (const role of roles) {
-        if ((user.role & role) === 0) {
-          throw new LogicError(ErrorCode.AUTH_ROLE);
+        if ((user.role & role) !== 0) {
+          next();
+          return;
         }
       }
+      throw new LogicError(ErrorCode.AUTH_ROLE);
     }
     next();
   },

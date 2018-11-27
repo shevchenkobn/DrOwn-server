@@ -29,19 +29,19 @@ exports.isValidRole = isValidRole;
 let UserModel = class UserModel {
     constructor(connection) {
         this._connection = connection;
-        this._table = this._connection.knex(table_schemas_service_1.TableName.Users);
+        this._knex = this._connection.knex;
     }
     get table() {
-        return this._table;
+        return this._knex(table_schemas_service_1.TableName.Users);
     }
     select(columns, where) {
-        const query = where ? this._table.where(where) : this._table;
+        const query = where ? this.table.where(where) : this.table;
         return columns && columns.length > 0 ? query.select(columns) : query.select();
     }
     async create(userSeed, changeSeed = false, selectColumns) {
         const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
         const user = {
-            email: userSeed.name,
+            email: userSeed.email,
             role: userSeed.role,
             name: userSeed.name,
             companyId: userSeed.companyId,
@@ -57,7 +57,7 @@ let UserModel = class UserModel {
         }
         user.passwordHash = await bcrypt_1.hash(editedUserSeed.password, 13);
         try {
-            await this._table.insert(user);
+            await this.table.insert(user);
         }
         catch (err) {
             // FIXME: throw  duplicate name or some other error

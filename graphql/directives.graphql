@@ -12,7 +12,7 @@ A directive managing roles and scopes
 """
 directive @authorized(
     "Bitmask of allowed roles"
-    roles: UserRoles
+    roles: [UserRole!]
 ) on QUERY
 | MUTATION
 | SUBSCRIPTION
