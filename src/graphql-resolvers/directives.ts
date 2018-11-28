@@ -1,6 +1,12 @@
-import { GraphQLDirective } from 'graphql';
-import { resolvers as userResolvers } from './types/user.type';
-import { IDirectiveResolvers } from 'graphql-tools';
+import {
+  defaultFieldResolver,
+  GraphQLArgument,
+  GraphQLField,
+  GraphQLInputField,
+  GraphQLNonNull,
+  GraphQLScalarType,
+} from 'graphql';
+import { IDirectiveResolvers, SchemaDirectiveVisitor } from 'graphql-tools';
 import { IUser, UserRoles } from '../models/users.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { getUserFromRequest } from '../services/authentication.service';
@@ -64,4 +70,88 @@ export const directiveResolvers: IDirectiveResolvers = {
     }
     next();
   },
+
+  string(next, ...allArgs) {
+    console.log(allArgs);
+    next();
+  },
+};
+
+class ConstrainedString extends GraphQLScalarType {
+  constructor(type: GraphQLScalarType, maxLength?: number, regex?: RegExp) {
+    if (!maxLength && !regex) {
+      throw new LogicError(ErrorCode.GQL_DIRECTIVE_ARGUMENT);
+    }
+
+    function validate(value: any) {
+      if (typeof value !== 'string') {
+        throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+      }
+      if (maxLength && value.length <= maxLength) {
+        throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+      }
+      if (regex && !regex.test(value)) {
+        throw new LogicError(ErrorCode.GQL_VALUE_BAD);
+      }
+      return value;
+    }
+
+    super({
+      name: 'String',
+      serialize(value) {
+        return type.serialize(value);
+      },
+      parseValue(value) {
+        return type.parseValue(validate(type.serialize(value)));
+      },
+      parseLiteral(ast, ...args) {
+        return validate(type.parseLiteral(ast, ...args));
+      },
+    });
+  }
+}
+
+export const schemaDirectives = {
+  // string: class StringDirective extends SchemaDirectiveVisitor {
+  //   visitInputFieldDefinition(field: GraphQLInputField) {
+  //     if (!this.testType(field.type)) {
+  //       throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
+  //     }
+  //     const maxLength: number = this.args.maxLength || 0;
+  //     const regex: RegExp | undefined = typeof this.args.regex === 'string'
+  //       ? new RegExp(this.args.regex)
+  //       : void 0;
+  //
+  //     // FIXME: Ensure it works as intended
+  //     field.type = field.type instanceof GraphQLNonNull
+  //       ? new GraphQLNonNull(new ConstrainedString((field.type as any).ofType, maxLength, regex))
+  //       : new ConstrainedString(field.type as any, maxLength, regex);
+  //   }
+  //
+  //   visitArgumentDefinition(argument: GraphQLArgument) {
+  //     if (!this.testType(argument.type)) {
+  //       throw new LogicError(ErrorCode.GQL_DIRECTIVE_TARGED);
+  //     }
+  //     const maxLength: number = this.args.maxLength || 0;
+  //     const regex: RegExp | undefined = typeof this.args.regex === 'string'
+  //       ? new RegExp(this.args.regex)
+  //       : void 0;
+  //
+  //     // FIXME: Ensure it works as intended
+  //     argument.type = argument.type instanceof GraphQLNonNull
+  //       ? new GraphQLNonNull(new ConstrainedString((argument.type as any).ofType, maxLength, regex))
+  //       : new ConstrainedString(argument.type as any, maxLength, regex);
+  //   }
+  //
+  //   testType(type: any) {
+  //     try {
+  //       return (
+  //         type.name === 'String'
+  //         || type.ofType.name === 'String'
+  //       );
+  //     } catch {
+  //       return false;
+  //     }
+  //   }
+  // },
 };

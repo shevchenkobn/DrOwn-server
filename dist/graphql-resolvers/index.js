@@ -14,7 +14,11 @@ async function getGraphqlHandler() {
         typeDefs,
         directiveResolvers: directives_1.directiveResolvers,
         resolvers: [user_type_1.resolvers, schema_1.resolvers, directives_1.resolvers],
-        schemaDirectives: { ...common_1.schemaDirectives, ...user_type_1.schemaDirectives },
+        schemaDirectives: {
+            ...common_1.schemaDirectives,
+            ...user_type_1.schemaDirectives,
+            ...directives_1.schemaDirectives,
+        },
     });
     return (serveGraphiql = false) => graphqlExpress((req, res) => ({
         schema,

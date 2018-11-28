@@ -8,7 +8,11 @@ import {
   schemaDirectives as userSchemaDirectives,
 } from './types/user.type';
 import { resolvers as schemaResolvers } from './schema';
-import { resolvers as directiveTypeResolvers, directiveResolvers } from './directives';
+import {
+  resolvers as directiveTypeResolvers,
+  directiveResolvers,
+  schemaDirectives,
+} from './directives';
 import { Request } from 'express';
 import { Response } from 'express';
 import * as graphqlHTTP from 'express-graphql';
@@ -20,7 +24,11 @@ export async function getGraphqlHandler() {
     typeDefs,
     directiveResolvers,
     resolvers: [userResolvers, schemaResolvers, directiveTypeResolvers],
-    schemaDirectives: { ...commonSchemaDirectives, ...userSchemaDirectives },
+    schemaDirectives: {
+      ...commonSchemaDirectives,
+      ...userSchemaDirectives,
+      ...schemaDirectives,
+    },
   });
 
   return (serveGraphiql = false) => graphqlExpress((req, res) => ({

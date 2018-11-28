@@ -1,4 +1,4 @@
-import { GraphQLNonNull, GraphQLScalarType } from 'graphql';
+import { GraphQLNonNull, GraphQLNullableType, GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql';
 import { GraphQLDirective, GraphQLInt } from 'graphql';
 import { GraphQLField } from 'graphql';
@@ -67,9 +67,9 @@ class ConstrainedDecimal extends GraphQLScalarType {
     super({
       name: DECIMAL_TYPE_NAME,
       parseValue(value) {
-        const parsed = type.parseValue(value);
-        if (typeof parsed === 'string' && regex.test(parsed)) {
-          return parsed;
+        const serialized = type.serialize(value);
+        if (typeof serialized === 'string' && regex.test(serialized)) {
+          return type.parseValue(serialized);
         }
         throw new LogicError(ErrorCode.GQL_VALUE_BAD);
       },
@@ -115,7 +115,9 @@ export const schemaDirectives = {
       const regex = new RegExp(`^\\d{1,${i}}(\\.\\d{0,${f})?'`);
 
       // FIXME: Ensure it works as intended
-      field.type = new ConstrainedDecimal(field.type as any, regex);
+      field.type = field.type instanceof GraphQLNonNull
+        ? new GraphQLNonNull(new ConstrainedDecimal((field.type as any).ofType, regex))
+        : new ConstrainedDecimal(field.type as any, regex);
     }
 
     testType(type: any) {
@@ -124,7 +126,7 @@ export const schemaDirectives = {
           type.name === DECIMAL_TYPE_NAME
           || type.ofType.name === DECIMAL_TYPE_NAME
         );
-      } catch (err) {
+      } catch {
         return false;
       }
     }

@@ -6,7 +6,7 @@ type Mutation {
     registerUser(userSeed: RegisterUser!, authenticate: Boolean! = true): User
     authenticate(
         email: String! @string(
-            maxLength: 15
+            maxLength: 150
             regex: "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
         )
         password: String! @string(
