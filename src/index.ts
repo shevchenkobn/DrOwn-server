@@ -16,9 +16,10 @@ const app = express();
 Promise.all([
   loadSwaggerSchema(),
   initAsync,
-]).then(schema => {
+]).then(([schemaResults]) => {
   const notProduction = process.env.NODE_ENV !== 'production';
-
+  console.log(schemaResults);
+  debugger;
   // TODO: Initialize swagger and the app
 
   // if (notProduction) {

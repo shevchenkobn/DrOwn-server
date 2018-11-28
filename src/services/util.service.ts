@@ -1,9 +1,6 @@
-import * as globby from 'globby';
 import { resolve } from 'app-root-path';
-import { promises as fsPromises } from 'fs';
-import * as RefParser from 'json-schema-ref-parser';
-
-const { readFile } = fsPromises;
+import { resolveRefsAt } from 'json-refs';
+import * as YAML from 'js-yaml';
 
 export function bindCallbackOnExit(callback: (...args: any[]) => any) {
   const events = ['SIGTERM', 'SIGINT', 'SIGQUIT'] as NodeJS.Signals[];
@@ -31,32 +28,16 @@ export function bindCallbackOnExit(callback: (...args: any[]) => any) {
 }
 
 export function loadSwaggerSchema() {
-  return RefParser.dereference('swagger/index.yaml', {
-    parse: {
-      json: false,
-      yaml: true,
-      text: false,
-      binary: false,
-    } as any,
-
-    resolve: {
-      external: false,
-      http: false,
-      file: true,
+  return resolveRefsAt(resolve('swagger/index.yaml'), {
+    loaderOptions: {
+      processContent(content: { text: string }, callback: (err: any, obj?: any) => void) {
+        try {
+          callback(null, YAML.load(content.text));
+        } catch (err) {
+          callback(err);
+        }
+      },
     },
-
-    dereference: {
-      circular: false,
-    },
+    resolveCirculars: false,
   });
-  // const fileNames = await globby(resolve('swagger/{,**/}*.yaml'));
-  //
-  // const fileResult = fileNames.map(n => readFile(n, 'utf8'));
-  //
-  // const filesContent = [];
-  // for (const content of await Promise.all(fileResult)) {
-  //   filesContent.push(content);
-  // }
-  //
-  // return filesContent; // filesContent.join('\n');
 }
