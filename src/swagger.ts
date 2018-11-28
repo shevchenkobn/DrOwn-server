@@ -1,18 +1,49 @@
-import { TYPES } from '../di/types';
-import { IUser, UserModel, UserRoles } from '../models/users.model';
-import { container } from '../di/container';
-import { IResolvers } from 'graphql-tools';
+import { IUser, UserRoles } from './models/users.model';
+import { getRefreshToken, getRefreshTokenExpiration, getUserFromRequest } from './services/authentication.service';
+import { ErrorCode, LogicError } from './services/error.service';
+import { getSelectColumns } from './services/util.service';
 import { compare } from 'bcrypt';
-import { ErrorCode, LogicError } from '../services/error.service';
-import {
-  getRefreshToken,
-  getRefreshTokenExpiration
-} from '../services/authentication.service';
-import { getSelectColumns } from '../services/util.service';
-import { JwtAuthetication } from '../services/authentication.class';
 
-const userModel = container.get<UserModel>(TYPES.UserModel);
-const jwt = container.get<JwtAuthetication>(TYPES.JwtAuthorization);
+const decimalPattern = /^\d{1,7}(\.\d{0,2)?'/;
+const decimalType = {
+  description: 'A type that stores cash precisely (7 before floating point, 2 after)',
+};
+
+const emailPattern = /"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"/
+
+const passwordPattern = /^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,}$/;
+// try use as format either;
+const numberPattern = "^[\\d]{1,15}$";
+
+
+
+const authorized = async (next, source, { roles: roleNames }, ctx) => {
+  let user: IUser;
+  if (typeof ctx.user === 'object') {
+    user = ctx.user;
+  } else {
+    try {
+      user = await getUserFromRequest(ctx.req);
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        throw new LogicError(ErrorCode.AUTH_EXPIRED);
+      }
+      throw new LogicError(ErrorCode.AUTH_NO);
+    }
+    ctx.user = user;
+  }
+  if (roleNames && roleNames.length > 0) {
+    const roles: number[] = roleNames.map((name: any) => UserRoles[name as any]);
+    for (const role of roles) {
+      if ((user.role & role) !== 0) {
+        next();
+        return;
+      }
+    }
+    throw new LogicError(ErrorCode.AUTH_ROLE);
+  }
+  next();
+};
 
 export const resolvers: IResolvers = {
   Query: {

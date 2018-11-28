@@ -3,6 +3,7 @@
   <component name="TypeScriptCompiler">
     <option name="enableServiceForProjectsWithoutConfig" value="false" />
     <option name="typeScriptServiceDirectory" value="/usr/lib/node_modules/typescript" />
+    <option name="showAllErrors" value="true" />
     <option name="versionType" value="SERVICE_DIRECTORY" />
   </component>
 </project>

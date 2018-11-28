@@ -31,8 +31,6 @@
   },
   "homepage": "https://github.com/shevchenkobn/DrOwn-server#readme",
   "dependencies": {
-    "@types/ajv": "^1.0.0",
-    "ajv": "^6.5.5",
     "app-root-path": "^2.1.0",
     "bcrypt": "^3.0.2",
     "body-parser": "^1.18.3",
@@ -40,10 +38,7 @@
     "config": "^2.0.1",
     "dataloader": "^1.4.0",
     "express": "^4.16.4",
-    "express-graphql": "^0.7.1",
     "globby": "^8.0.1",
-    "graphql": "^14.0.2",
-    "graphql-tools": "^4.0.3",
     "inversify": "^5.0.1",
     "js-yaml": "^3.12.0",
     "jsonwebtoken": "^8.4.0",
@@ -51,6 +46,7 @@
     "mysql": "^2.16.0",
     "randomatic": "^3.1.1",
     "reflect-metadata": "^0.1.12",
+    "swagger-tools": "^0.10.4",
     "tslib": "^1.9.3",
     "yargs": "^12.0.5"
   },
@@ -60,9 +56,7 @@
     "@types/body-parser": "^1.17.0",
     "@types/config": "0.0.34",
     "@types/express": "^4.16.0",
-    "@types/express-graphql": "^0.6.2",
     "@types/globby": "^8.0.0",
-    "@types/graphql": "^14.0.3",
     "@types/jsonwebtoken": "^8.3.0",
     "@types/knex": "^0.15.1",
     "@types/mysql2": "github:types/mysql2",
@@ -71,8 +65,5 @@
     "@types/yargs": "^12.0.1",
     "tslib": "^1.9.3"
   },
-  "optionalDependencies": {
-    "join-monster": "^2.1.0",
-    "join-monster-graphql-tools-adapter": "0.0.3"
-  }
+  "optionalDependencies": {}
 }
