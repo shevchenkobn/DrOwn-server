@@ -24,7 +24,7 @@ Promise.all([
         }));
         app.use(middleware.swaggerRouter({
             ignoreMissingHandlers: false,
-            useStubs: false,
+            useStubs: notProduction,
             controllers: path_1.resolve(__dirname, './swagger-controllers'),
         }));
         app.use(middleware.swaggerUi({
