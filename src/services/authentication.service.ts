@@ -33,8 +33,8 @@ export interface JwtConfig {
 const jwtAuth = container.get<JwtAuthetication>(TYPES.JwtAuthorization);
 const userModel = container.get<UserModel>(TYPES.UserModel);
 
-export async function getUserFromString(str: string) {
-  const { id: userId } = jwtAuth.decode(getTokenFromString(str));
+export async function getUserFromString(str: string, , ignoreExpiration = false) {
+  const { id: userId } = jwtAuth.decode(getTokenFromString(str), ignoreExpiration);
   return (await userModel.select([], { userId }))[0] as IUser;
 }
 
