@@ -33,20 +33,24 @@ export interface JwtConfig {
 const jwtAuth = container.get<JwtAuthetication>(TYPES.JwtAuthorization);
 const userModel = container.get<UserModel>(TYPES.UserModel);
 
-export async function getUserFromRequest(request: IncomingMessage) {
-  const { id: userId } = jwtAuth.decode(getTokenFromRequest(request));
+export async function getUserFromString(str: string) {
+  const { id: userId } = jwtAuth.decode(getTokenFromString(str));
   return (await userModel.select([], { userId }))[0] as IUser;
 }
 
-const bearerRegex = /^Bearer +/;
 export function getTokenFromRequest(request: IncomingMessage) {
-  if (
-    typeof request.headers.authorization !== 'string'
-    || !bearerRegex.test(request.headers.authorization)
-  ) {
+  if (typeof request.headers.authorization !== 'string') {
     throw new LogicError(ErrorCode.AUTH_NO);
   }
-  return request.headers.authorization.replace(bearerRegex, '');
+  return getTokenFromString(request.headers.authorization);
+}
+
+const bearerRegex = /^Bearer +/;
+export function getTokenFromString(str: string) {
+  if (!bearerRegex.test(str)) {
+    throw new LogicError(ErrorCode.AUTH_NO);
+  }
+  return str.replace(bearerRegex, '');
 }
 
 export function getRefreshToken(user: IUser) {

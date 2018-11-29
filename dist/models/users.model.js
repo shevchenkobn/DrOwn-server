@@ -13,17 +13,17 @@ const error_service_2 = require("../services/error.service");
 exports.maxPasswordLength = 72 - 29;
 var UserRoles;
 (function (UserRoles) {
-    UserRoles[UserRoles["Customer"] = 1] = "Customer";
-    UserRoles[UserRoles["Owner"] = 2] = "Owner";
-    UserRoles[UserRoles["Landlord"] = 4] = "Landlord";
-    UserRoles[UserRoles["Producer"] = 8] = "Producer";
-    UserRoles[UserRoles["Maintainer"] = 16] = "Maintainer";
-    UserRoles[UserRoles["Company"] = 32] = "Company";
-    UserRoles[UserRoles["Moderator"] = 64] = "Moderator";
-    UserRoles[UserRoles["Admin"] = 128] = "Admin";
+    UserRoles[UserRoles["CUSTOMER"] = 1] = "CUSTOMER";
+    UserRoles[UserRoles["OWNER"] = 2] = "OWNER";
+    UserRoles[UserRoles["LANDLORD"] = 4] = "LANDLORD";
+    UserRoles[UserRoles["PRODUCER"] = 8] = "PRODUCER";
+    UserRoles[UserRoles["MAINTAINER"] = 16] = "MAINTAINER";
+    UserRoles[UserRoles["COMPANY"] = 32] = "COMPANY";
+    UserRoles[UserRoles["MODERATOR"] = 64] = "MODERATOR";
+    UserRoles[UserRoles["ADMIN"] = 128] = "ADMIN";
 })(UserRoles = exports.UserRoles || (exports.UserRoles = {}));
 function isValidRole(role) {
-    return typeof role === 'number' && role >= UserRoles.Customer && role <= UserRoles.Admin;
+    return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
 }
 exports.isValidRole = isValidRole;
 let UserModel = class UserModel {

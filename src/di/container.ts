@@ -3,6 +3,7 @@ import { Container } from 'inversify';
 import { DbConnection } from '../services/db-connection.class';
 import { UserModel } from '../models/users.model';
 import { JwtAuthetication } from '../services/authentication.class';
+import { UserRolesController } from '../controllers/user-roles.controller';
 
 export const container = new Container({
   defaultScope: 'Singleton',
@@ -10,8 +11,12 @@ export const container = new Container({
 
 const typeMap = new Map<symbol, any>([
   [TYPES.DbConnection, DbConnection],
-  [TYPES.UserModel, UserModel],
+
   [TYPES.JwtAuthorization, JwtAuthetication],
+
+  [TYPES.UserModel, UserModel],
+
+  [TYPES.UserRolesController, UserRolesController],
 ]);
 
 for (const [symbol, type] of typeMap) {

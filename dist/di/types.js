@@ -4,7 +4,8 @@ require("reflect-metadata");
 exports.ASYNC_INIT = Symbol.for('@asyncInit');
 exports.TYPES = {
     DbConnection: Symbol.for('DbConnection'),
-    UserModel: Symbol.for('UserModel'),
     JwtAuthorization: Symbol.for('JwtAuthorization'),
+    UserModel: Symbol.for('UserModel'),
+    UserRolesController: Symbol.for('UserRolesController'),
 };
 //# sourceMappingURL=types.js.map

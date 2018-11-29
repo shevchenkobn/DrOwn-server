@@ -1,4 +1,2 @@
-/foo:
-  $ref: ./foo.yaml
-/bar:
-  $ref: ./bar.yaml
+/user-roles:
+  $ref: ./user-roles.yaml

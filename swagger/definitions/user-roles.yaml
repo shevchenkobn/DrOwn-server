@@ -1,0 +1,34 @@
+type: object
+properties:
+  customer:
+    type: integer
+    minimum: 0x1
+    maximum: 0x1
+  owner:
+    type: integer
+    minimum: 0x2
+    maximum: 0x2
+  landlord:
+    type: integer
+    minimum: 0x4
+    maximum: 0x4
+  producer:
+    type: integer
+    minimum: 0x8
+    maximum: 0x8
+  maintainer:
+    type: integer
+    minimum: 0x10
+    maximum: 0x10
+  company:
+    type: integer
+    minimum: 0x20
+    maximum: 0x20
+  moderator:
+    type: integer
+    minimum: 0x40
+    maximum: 0x40
+  admin:
+    type: integer
+    minimum: 0x80
+    maximum: 0x80

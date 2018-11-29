@@ -168,14 +168,14 @@ async function seedDatabase(knex) {
     const adminData = config.get('server.admin');
     const adminUser = {
         ...adminData,
-        role: users_model_1.UserRoles.Customer
-            | users_model_1.UserRoles.Owner
-            | users_model_1.UserRoles.Landlord
-            | users_model_1.UserRoles.Producer
-            | users_model_1.UserRoles.Maintainer
-            | users_model_1.UserRoles.Moderator
-            | users_model_1.UserRoles.Admin
-            | users_model_1.UserRoles.Company,
+        role: users_model_1.UserRoles.CUSTOMER
+            | users_model_1.UserRoles.OWNER
+            | users_model_1.UserRoles.LANDLORD
+            | users_model_1.UserRoles.PRODUCER
+            | users_model_1.UserRoles.MAINTAINER
+            | users_model_1.UserRoles.MODERATOR
+            | users_model_1.UserRoles.ADMIN
+            | users_model_1.UserRoles.COMPANY,
     };
     await container_1.container.get(types_1.TYPES.UserModel).create(adminUser);
 }

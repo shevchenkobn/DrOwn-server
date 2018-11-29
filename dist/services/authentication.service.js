@@ -8,20 +8,26 @@ const container_1 = require("../di/container");
 const jwtConfig = config.get('jwt');
 const jwtAuth = container_1.container.get(types_1.TYPES.JwtAuthorization);
 const userModel = container_1.container.get(types_1.TYPES.UserModel);
-async function getUserFromRequest(request) {
-    const { id: userId } = jwtAuth.decode(getTokenFromRequest(request));
+async function getUserFromString(str) {
+    const { id: userId } = jwtAuth.decode(getTokenFromString(str));
     return (await userModel.select([], { userId }))[0];
 }
-exports.getUserFromRequest = getUserFromRequest;
-const bearerRegex = /^Bearer +/;
+exports.getUserFromString = getUserFromString;
 function getTokenFromRequest(request) {
-    if (typeof request.headers.authorization !== 'string'
-        || !bearerRegex.test(request.headers.authorization)) {
+    if (typeof request.headers.authorization !== 'string') {
         throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_NO);
     }
-    return request.headers.authorization.replace(bearerRegex, '');
+    return getTokenFromString(request.headers.authorization);
 }
 exports.getTokenFromRequest = getTokenFromRequest;
+const bearerRegex = /^Bearer +/;
+function getTokenFromString(str) {
+    if (!bearerRegex.test(str)) {
+        throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_NO);
+    }
+    return str.replace(bearerRegex, '');
+}
+exports.getTokenFromString = getTokenFromString;
 function getRefreshToken(user) {
     return new Promise((resolve, reject) => {
         const hasher = crypto_1.createHash('SHA512');

@@ -29,11 +29,11 @@ export class JwtAuthetication {
     });
   }
 
-  decode(token: string): { id: string } {
+  decode(token: string, ignoreExpiration = false): { id: string } {
     const payload = jwt.verify(token, this._keys!.publicKey, {
+      ignoreExpiration,
       algorithms: ['RS256'],
       issuer: jwtConfig.issuer,
-      ignoreExpiration: false,
     }) as any;
     return payload;
   }

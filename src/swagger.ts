@@ -17,33 +17,6 @@
 //
 //
 //
-// const authorized = async (next, source, { roles: roleNames }, ctx) => {
-//   let user: IUser;
-//   if (typeof ctx.user === 'object') {
-//     user = ctx.user;
-//   } else {
-//     try {
-//       user = await getUserFromRequest(ctx.req);
-//     } catch (err) {
-//       if (err.name === 'TokenExpiredError') {
-//         throw new LogicError(ErrorCode.AUTH_EXPIRED);
-//       }
-//       throw new LogicError(ErrorCode.AUTH_NO);
-//     }
-//     ctx.user = user;
-//   }
-//   if (roleNames && roleNames.length > 0) {
-//     const roles: number[] = roleNames.map((name: any) => UserRoles[name as any]);
-//     for (const role of roles) {
-//       if ((user.role & role) !== 0) {
-//         next();
-//         return;
-//       }
-//     }
-//     throw new LogicError(ErrorCode.AUTH_ROLE);
-//   }
-//   next();
-// };
 //
 // export const resolvers: IResolvers = {
 //   Query: {

@@ -1,7 +1,18 @@
 swagger: '2.0'
 info:
   $ref: ./info.yaml
+
+basePath: /api/v1
+consumes:
+  - application/json
+produces:
+  - application/json
+
 paths:
   $ref: ./paths/index.yaml
+
+securityDefinitions:
+  $ref: ./securityDefinitions/index.yaml
+
 definitions:
   $ref: ./definitions/index.yaml

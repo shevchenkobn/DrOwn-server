@@ -194,14 +194,14 @@ export async function seedDatabase(knex: Knex) {
   const adminData = config.get<{ name: string, password: string, email: string }>('server.admin');
   const adminUser: IUserSeed = {
     ...adminData,
-    role: UserRoles.Customer
-      | UserRoles.Owner
-      | UserRoles.Landlord
-      | UserRoles.Producer
-      | UserRoles.Maintainer
-      | UserRoles.Moderator
-      | UserRoles.Admin
-      | UserRoles.Company,
+    role: UserRoles.CUSTOMER
+      | UserRoles.OWNER
+      | UserRoles.LANDLORD
+      | UserRoles.PRODUCER
+      | UserRoles.MAINTAINER
+      | UserRoles.MODERATOR
+      | UserRoles.ADMIN
+      | UserRoles.COMPANY,
   };
 
   await container.get<UserModel>(TYPES.UserModel).create(adminUser);

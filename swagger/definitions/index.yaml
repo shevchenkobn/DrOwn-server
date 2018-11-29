@@ -1,2 +1,5 @@
+UserRoles:
+  $ref: ./user-roles.yaml
+
 User:
-  $ref: ./User.yaml
+  $ref: ./user.yaml

@@ -1,0 +1,11 @@
+x-swagger-router-controller: "user-roles"
+
+get:
+  operationId: getUserRoles
+  summary: Returns all user roles
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/UserRoles'
+

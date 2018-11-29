@@ -12,18 +12,18 @@ import { ErrorCode } from '../services/error.service';
 export const maxPasswordLength = 72 - 29;
 
 export enum UserRoles {
-  Customer = 0x1, // Can rent drones and order them
-  Owner = 0x2, // Can own, buy, order fixes and sell drones within the app
-  Landlord = 0x4, // Can lease drones
-  Producer = 0x8, // Can add new drones and edit produced
-  Maintainer = 0x10, // Can fix drones
-  Company = 0x20, // Can CRUD users-employees and promote them to companies
-  Moderator = 0x40, // Can CRUD reviews and reports, fine other users, create users (not moderators)
-  Admin = 0x80, // Can CRUD all tables + moderate
+  CUSTOMER = 0x1, // Can rent drones and order them
+  OWNER = 0x2, // Can own, buy, order fixes and sell drones within the app
+  LANDLORD = 0x4, // Can lease drones
+  PRODUCER = 0x8, // Can add new drones and edit produced
+  MAINTAINER = 0x10, // Can fix drones
+  COMPANY = 0x20, // Can CRUD users-employees and promote them to companies
+  MODERATOR = 0x40, // Can CRUD reviews and reports, fine other users, create users (not moderators)
+  ADMIN = 0x80, // Can CRUD all tables + moderate
 }
 
 export function isValidRole(role: any): role is UserRoles {
-  return typeof role === 'number' && role >= UserRoles.Customer && role <= UserRoles.Admin;
+  return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
 }
 
 export interface IUserSeed {
