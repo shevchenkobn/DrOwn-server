@@ -101,7 +101,7 @@ export class UserModel {
 
     if (!editedUserSeed.password) {
       if (!editedUserSeed.companyId) {
-        throw new LogicError(ErrorCode.USER_NO_REGISTER_DATA);
+        throw new LogicError(ErrorCode.USER_COMPANY_NO);
       }
       editedUserSeed.password = randomatic('aA0!', maxPasswordLength);
     }
@@ -109,7 +109,7 @@ export class UserModel {
     try {
       await this.table.insert(user);
     } catch (err) {
-      // FIXME: throw  duplicate name or some other error
+      // FIXME: throw  duplicate name or some other error if some connection problems
       throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
     }
     const selectedUser = (await this.select(

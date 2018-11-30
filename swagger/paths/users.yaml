@@ -4,6 +4,7 @@ get:
   tags:
   - users
   summary: List all users with or without filters and sorting
+  operationId: getUsers
   security:
   - Bearer: []
   parameters: # TODO: filters and sort

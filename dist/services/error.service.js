@@ -6,13 +6,13 @@ var ErrorCode;
     ErrorCode["AUTH_ROLE"] = "AUTH_ROLE";
     ErrorCode["AUTH_BAD"] = "AUTH_BAD";
     ErrorCode["AUTH_EXPIRED"] = "AUTH_EXPIRED";
-    ErrorCode["USER_NO_COMPANY"] = "USER_NO_COMPANY";
-    ErrorCode["USER_NO_REGISTER_DATA"] = "USER_NO_REGISTER_DATA";
+    ErrorCode["USER_COMPANY_HAS"] = "USER_COMPANY_HAS";
+    ErrorCode["USER_COMPANY_NO"] = "USER_COMPANY_NO";
     ErrorCode["USER_ROLE_BAD"] = "USER_ROLE_BAD";
     ErrorCode["USER_DUPLICATE_EMAIL"] = "USER_DUPLICATE_EMAIL";
     ErrorCode["SWAGGER"] = "SWAGGER";
     ErrorCode["SERVER"] = "SERVER";
-    ErrorCode["HTTP_404"] = "404";
+    ErrorCode["NOT_FOUND"] = "NOT_FOUND";
 })(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
 class LogicError extends TypeError {
     constructor(code, message) {
@@ -27,6 +27,8 @@ class LogicError extends TypeError {
 }
 exports.LogicError = LogicError;
 exports.errorHandler = (err, req, res, next) => {
+    // TODO: log error
+    console.error(err);
     if (err instanceof LogicError) {
         switch (err.code) {
             case ErrorCode.AUTH_ROLE:
@@ -58,10 +60,12 @@ exports.errorHandler = (err, req, res, next) => {
         }
         else {
             res.status(500);
+            if (process.env.NODE_ENV === 'production') {
+                res.json(new LogicError(ErrorCode.SERVER));
+                return;
+            }
         }
     }
-    // todo: log error
-    console.error(err);
     res.json(err);
 };
 // 0 is returned if not a swagger error
@@ -81,6 +85,6 @@ function getCodeFromSwaggerError(err, req) {
     return 0;
 }
 exports.notFoundHandler = (req, res) => {
-    res.status(404).json(new LogicError(ErrorCode.HTTP_404, `Route ${req.url} is not found`));
+    res.status(404).json(new LogicError(ErrorCode.NOT_FOUND, `Route ${req.url} is not found`));
 };
 //# sourceMappingURL=error.service.js.map

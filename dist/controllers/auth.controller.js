@@ -75,6 +75,10 @@ let AuthController = class AuthController {
                 try {
                     const inputUser = req.swagger.params.user.value;
                     const select = req.swagger.params.select.value;
+                    if (typeof inputUser.companyId === 'string') {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_HAS));
+                        return;
+                    }
                     if (inputUser.role & users_model_1.UserRoles.ADMIN || inputUser.role & users_model_1.UserRoles.MODERATOR) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_ROLE_BAD));
                         return;

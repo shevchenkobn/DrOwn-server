@@ -66,7 +66,7 @@ let UserModel = class UserModel {
         };
         if (!editedUserSeed.password) {
             if (!editedUserSeed.companyId) {
-                throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_NO_REGISTER_DATA);
+                throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_COMPANY_NO);
             }
             editedUserSeed.password = randomatic_1.default('aA0!', exports.maxPasswordLength);
         }
@@ -75,7 +75,7 @@ let UserModel = class UserModel {
             await this.table.insert(user);
         }
         catch (err) {
-            // FIXME: throw  duplicate name or some other error
+            // FIXME: throw  duplicate name or some other error if some connection problems
             throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_DUPLICATE_EMAIL);
         }
         const selectedUser = (await this.select(selectColumns, { email: editedUserSeed.email }))[0];

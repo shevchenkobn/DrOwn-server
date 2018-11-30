@@ -10,8 +10,8 @@ properties:
     - AUTH_BAD
     - AUTH_EXPIRED
 
-    - USER_NO_COMPANY
-    - USER_NO_REGISTER_DATA
+    - USER_COMPANY_HAS
+    - USER_COMPANY_NO
     - USER_ROLE_BAD
     - USER_DUPLICATE_EMAIL
 
@@ -19,6 +19,6 @@ properties:
 
     - SERVER
 
-    - "404"
+    - NOT_FOUND
   message:
     type: string

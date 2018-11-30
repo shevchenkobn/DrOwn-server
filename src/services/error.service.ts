@@ -6,15 +6,15 @@ export enum ErrorCode {
   AUTH_BAD = 'AUTH_BAD',
   AUTH_EXPIRED = 'AUTH_EXPIRED',
 
-  USER_NO_COMPANY = 'USER_NO_COMPANY',
-  USER_NO_REGISTER_DATA = 'USER_NO_REGISTER_DATA',
+  USER_COMPANY_HAS = 'USER_COMPANY_HAS',
+  USER_COMPANY_NO = 'USER_COMPANY_NO',
   USER_ROLE_BAD = 'USER_ROLE_BAD',
   USER_DUPLICATE_EMAIL = 'USER_DUPLICATE_EMAIL',
 
   SWAGGER = 'SWAGGER',
 
   SERVER = 'SERVER',
-  HTTP_404 = '404',
+  NOT_FOUND = 'NOT_FOUND',
 }
 
 export class LogicError extends TypeError {
@@ -31,6 +31,8 @@ export class LogicError extends TypeError {
 }
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  // TODO: log error
+  console.error(err);
   if (err instanceof LogicError) {
     switch (err.code) {
       case ErrorCode.AUTH_ROLE:
@@ -62,10 +64,12 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
       res.status(httpCodeFromSwaggerError);
     } else {
       res.status(500);
+      if (process.env.NODE_ENV === 'production') {
+        res.json(new LogicError(ErrorCode.SERVER));
+        return;
+      }
     }
   }
-  // todo: log error
-  console.error(err);
   res.json(err);
 };
 
@@ -89,5 +93,5 @@ function getCodeFromSwaggerError(err: any, req: Request): number {
 }
 
 export const notFoundHandler: Handler = (req, res) => {
-  res.status(404).json(new LogicError(ErrorCode.HTTP_404, `Route ${req.url} is not found`));
+  res.status(404).json(new LogicError(ErrorCode.NOT_FOUND, `Route ${req.url} is not found`));
 };

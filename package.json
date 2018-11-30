@@ -16,7 +16,8 @@
     "start:b:dev": "npm run build && node --inspect=9229 ./dist",
     "watch": "nodemon -w src/**/*.* -x \"npm run start:dev\"",
     "db:clear": "node dist/console/drop-sql-tables",
-    "db:add": "node dist/console/add-sql-tables"
+    "db:add": "node dist/console/add-sql-tables",
+    "genKeys": "node dist/console/generate-key-pair"
   },
   "engines": {
     "node": "^10.12"
