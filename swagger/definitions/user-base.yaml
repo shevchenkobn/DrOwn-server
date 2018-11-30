@@ -1,0 +1,28 @@
+type: object
+required:
+- email
+- role
+- name
+properties:
+  email:
+    type: string
+    format: email
+  role:
+    type: integer
+    minimum: 1
+    maximum: 255
+  name:
+    type: string
+  companyId:
+    $ref: '#/definitions/BigInt'
+  address:
+    type: string
+  phoneNumber:
+    type: string
+    format: ^\\d{1,15}$
+  longitude:
+    type: number
+  latitude:
+    type: number
+  cash:
+    $ref: '#/definitions/Decimal'

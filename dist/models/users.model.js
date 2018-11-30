@@ -26,6 +26,17 @@ function isValidRole(role) {
     return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
 }
 exports.isValidRole = isValidRole;
+const safeColumns = [
+    'userId',
+    'role',
+    'name',
+    'companyId',
+    'address',
+    'phoneNumber',
+    'longitude',
+    'latitude',
+    'cash',
+];
 let UserModel = class UserModel {
     constructor(connection) {
         this._connection = connection;
@@ -34,9 +45,13 @@ let UserModel = class UserModel {
     get table() {
         return this._knex(table_schemas_service_1.TableName.Users);
     }
-    select(columns, where) {
+    select(columns, where, safeSelect = true) {
+        let fields = columns;
+        if (!columns) {
+            fields = safeSelect ? safeColumns : [];
+        }
         const query = where ? this.table.where(where) : this.table;
-        return columns && columns.length > 0 ? query.select(columns) : query.select();
+        return query.select(fields);
     }
     async create(userSeed, changeSeed = false, selectColumns) {
         const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
@@ -63,10 +78,8 @@ let UserModel = class UserModel {
             // FIXME: throw  duplicate name or some other error
             throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_DUPLICATE_EMAIL);
         }
-        if (selectColumns) {
-            return (await this.select(selectColumns, { email: editedUserSeed.email }))[0];
-        }
-        return editedUserSeed;
+        const selectedUser = (await this.select(selectColumns, { email: editedUserSeed.email }))[0];
+        return selectedUser;
     }
 };
 UserModel = tslib_1.__decorate([

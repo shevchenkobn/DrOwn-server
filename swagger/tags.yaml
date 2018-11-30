@@ -1,0 +1,6 @@
+- name: auth
+  description: |
+    Endpoints connected with authentication.
+    **These are the only that don't need access token in headers**
+- name: users
+  description: Endpoints for CRUD above users

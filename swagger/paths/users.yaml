@@ -1,0 +1,34 @@
+x-swagger-router-controller: users
+
+get:
+  tags:
+  - users
+  summary: List all users with or without filters and sorting
+  security:
+  - Bearer: []
+  parameters: # TODO: filters and sort
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - role
+      - name
+      - companyId
+      - address
+      - phoneNumber
+      - longitude
+      - latitude
+      - cash
+  responses:
+    200:
+      description: OK
+      schema:
+        type: array
+        items:
+          $ref: '#/definitions/User'

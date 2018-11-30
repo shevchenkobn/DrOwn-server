@@ -26,31 +26,40 @@ export function isValidRole(role: any): role is UserRoles {
   return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
 }
 
-export interface IUserSeed {
+export interface IUserBase {
   email: string;
-  password?: string | null;
   role: UserRoles;
   name: string;
   companyId?: string | null;
   address?: string | null;
   phoneNumber?: string | null;
+  longitude?: number | null;
+  latitude?: number | null;
   cash?: string | null;
 }
 
-export interface IUser {
+export interface IUserSeed extends IUserBase {
+  password?: string | null;
+}
+
+export interface IUser extends IUserBase {
   userId: string;
-  email: string;
   passwordHash: string;
-  role: UserRoles;
-  name: string;
-  companyId?: string | null;
-  address?: string | null;
-  phoneNumber?: string | null;
-  cash?: string | null;
   refreshToken?: string | null;
   refreshTokenExpiration?: Date | null;
 }
 
+const safeColumns = [
+  'userId',
+  'role',
+  'name',
+  'companyId',
+  'address',
+  'phoneNumber',
+  'longitude',
+  'latitude',
+  'cash',
+];
 @injectable()
 export class UserModel {
   private readonly _connection: DbConnection;
@@ -67,12 +76,17 @@ export class UserModel {
     this._knex = this._connection.knex;
   }
 
-  select(columns?: Array<keyof IUser>, where?: any) {
+  select(columns?: (keyof IUser)[], where?: any, safeSelect = true) {
+    let fields: string[] = columns as string[];
+    if (!columns) {
+      fields = safeSelect ? safeColumns : [];
+    }
+
     const query = where ? this.table.where(where) : this.table;
-    return columns && columns.length > 0 ? query.select(columns) : query.select();
+    return query.select(fields);
   }
 
-  async create(userSeed: IUserSeed, changeSeed = false, selectColumns?: Array<keyof IUser>) {
+  async create(userSeed: IUserSeed, changeSeed = false, selectColumns?: (keyof IUser)[]) {
     const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
 
     const user: IUser = {
@@ -98,9 +112,9 @@ export class UserModel {
       // FIXME: throw  duplicate name or some other error
       throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
     }
-    if (selectColumns) {
-      return (await this.select(selectColumns, { email: editedUserSeed.email }))[0] as IUser;
-    }
-    return editedUserSeed;
+    const selectedUser = (await this.select(
+      selectColumns,
+      { email: editedUserSeed.email }))[0] as IUser;
+    return selectedUser;
   }
 }

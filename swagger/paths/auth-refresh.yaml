@@ -1,0 +1,21 @@
+x-swagger-router-controller: "auth"
+
+post:
+  tags:
+  - auth
+  operationId: refreshTokens
+  summary: Get access token by refresh token
+  parameters:
+  - in: body
+    name: tokens
+    description: Tokens to validate. The access token may be expired, but it must identify the user.
+    required: true
+    schema:
+      $ref: '#/definitions/Tokens'
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/Tokens'
+    401:
+      $ref: '#/responses/Unauthorized'

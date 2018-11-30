@@ -1,0 +1,16 @@
+NotFound:
+  description: The specified resource was not found
+  schema:
+    $ref: "#/definitions/Error"
+Unauthorized:
+  description: Either log-in, log-on credentials or access token are bad or client doesn't have access token
+  schema:
+    $ref: "#/definitions/Error"
+Forbidden:
+  description: Client doesn't have sufficient permissions to access the resource or token is expired
+  schema:
+    $ref: "#/definitions/Error"
+ClientError:
+  description: Client has sent bad request data
+  schema:
+    $ref: "#/definitions/Error"

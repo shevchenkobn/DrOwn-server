@@ -1,0 +1,21 @@
+x-swagger-router-controller: "auth"
+
+post:
+  tags:
+  - auth
+  operationId: getTokens
+  summary: Get access and refresh tokens
+  parameters:
+  - in: body
+    name: user
+    description: The user credentials.
+    required: true
+    schema:
+      $ref: '#/definitions/UserCredentials'
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/Tokens'
+    401:
+      $ref: '#/responses/Unauthorized'

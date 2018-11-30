@@ -1,7 +1,11 @@
+import { TYPES } from '../di/types';
 import { SwaggerSecurityHandler } from 'swagger-tools';
 import { IUser, UserRoles } from '../models/users.model';
-import { getUserFromString } from './authentication.service';
 import { ErrorCode, LogicError } from './error.service';
+import { container } from '../di/container';
+import { AuthService } from './authentication.class';
+
+const jwt = container.get<AuthService>(TYPES.AuthService);
 
 export const authenticateBearer: SwaggerSecurityHandler = async (
   req,
@@ -11,7 +15,7 @@ export const authenticateBearer: SwaggerSecurityHandler = async (
 ) => {
   let user: IUser;
   try {
-    user = await getUserFromString(authorizationHeader as string);
+    user = await jwt.getUserFromString(authorizationHeader as string);
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
       next(new LogicError(ErrorCode.AUTH_EXPIRED));
@@ -22,7 +26,7 @@ export const authenticateBearer: SwaggerSecurityHandler = async (
   }
 
   const roleNames = (req as any).swagger['x-security-scopes'];
-  if (roleNames.length >= 0) {
+  if (roleNames && roleNames.length >= 0) {
     const roles: number[] = roleNames.map((name: string) => UserRoles[name.toUpperCase() as any]);
     for (const role of roles) {
       if ((user.role & role) !== 0) {

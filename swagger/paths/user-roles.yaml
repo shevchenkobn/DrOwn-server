@@ -1,6 +1,9 @@
 x-swagger-router-controller: "user-roles"
 
 get:
+  tags:
+  - auth
+  - users
   operationId: getUserRoles
   summary: Returns all user roles
   responses:

@@ -7,12 +7,13 @@ const util_service_1 = require("./services/util.service");
 const swagger_tools_1 = require("swagger-tools");
 const handler_service_1 = require("./services/handler.service");
 const path_1 = require("path");
+const error_service_1 = require("./services/error.service");
 const { host, port, swaggerDocsPrefix } = config.get('server');
 const app = express();
 Promise.all([
     util_service_1.loadSwaggerSchema(),
     container_1.initAsync,
-]).then(([schemaResults]) => {
+]).then(([schemaResults, initResults]) => {
     const notProduction = process.env.NODE_ENV !== 'production';
     swagger_tools_1.initializeMiddleware(schemaResults.resolved, middleware => {
         app.use(middleware.swaggerMetadata());
@@ -33,6 +34,8 @@ Promise.all([
             swaggerUi: '/docs',
             swaggerUiPrefix: swaggerDocsPrefix,
         }));
+        app.use(error_service_1.errorHandler);
+        app.use(error_service_1.notFoundHandler);
         const server = app.listen(port, host);
         util_service_1.bindCallbackOnExit(() => server.close());
         console.log(`Listening at ${host}:${port}`);

@@ -8,7 +8,11 @@ var ErrorCode;
     ErrorCode["AUTH_EXPIRED"] = "AUTH_EXPIRED";
     ErrorCode["USER_NO_COMPANY"] = "USER_NO_COMPANY";
     ErrorCode["USER_NO_REGISTER_DATA"] = "USER_NO_REGISTER_DATA";
+    ErrorCode["USER_ROLE_BAD"] = "USER_ROLE_BAD";
     ErrorCode["USER_DUPLICATE_EMAIL"] = "USER_DUPLICATE_EMAIL";
+    ErrorCode["SWAGGER"] = "SWAGGER";
+    ErrorCode["SERVER"] = "SERVER";
+    ErrorCode["HTTP_404"] = "404";
 })(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
 class LogicError extends TypeError {
     constructor(code, message) {
@@ -22,4 +26,61 @@ class LogicError extends TypeError {
     }
 }
 exports.LogicError = LogicError;
+exports.errorHandler = (err, req, res, next) => {
+    if (err instanceof LogicError) {
+        switch (err.code) {
+            case ErrorCode.AUTH_ROLE:
+            case ErrorCode.AUTH_EXPIRED:
+                res.status(403);
+                break;
+            case ErrorCode.AUTH_NO:
+            case ErrorCode.AUTH_BAD:
+                res.status(401);
+                break;
+            default:
+                res.status(400);
+                break;
+        }
+    }
+    else {
+        const httpCodeFromSwaggerError = getCodeFromSwaggerError(err, req);
+        if (httpCodeFromSwaggerError !== 0) {
+            Object.defineProperties(err, {
+                status: {
+                    enumerable: false,
+                },
+                message: {
+                    enumerable: true,
+                },
+            });
+            err.code = ErrorCode.SWAGGER;
+            res.status(httpCodeFromSwaggerError);
+        }
+        else {
+            res.status(500);
+        }
+    }
+    // todo: log error
+    console.error(err);
+    res.json(err);
+};
+// 0 is returned if not a swagger error
+const swaggerErrorRegex = /swagger/i;
+function getCodeFromSwaggerError(err, req) {
+    if (err.status || err.statusCode) {
+        return err.status || err.statusCode;
+    }
+    if (err.failedValidation) {
+        return 400;
+    }
+    if (swaggerErrorRegex.test(err.message)
+        && Array.isArray(err.allowedMethods)
+        && err.allowedMethods.every(item => item !== req.method)) {
+        return 404;
+    }
+    return 0;
+}
+exports.notFoundHandler = (req, res) => {
+    res.status(404).json(new LogicError(ErrorCode.HTTP_404, `Route ${req.url} is not found`));
+};
 //# sourceMappingURL=error.service.js.map

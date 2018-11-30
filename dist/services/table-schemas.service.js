@@ -29,6 +29,8 @@ const tablesToCreate = new Map([
                     .references(`${TableName.Users}.userId`).onDelete('CASCADE');
                 table.string('address', 150).nullable();
                 table.string('phoneNumber', 15).nullable();
+                table.decimal('longitude', 9, 6).nullable();
+                table.decimal('latitude', 9, 6).nullable();
                 table.decimal('cash', 9, 2).notNullable().defaultTo(0);
                 table.string('refreshToken').nullable().unique(`unique_refreshToken_${TableName.Users}`);
                 table.dateTime('refreshTokenExpiration').nullable();

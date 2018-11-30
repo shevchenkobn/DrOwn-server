@@ -1,12 +1,11 @@
 import { initAsync } from './di/container'; // Import first to initialize all dependencies
 import * as express from 'express';
 import * as config from 'config';
-import { Handler } from 'express';
-import { UserModel } from './models/users.model';
 import { bindCallbackOnExit, loadSwaggerSchema } from './services/util.service';
 import { initializeMiddleware } from 'swagger-tools';
 import { authenticateBearer } from './services/handler.service';
 import { resolve } from 'path';
+import { errorHandler, notFoundHandler } from './services/error.service';
 
 const { host, port, swaggerDocsPrefix } = config.get<{
   host: string,
@@ -19,7 +18,7 @@ const app = express();
 Promise.all([
   loadSwaggerSchema(),
   initAsync,
-]).then(([schemaResults]) => {
+]).then(([schemaResults, initResults]) => {
   const notProduction = process.env.NODE_ENV !== 'production';
 
   initializeMiddleware(schemaResults.resolved, middleware => {
@@ -46,6 +45,10 @@ Promise.all([
       swaggerUi: '/docs',
       swaggerUiPrefix: swaggerDocsPrefix,
     }));
+
+    app.use(errorHandler);
+
+    app.use(notFoundHandler);
 
     const server = app.listen(port, host);
     bindCallbackOnExit(() => server.close());

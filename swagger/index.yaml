@@ -16,3 +16,9 @@ securityDefinitions:
 
 definitions:
   $ref: ./definitions/index.yaml
+
+responses:
+  $ref: ./responses/index.yaml
+
+tags:
+  $ref: ./tags.yaml

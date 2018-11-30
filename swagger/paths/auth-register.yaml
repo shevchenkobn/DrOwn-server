@@ -1,0 +1,41 @@
+x-swagger-router-controller: "auth"
+
+post:
+  tags:
+  - auth
+  operationId: registerUser
+  summary: Create an account
+  parameters: # TODO: filters and sort
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - role
+      - name
+      - companyId
+      - address
+      - phoneNumber
+      - longitude
+      - latitude
+      - cash
+  - in: body
+    name: user
+    description: The user to create.
+    required: true
+    schema:
+      $ref: '#/definitions/InputUser'
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/User'
+    401:
+      $ref: '#/responses/Unauthorized'
+    400:
+      $ref: '#/responses/ClientError'

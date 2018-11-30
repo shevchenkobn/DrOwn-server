@@ -1,0 +1,24 @@
+type: object
+required:
+- code
+properties:
+  code:
+    type: string
+    enum:
+    - AUTH_NO
+    - AUTH_ROLE
+    - AUTH_BAD
+    - AUTH_EXPIRED
+
+    - USER_NO_COMPANY
+    - USER_NO_REGISTER_DATA
+    - USER_ROLE_BAD
+    - USER_DUPLICATE_EMAIL
+
+    - SWAGGER
+
+    - SERVER
+
+    - "404"
+  message:
+    type: string

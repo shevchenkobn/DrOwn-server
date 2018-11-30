@@ -1,4 +1,11 @@
 type: object
+allOf:
+- $ref: '#/definitions/UserBase'
+required:
+- cash
+- userId
 properties:
-  email:
+  userId:
+    $ref: '#/definitions/BigInt'
+  refreshToken:
     type: string

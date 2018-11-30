@@ -1,2 +1,14 @@
 /user-roles:
   $ref: ./user-roles.yaml
+
+/auth:
+  $ref: ./auth.yaml
+
+/auth/refresh:
+  $ref: ./auth-refresh.yaml
+
+/auth/register:
+  $ref: ./auth-register.yaml
+
+/users:
+  $ref: ./users.yaml

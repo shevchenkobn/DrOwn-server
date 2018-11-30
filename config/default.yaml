@@ -10,7 +10,7 @@ server:
   admin:
     name: Master Admin
     password: "admin"
-    email: "master.admin@localhost"
+    email: "master.admin@local.host"
 jwt:
   keys:
     folder: "keys/"

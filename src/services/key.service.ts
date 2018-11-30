@@ -2,7 +2,7 @@ import { resolve } from 'app-root-path';
 import * as config from 'config';
 import * as path from 'path';
 import { promises as fsPromises } from 'fs';
-import { JwtConfig } from './authentication.service';
+import { JwtConfig } from './authentication.class';
 
 const jwtConfig = config.get<JwtConfig>('jwt');
 

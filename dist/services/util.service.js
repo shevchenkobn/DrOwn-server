@@ -34,11 +34,14 @@ function loadSwaggerSchema() {
                     callback(null, YAML.load(content.text));
                 }
                 catch (err) {
+                    // TODO: log error
+                    console.log(err);
                     callback(err);
                 }
             },
         },
         resolveCirculars: false,
+        includeInvalid: false,
     });
 }
 exports.loadSwaggerSchema = loadSwaggerSchema;

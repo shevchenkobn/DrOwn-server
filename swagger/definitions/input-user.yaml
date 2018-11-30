@@ -1,0 +1,8 @@
+type: object
+allOf:
+- $ref: '#/definitions/UserBase'
+properties:
+  password:
+    type: string
+    format: password
+    pattern: ^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,}$

@@ -2,8 +2,10 @@ import { ASYNC_INIT, TYPES } from './types';
 import { Container } from 'inversify';
 import { DbConnection } from '../services/db-connection.class';
 import { UserModel } from '../models/users.model';
-import { JwtAuthetication } from '../services/authentication.class';
+import { AuthService } from '../services/authentication.class';
 import { UserRolesController } from '../controllers/user-roles.controller';
+import { UsersController } from '../controllers/users.controller';
+import { AuthController } from '../controllers/auth.controller';
 
 export const container = new Container({
   defaultScope: 'Singleton',
@@ -12,11 +14,13 @@ export const container = new Container({
 const typeMap = new Map<symbol, any>([
   [TYPES.DbConnection, DbConnection],
 
-  [TYPES.JwtAuthorization, JwtAuthetication],
+  [TYPES.AuthService, AuthService],
 
   [TYPES.UserModel, UserModel],
 
   [TYPES.UserRolesController, UserRolesController],
+  [TYPES.AuthController, AuthController],
+  [TYPES.UsersController, UsersController],
 ]);
 
 for (const [symbol, type] of typeMap) {
@@ -25,7 +29,6 @@ for (const [symbol, type] of typeMap) {
 
 export const initAsync = Promise.all(
   [...typeMap.entries()]
-    .map(([symbol]) => container.get(symbol))
-    .filter(instance => ASYNC_INIT in instance)
-    .map(instance => (instance as any)[ASYNC_INIT]),
+    .filter(([, type]) => ASYNC_INIT in type)
+    .map(([symbol]) => container.get<any>(symbol)[ASYNC_INIT] as Promise<any>),
 );
