@@ -4,12 +4,19 @@ const tslib_1 = require("tslib");
 const types_1 = require("../di/types");
 const inversify_1 = require("inversify");
 const users_model_1 = require("../models/users.model");
+const invisibleFields = ['cash', 'address', 'longitude', 'latitude'];
 let UsersController = class UsersController {
     constructor(userModel) {
         return {
             async getUsers(req, res, next) {
                 try {
-                    const select = req.swagger.params.select.value;
+                    let select = req.swagger.params.select.value;
+                    const user = req.user;
+                    if (!(user.role & users_model_1.UserRoles.ADMIN
+                        || user.role & users_model_1.UserRoles.MODERATOR)) {
+                        select = select.filter(column => !invisibleFields.includes(column));
+                    }
+                    console.debug(select);
                     // TODO: add filters and sorting
                     res.json(await userModel.select(select));
                 }

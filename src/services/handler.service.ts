@@ -36,5 +36,6 @@ export const authenticateBearer: SwaggerSecurityHandler = async (
     }
     next(new LogicError(ErrorCode.AUTH_ROLE));
   }
+  (req as any).user = user;
   next();
 };

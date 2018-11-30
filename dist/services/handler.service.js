@@ -29,6 +29,7 @@ exports.authenticateBearer = async (req, securityDefinition, authorizationHeader
         }
         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
     }
+    req.user = user;
     next();
 };
 //# sourceMappingURL=handler.service.js.map

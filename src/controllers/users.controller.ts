@@ -1,8 +1,9 @@
 import { TYPES } from '../di/types';
 import { inject, injectable } from 'inversify';
-import { UserModel, IUser } from '../models/users.model';
+import { UserModel, IUser, UserRoles } from '../models/users.model';
 import { Request, Response, NextFunction } from 'express';
 
+const invisibleFields = ['cash', 'address', 'longitude', 'latitude'];
 @injectable()
 export class UsersController {
   constructor(
@@ -11,9 +12,15 @@ export class UsersController {
     return {
       async getUsers(req: Request, res: Response, next: NextFunction) {
         try {
-          const select = (req as any).swagger.params.select.value as (keyof IUser)[];
-          // TODO: disallow non-admin and non-moderators
-          //       from seeing longitude, address, latitude and cash
+          let select = (req as any).swagger.params.select.value as (keyof IUser)[];
+          const user = (req as any).user as IUser;
+          if (!(
+            user.role & UserRoles.ADMIN
+            || user.role & UserRoles.MODERATOR
+          )) {
+            select = select.filter(column => !invisibleFields.includes(column));
+          }
+          console.debug(select);
           // TODO: add filters and sorting
           res.json(await userModel.select(select));
         } catch (err) {
