@@ -1,5 +1,0 @@
-dbConnection:
-  host: 127.0.0.1
-  user: bogdan
-  password: bogdan@mysql
-  database: drones
