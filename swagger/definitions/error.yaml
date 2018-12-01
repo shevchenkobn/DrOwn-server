@@ -10,7 +10,7 @@ properties:
     - AUTH_BAD
     - AUTH_EXPIRED
 
-    - USER_COMPANY_HAS
+    - USER_COMPANY_BAD
     - USER_COMPANY_NO
     - USER_ROLE_BAD
     - USER_DUPLICATE_EMAIL

@@ -30,16 +30,11 @@ let UsersController = class UsersController {
                     const select = req.swagger.params.select.value;
                     const inputUser = req.swagger.params.user.value;
                     const user = req.user;
-                    if (user.role & users_model_1.UserRoles.COMPANY && !(user.role & users_model_1.UserRoles.ADMIN)) {
-                        if (inputUser.role & users_model_1.UserRoles.ADMIN || inputUser.role & users_model_1.UserRoles.MODERATOR) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                            return;
-                        }
-                        if (inputUser.companyId && inputUser.companyId !== user.userId) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_HAS));
-                            return;
-                        }
-                        inputUser.companyId = user.userId;
+                    if (!(user.role & users_model_1.UserRoles.ADMIN)
+                        && (inputUser.role & users_model_1.UserRoles.ADMIN
+                            || inputUser.role & users_model_1.UserRoles.MODERATOR)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                        return;
                     }
                     const noPassword = !inputUser.password;
                     const selectPassword = select && select.includes('password');
@@ -51,19 +46,69 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
                     }
-                    inputUser.password = userModel.getPassword(inputUser);
-                    if (user.role & users_model_1.UserRoles.ADMIN) {
-                        let users = [inputUser];
-                        let userId;
-                        while (users[0].companyId) {
-                            userId = inputUser.companyId;
-                            users = await userModel.select(['role', 'companyId'], { userId });
-                            if (!(users[0].role & users_model_1.UserRoles.COMPANY)) {
-                                next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_NO));
+                    if (user.role & users_model_1.UserRoles.COMPANY && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        if (inputUser.companyId) {
+                            const companyId = user.userId;
+                            let users = [inputUser];
+                            let userId;
+                            let found = false;
+                            while (users[0].companyId) {
+                                userId = users[0].companyId;
+                                users = (await userModel.select(['role', 'companyId', 'userId'], { userId }));
+                                if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.COMPANY)) {
+                                    next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_BAD));
+                                    return;
+                                }
+                                if (users[0].userId === companyId) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_BAD));
                                 return;
                             }
                         }
+                        else {
+                            inputUser.companyId = user.userId;
+                        }
                     }
+                    // if (user.role & UserRoles.COMPANY && !(user.role & UserRoles.ADMIN)) {
+                    //   if (inputUser.role & UserRoles.ADMIN || inputUser.role & UserRoles.MODERATOR) {
+                    //     next(new LogicError(ErrorCode.AUTH_ROLE));
+                    //     return;
+                    //   }
+                    //   if (inputUser.companyId && inputUser.companyId !== user.userId) {
+                    //     next(new LogicError(ErrorCode.USER_COMPANY_BAD));
+                    //     return;
+                    //   }
+                    //   inputUser.companyId = user.userId;
+                    // }
+                    // const noPassword = !inputUser.password;
+                    // const selectPassword = select && select.includes('password');
+                    // if (noPassword && !(!select || selectPassword)) {
+                    //   next(new LogicError(ErrorCode.USER_NO_SAVE_PASSWORD));
+                    //   return;
+                    // }
+                    // if (!noPassword && selectPassword) {
+                    //   next(new LogicError(ErrorCode.SELECT_BAD));
+                    //   return;
+                    // }
+                    // inputUser.password = userModel.getPassword(inputUser);
+                    // if (user.role & UserRoles.ADMIN) {
+                    //   let users = [inputUser];
+                    //   let userId;
+                    //   while (users[0].companyId) {
+                    //     userId = inputUser.companyId;
+                    //     users = await userModel.select(['role', 'companyId'], { userId });
+                    //
+                    //     if (!(users[0].role & UserRoles.COMPANY)) {
+                    //       next(new LogicError(ErrorCode.USER_COMPANY_NO));
+                    //       return;
+                    //     }
+                    //   }
+                    // }
+                    inputUser.password = userModel.getPassword(inputUser);
                     await userModel.create(inputUser, true);
                     const newUser = (await userModel.select(getColumns(select, true), { email: inputUser.email }))[0];
                     if (noPassword) {

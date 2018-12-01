@@ -28,14 +28,17 @@ export const authenticateBearer: SwaggerSecurityHandler = async (
   const roleNames = (req as any).swagger.operation['x-security-scopes'];
   if (roleNames && roleNames.length >= 0) {
     const roles: number[] = roleNames.map((name: string) => UserRoles[name.toUpperCase() as any]);
+    let hasRole = false;
     for (const role of roles) {
       if ((user.role & role) !== 0) {
-        next();
-        return;
+        hasRole = true;
+        break;
       }
     }
-    next(new LogicError(ErrorCode.AUTH_ROLE));
-    return;
+    if (!hasRole) {
+      next(new LogicError(ErrorCode.AUTH_ROLE));
+      return;
+    }
   }
   (req as any).user = user;
   next();

@@ -6,7 +6,7 @@ var ErrorCode;
     ErrorCode["AUTH_ROLE"] = "AUTH_ROLE";
     ErrorCode["AUTH_BAD"] = "AUTH_BAD";
     ErrorCode["AUTH_EXPIRED"] = "AUTH_EXPIRED";
-    ErrorCode["USER_COMPANY_HAS"] = "USER_COMPANY_HAS";
+    ErrorCode["USER_COMPANY_BAD"] = "USER_COMPANY_BAD";
     ErrorCode["USER_COMPANY_NO"] = "USER_COMPANY_NO";
     ErrorCode["USER_ROLE_BAD"] = "USER_ROLE_BAD";
     ErrorCode["USER_DUPLICATE_EMAIL"] = "USER_DUPLICATE_EMAIL";

@@ -21,14 +21,17 @@ exports.authenticateBearer = async (req, securityDefinition, authorizationHeader
     const roleNames = req.swagger.operation['x-security-scopes'];
     if (roleNames && roleNames.length >= 0) {
         const roles = roleNames.map((name) => users_model_1.UserRoles[name.toUpperCase()]);
+        let hasRole = false;
         for (const role of roles) {
             if ((user.role & role) !== 0) {
-                next();
-                return;
+                hasRole = true;
+                break;
             }
         }
-        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-        return;
+        if (!hasRole) {
+            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+            return;
+        }
     }
     req.user = user;
     next();

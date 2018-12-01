@@ -38,16 +38,15 @@ export class UsersController {
           const inputUser = (req as any).swagger.params.user.value as IUserSeed;
           const user = (req as any).user as IUser;
 
-          if (user.role & UserRoles.COMPANY && !(user.role & UserRoles.ADMIN)) {
-            if (inputUser.role & UserRoles.ADMIN || inputUser.role & UserRoles.MODERATOR) {
-              next(new LogicError(ErrorCode.AUTH_ROLE));
-              return;
-            }
-            if (inputUser.companyId && inputUser.companyId !== user.userId) {
-              next(new LogicError(ErrorCode.USER_COMPANY_HAS));
-              return;
-            }
-            inputUser.companyId = user.userId;
+          if (
+            !(user.role & UserRoles.ADMIN)
+            && (
+              inputUser.role & UserRoles.ADMIN
+              || inputUser.role & UserRoles.MODERATOR
+            )
+          ) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
           }
 
           const noPassword = !inputUser.password;
@@ -60,22 +59,35 @@ export class UsersController {
             next(new LogicError(ErrorCode.SELECT_BAD));
             return;
           }
-          inputUser.password = userModel.getPassword(inputUser);
 
-          if (user.role & UserRoles.ADMIN) {
-            let users = [inputUser];
-            let userId;
-            while (users[0].companyId) {
-              userId = inputUser.companyId;
-              users = await userModel.select(['role', 'companyId'], { userId });
+          if (user.role & UserRoles.COMPANY && !(user.role & UserRoles.ADMIN)) {
+            if (inputUser.companyId) {
+              const companyId = user.userId;
+              let users: IUser[] = [inputUser] as IUser[];
+              let userId;
+              let found = false;
+              while (users[0].companyId) {
+                userId = users[0].companyId;
+                users = (await userModel.select(['role', 'companyId', 'userId'], { userId }));
 
-              if (!(users[0].role & UserRoles.COMPANY)) {
-                next(new LogicError(ErrorCode.USER_COMPANY_NO));
+                if (users.length === 0 || !(users[0].role & UserRoles.COMPANY)) {
+                  next(new LogicError(ErrorCode.USER_COMPANY_BAD));
+                  return;
+                }
+                if (users[0].userId === companyId) {
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) {
+                next(new LogicError(ErrorCode.USER_COMPANY_BAD));
                 return;
               }
+            } else {
+              inputUser.companyId = user.userId;
             }
-          }
 
+          inputUser.password = userModel.getPassword(inputUser);
           await userModel.create(inputUser, true);
           const newUser = (await userModel.select(
             getColumns(select as any, true),
