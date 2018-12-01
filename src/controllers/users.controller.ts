@@ -86,6 +86,7 @@ export class UsersController {
             } else {
               inputUser.companyId = user.userId;
             }
+          }
 
           inputUser.password = userModel.getPassword(inputUser);
           await userModel.create(inputUser, true);

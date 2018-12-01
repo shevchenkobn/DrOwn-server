@@ -73,41 +73,6 @@ let UsersController = class UsersController {
                             inputUser.companyId = user.userId;
                         }
                     }
-                    // if (user.role & UserRoles.COMPANY && !(user.role & UserRoles.ADMIN)) {
-                    //   if (inputUser.role & UserRoles.ADMIN || inputUser.role & UserRoles.MODERATOR) {
-                    //     next(new LogicError(ErrorCode.AUTH_ROLE));
-                    //     return;
-                    //   }
-                    //   if (inputUser.companyId && inputUser.companyId !== user.userId) {
-                    //     next(new LogicError(ErrorCode.USER_COMPANY_BAD));
-                    //     return;
-                    //   }
-                    //   inputUser.companyId = user.userId;
-                    // }
-                    // const noPassword = !inputUser.password;
-                    // const selectPassword = select && select.includes('password');
-                    // if (noPassword && !(!select || selectPassword)) {
-                    //   next(new LogicError(ErrorCode.USER_NO_SAVE_PASSWORD));
-                    //   return;
-                    // }
-                    // if (!noPassword && selectPassword) {
-                    //   next(new LogicError(ErrorCode.SELECT_BAD));
-                    //   return;
-                    // }
-                    // inputUser.password = userModel.getPassword(inputUser);
-                    // if (user.role & UserRoles.ADMIN) {
-                    //   let users = [inputUser];
-                    //   let userId;
-                    //   while (users[0].companyId) {
-                    //     userId = inputUser.companyId;
-                    //     users = await userModel.select(['role', 'companyId'], { userId });
-                    //
-                    //     if (!(users[0].role & UserRoles.COMPANY)) {
-                    //       next(new LogicError(ErrorCode.USER_COMPANY_NO));
-                    //       return;
-                    //     }
-                    //   }
-                    // }
                     inputUser.password = userModel.getPassword(inputUser);
                     await userModel.create(inputUser, true);
                     const newUser = (await userModel.select(getColumns(select, true), { email: inputUser.email }))[0];
