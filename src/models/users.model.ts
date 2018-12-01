@@ -4,10 +4,9 @@ import { TYPES } from '../di/types';
 import * as Knex from 'knex';
 import { hash } from 'bcrypt';
 import { TableName } from '../services/table-schemas.service';
-import randomatic from 'randomatic';
+import * as randomatic from 'randomatic';
 import { DbConnection } from '../services/db-connection.class';
-import { LogicError } from '../services/error.service';
-import { ErrorCode } from '../services/error.service';
+import { ErrorCode, LogicError } from '../services/error.service';
 
 export const maxPasswordLength = 72 - 29;
 
@@ -49,17 +48,6 @@ export interface IUser extends IUserBase {
   refreshTokenExpiration?: Date | null;
 }
 
-const safeColumns = [
-  'userId',
-  'role',
-  'name',
-  'companyId',
-  'address',
-  'phoneNumber',
-  'longitude',
-  'latitude',
-  'cash',
-];
 @injectable()
 export class UserModel {
   private readonly _connection: DbConnection;
@@ -76,17 +64,18 @@ export class UserModel {
     this._knex = this._connection.knex;
   }
 
-  select(columns?: (keyof IUser)[], where?: any, safeSelect = true) {
-    let fields: string[] = columns as string[];
-    if (!columns) {
-      fields = safeSelect ? safeColumns : [];
-    }
-
+  select(columns?: ReadonlyArray<keyof IUser>, where?: any) {
     const query = where ? this.table.where(where) : this.table;
-    return query.select(fields);
+    return query.select(columns as any);
   }
 
-  async create(userSeed: IUserSeed, changeSeed = false, selectColumns?: (keyof IUser)[]) {
+  getPassword(userSeed: IUserSeed) {
+    return !userSeed.password
+      ? randomatic('aA0!', maxPasswordLength)
+      : userSeed.password;
+  }
+
+  async create(userSeed: IUserSeed, changeSeed = false) {
     const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
 
     const user: IUser = {
@@ -99,22 +88,20 @@ export class UserModel {
       cash: userSeed.cash,
     } as any;
 
-    if (!editedUserSeed.password) {
-      if (!editedUserSeed.companyId) {
-        throw new LogicError(ErrorCode.USER_COMPANY_NO);
-      }
-      editedUserSeed.password = randomatic('aA0!', maxPasswordLength);
-    }
     user.passwordHash = await hash(editedUserSeed.password, 13);
     try {
       await this.table.insert(user);
     } catch (err) {
-      // FIXME: throw  duplicate name or some other error if some connection problems
-      throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
+      switch (err.errno) {
+        case 1062:
+          throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
+
+        case 1452:
+          throw new LogicError(ErrorCode.USER_COMPANY_NO);
+      }
+
+      console.log('register user: ', err);
+      throw new LogicError(ErrorCode.SERVER);
     }
-    const selectedUser = (await this.select(
-      selectColumns,
-      { email: editedUserSeed.email }))[0] as IUser;
-    return selectedUser;
   }
 }

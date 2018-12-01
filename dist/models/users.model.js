@@ -6,10 +6,9 @@ const inversify_1 = require("inversify");
 const types_1 = require("../di/types");
 const bcrypt_1 = require("bcrypt");
 const table_schemas_service_1 = require("../services/table-schemas.service");
-const randomatic_1 = require("randomatic");
+const randomatic = require("randomatic");
 const db_connection_class_1 = require("../services/db-connection.class");
 const error_service_1 = require("../services/error.service");
-const error_service_2 = require("../services/error.service");
 exports.maxPasswordLength = 72 - 29;
 var UserRoles;
 (function (UserRoles) {
@@ -26,17 +25,6 @@ function isValidRole(role) {
     return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
 }
 exports.isValidRole = isValidRole;
-const safeColumns = [
-    'userId',
-    'role',
-    'name',
-    'companyId',
-    'address',
-    'phoneNumber',
-    'longitude',
-    'latitude',
-    'cash',
-];
 let UserModel = class UserModel {
     constructor(connection) {
         this._connection = connection;
@@ -45,15 +33,16 @@ let UserModel = class UserModel {
     get table() {
         return this._knex(table_schemas_service_1.TableName.Users);
     }
-    select(columns, where, safeSelect = true) {
-        let fields = columns;
-        if (!columns) {
-            fields = safeSelect ? safeColumns : [];
-        }
+    select(columns, where) {
         const query = where ? this.table.where(where) : this.table;
-        return query.select(fields);
+        return query.select(columns);
     }
-    async create(userSeed, changeSeed = false, selectColumns) {
+    getPassword(userSeed) {
+        return !userSeed.password
+            ? randomatic('aA0!', exports.maxPasswordLength)
+            : userSeed.password;
+    }
+    async create(userSeed, changeSeed = false) {
         const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
         const user = {
             email: userSeed.email,
@@ -64,22 +53,20 @@ let UserModel = class UserModel {
             phoneNumber: userSeed.phoneNumber,
             cash: userSeed.cash,
         };
-        if (!editedUserSeed.password) {
-            if (!editedUserSeed.companyId) {
-                throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_COMPANY_NO);
-            }
-            editedUserSeed.password = randomatic_1.default('aA0!', exports.maxPasswordLength);
-        }
         user.passwordHash = await bcrypt_1.hash(editedUserSeed.password, 13);
         try {
             await this.table.insert(user);
         }
         catch (err) {
-            // FIXME: throw  duplicate name or some other error if some connection problems
-            throw new error_service_1.LogicError(error_service_2.ErrorCode.USER_DUPLICATE_EMAIL);
+            switch (err.errno) {
+                case 1062:
+                    throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_DUPLICATE_EMAIL);
+                case 1452:
+                    throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_NO);
+            }
+            console.log('register user: ', err);
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.SERVER);
         }
-        const selectedUser = (await this.select(selectColumns, { email: editedUserSeed.email }))[0];
-        return selectedUser;
     }
 };
 UserModel = tslib_1.__decorate([

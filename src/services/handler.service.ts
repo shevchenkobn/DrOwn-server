@@ -25,7 +25,7 @@ export const authenticateBearer: SwaggerSecurityHandler = async (
     return;
   }
 
-  const roleNames = (req as any).swagger['x-security-scopes'];
+  const roleNames = (req as any).swagger.operation['x-security-scopes'];
   if (roleNames && roleNames.length >= 0) {
     const roles: number[] = roleNames.map((name: string) => UserRoles[name.toUpperCase() as any]);
     for (const role of roles) {
@@ -35,6 +35,7 @@ export const authenticateBearer: SwaggerSecurityHandler = async (
       }
     }
     next(new LogicError(ErrorCode.AUTH_ROLE));
+    return;
   }
   (req as any).user = user;
   next();

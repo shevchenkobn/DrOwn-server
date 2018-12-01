@@ -12,11 +12,17 @@ UserRoles:
 UserBase:
   $ref: ./user-base.yaml
 
-InputUser:
-  $ref: ./input-user.yaml
+CreateUser:
+  $ref: ./create-user.yaml
+
+RegisterUser:
+  $ref: ./register-user.yaml
 
 User:
   $ref: ./user.yaml
+
+PasswordUser:
+  $ref: ./password-user.yaml
 
 UserCredentials:
   $ref: ./user-credentials.yaml

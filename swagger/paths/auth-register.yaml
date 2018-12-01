@@ -29,7 +29,7 @@ post:
     description: The user to create.
     required: true
     schema:
-      $ref: '#/definitions/InputUser'
+      $ref: '#/definitions/RegisterUser'
   responses:
     200:
       description: OK

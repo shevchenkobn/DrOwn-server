@@ -1,8 +1,4 @@
 type: object
-required:
-- email
-- role
-- name
 properties:
   email:
     type: string
@@ -13,8 +9,6 @@ properties:
     maximum: 255
   name:
     type: string
-  companyId:
-    $ref: '#/definitions/BigInt'
   address:
     type: string
   phoneNumber:

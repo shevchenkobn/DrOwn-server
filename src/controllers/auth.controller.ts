@@ -5,6 +5,7 @@ import { IUser, IUserSeed, UserModel, UserRoles } from '../models/users.model';
 import { AuthService } from '../services/authentication.class';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { compare } from 'bcrypt';
+import { getColumns } from './users.controller';
 
 @injectable()
 export class AuthController {
@@ -87,17 +88,20 @@ export class AuthController {
           const inputUser = (req as any).swagger.params.user.value as IUserSeed;
           const select = (req as any).swagger.params.select.value as (keyof IUser)[];
 
-          if (typeof inputUser.companyId === 'string') {
-            next(new LogicError(ErrorCode.USER_COMPANY_HAS));
-            return;
-          }
+          // if (typeof inputUser.companyId === 'string') {
+          //   next(new LogicError(ErrorCode.USER_COMPANY_HAS));
+          //   return;
+          // }
 
           if (inputUser.role & UserRoles.ADMIN || inputUser.role & UserRoles.MODERATOR) {
             next(new LogicError(ErrorCode.USER_ROLE_BAD));
             return;
           }
-
-          res.json(await userModel.create(inputUser, true, select));
+          await userModel.create(inputUser);
+          res.json((await userModel.select(
+            getColumns(select, true),
+            { email: inputUser.email },
+          ))[0]);
         } catch (err) {
           next(err);
         }

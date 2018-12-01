@@ -10,6 +10,9 @@ export enum ErrorCode {
   USER_COMPANY_NO = 'USER_COMPANY_NO',
   USER_ROLE_BAD = 'USER_ROLE_BAD',
   USER_DUPLICATE_EMAIL = 'USER_DUPLICATE_EMAIL',
+  USER_NO_SAVE_PASSWORD = 'USER_NO_SAVE_PASSWORD',
+
+  SELECT_BAD = 'SELECT_BAD',
 
   SWAGGER = 'SWAGGER',
 
@@ -37,12 +40,17 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     switch (err.code) {
       case ErrorCode.AUTH_ROLE:
       case ErrorCode.AUTH_EXPIRED:
+      case ErrorCode.SELECT_BAD:
         res.status(403);
         break;
 
       case ErrorCode.AUTH_NO:
       case ErrorCode.AUTH_BAD:
         res.status(401);
+        break;
+
+      case ErrorCode.SERVER:
+        res.status(500);
         break;
 
       default:

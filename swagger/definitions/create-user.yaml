@@ -5,10 +5,10 @@ required:
 - email
 - role
 - name
-- cash
-- userId
 properties:
+  password:
+    type: string
+    format: password
+    pattern: ^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,}$
   companyId:
-    $ref: '#/definitions/BigInt'
-  userId:
     $ref: '#/definitions/BigInt'

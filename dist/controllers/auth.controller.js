@@ -7,6 +7,7 @@ const users_model_1 = require("../models/users.model");
 const authentication_class_1 = require("../services/authentication.class");
 const error_service_1 = require("../services/error.service");
 const bcrypt_1 = require("bcrypt");
+const users_controller_1 = require("./users.controller");
 let AuthController = class AuthController {
     constructor(userModel, jwt) {
         return {
@@ -75,15 +76,16 @@ let AuthController = class AuthController {
                 try {
                     const inputUser = req.swagger.params.user.value;
                     const select = req.swagger.params.select.value;
-                    if (typeof inputUser.companyId === 'string') {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_HAS));
-                        return;
-                    }
+                    // if (typeof inputUser.companyId === 'string') {
+                    //   next(new LogicError(ErrorCode.USER_COMPANY_HAS));
+                    //   return;
+                    // }
                     if (inputUser.role & users_model_1.UserRoles.ADMIN || inputUser.role & users_model_1.UserRoles.MODERATOR) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_ROLE_BAD));
                         return;
                     }
-                    res.json(await userModel.create(inputUser, true, select));
+                    await userModel.create(inputUser);
+                    res.json((await userModel.select(users_controller_1.getColumns(select, true), { email: inputUser.email }))[0]);
                 }
                 catch (err) {
                     next(err);
