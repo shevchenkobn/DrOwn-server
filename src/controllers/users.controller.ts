@@ -1,8 +1,9 @@
 import { TYPES } from '../di/types';
 import { inject, injectable } from 'inversify';
-import { IUser, IUserSeed, UserModel, UserRoles } from '../models/users.model';
+import { IUser, IUserSeed, UserModel, UserRoles, WhereClause } from '../models/users.model';
 import { NextFunction, Request, Response } from 'express';
 import { ErrorCode, LogicError } from '../services/error.service';
+import { Maybe } from '../../@types/helpers';
 
 @injectable()
 export class UsersController {
@@ -62,6 +63,48 @@ export class UsersController {
           next(err);
         }
       },
+
+      async updateUser(req: Request, res: Response, next: NextFunction) {
+        try {
+          const select = (req as any).swagger.params.select.value as
+            (keyof IUser)[];
+          const inputUser = (req as any).swagger.params.user.value as IUserSeed;
+          const userId = (req as any).swagger.params.userId.value as Maybe<string>;
+          const email = (req as any).swagger.params.email.value as Maybe<string>;
+          const user = (req as any).user as IUser;
+
+          const whereClause = getUserWhereClause(userId, email, user);
+
+          await userModel.update(inputUser, whereClause);
+          if (select && select.length > 0) {
+            res.json((await userModel.select(
+              getColumns(select, true),
+              whereClause,
+            ))[0]);
+          } else {
+            res.json({});
+          }
+        } catch (err) {
+          next(err);
+        }
+      },
+
+      async deleteUser(req: Request, res: Response, next: NextFunction) {
+        try {
+          const select = (req as any).swagger.params.select.value as
+            (keyof IUser)[];
+          const inputUser = (req as any).swagger.params.user.value as IUserSeed;
+          const userId = (req as any).swagger.params.userId.value as Maybe<string>;
+          const email = (req as any).swagger.params.email.value as Maybe<string>;
+          const user = (req as any).user as IUser;
+
+          const whereClause = getUserWhereClause(userId, email, user);
+
+          await userModel.delete(whereClause);
+        } catch (err) {
+          next(err);
+        }
+      },
     };
   }
 }
@@ -80,8 +123,8 @@ const adminFields: ReadonlyArray<keyof IUser> = [
   'latitude',
 ];
 export function getColumns(
-  columns?: (keyof IUser)[] | null,
-  includeAdmin = false,
+  columns: Maybe<(keyof IUser)[]>,
+  includeAdmin: boolean,
 ): (keyof IUser)[] {
   if (!columns || columns.length === 0) {
     return (includeAdmin ? safeColumns.concat(adminFields) : safeColumns) as any;
@@ -90,4 +133,22 @@ export function getColumns(
     column => safeColumns.includes(column)
     || includeAdmin && adminFields.includes(column),
   );
+}
+
+function getUserWhereClause(userId: Maybe<string>, email: Maybe<string>, user: IUser) {
+  if (email && userId) {
+    throw new LogicError(ErrorCode.USER_EMAIL_AND_ID);
+  }
+
+  let whereClause: WhereClause;
+  if (userId) {
+    whereClause = { userId };
+  } else if (email) {
+    whereClause = { email };
+  } else if (user) {
+    whereClause = { userId: user.userId };
+  } else {
+    throw new LogicError(ErrorCode.USER_EMAIL_AND_ID);
+  }
+  return whereClause;
 }

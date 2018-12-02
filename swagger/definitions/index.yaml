@@ -21,6 +21,9 @@ UserRegister:
 User:
   $ref: ./user.yaml
 
+UserUpdate:
+  $ref: ./user-update.yaml
+
 UserPassword:
   $ref: ./user-password.yaml
 

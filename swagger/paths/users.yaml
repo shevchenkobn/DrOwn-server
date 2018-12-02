@@ -33,6 +33,9 @@ get:
         type: array
         items:
           $ref: '#/definitions/User'
+    400:
+      $ref: '#/responses/ClientError'
+
 post:
   tags:
   - users
@@ -71,6 +74,6 @@ post:
     200:
       description: OK
       schema:
-        type: array
-        items:
-          $ref: '#/definitions/UserPassword'
+        $ref: '#/definitions/UserPassword'
+    400:
+      $ref: '#/responses/ClientError'

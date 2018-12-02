@@ -1,4 +1,3 @@
-// import { isUser } from '../services/validators.service';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '../di/types';
 import * as Knex from 'knex';
@@ -7,6 +6,7 @@ import { TableName } from '../services/table-schemas.service';
 import * as randomatic from 'randomatic';
 import { DbConnection } from '../services/db-connection.class';
 import { ErrorCode, LogicError } from '../services/error.service';
+import { matchAny } from 'fast-glob/out/utils/pattern';
 
 export const maxPasswordLength = 72 - 29;
 
@@ -50,6 +50,8 @@ export interface IUser extends IUserBase {
   refreshTokenExpiration?: Date | null;
 }
 
+export type WhereClause = { email: string } | { userId: string };
+
 @injectable()
 export class UserModel {
   private readonly _connection: DbConnection;
@@ -80,32 +82,46 @@ export class UserModel {
   async create(userSeed: IUserSeed, changeSeed = false) {
     const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
 
-    const user: IUser = {
-      email: userSeed.email,
-      role: userSeed.role,
-      status: UserStatus.ACTIVE,
-      name: userSeed.name,
-      address: userSeed.address,
-      longitude: userSeed.longitude,
-      latitude: userSeed.latitude,
-      phoneNumber: userSeed.phoneNumber,
-      cash: userSeed.cash,
-    } as any;
+    const { password, ...user } = userSeed as (IUser & IUserSeed);
 
     user.passwordHash = await hash(editedUserSeed.password, 13);
     try {
       await this.table.insert(user);
     } catch (err) {
-      switch (err.errno) {
-        case 1062:
-          throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
-
-        case 1452:
-          throw new LogicError(ErrorCode.USER_COMPANY_NO);
-      }
-
-      console.log('register user: ', err);
-      throw new LogicError(ErrorCode.SERVER);
+      handleChangeError(err);
     }
   }
+
+  async update(
+    userSeed: IUserSeed,
+    whereClause: WhereClause,
+    changeSeed = false,
+  ) {
+    const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
+
+    const { password, ...user } = userSeed as (IUser & IUserSeed);
+
+    if (password) {
+      user.passwordHash = await hash(editedUserSeed.password, 13);
+    }
+    try {
+      await this.table.where(whereClause).update(user);
+    } catch (err) {
+      handleChangeError(err);
+    }
+  }
+
+  async delete(whereClause: WhereClause) {
+    return this.table.where(whereClause).delete();
+  }
+}
+
+function handleChangeError(err: any): never {
+  switch (err.errno) {
+    case 1062:
+      throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
+  }
+
+  console.log('change user error: ', err);
+  throw new LogicError(ErrorCode.SERVER);
 }

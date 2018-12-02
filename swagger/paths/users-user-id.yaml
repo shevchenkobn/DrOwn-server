@@ -1,0 +1,101 @@
+x-swagger-router-controller: users
+
+parameters:
+- in: path
+  name: userId
+  schema:
+    $ref: '#/definitions/BigInt'
+  required: false
+- in: query
+  name: email
+  type: string
+  format: email
+  required: false
+
+patch:
+  tags:
+  - users
+  summary: |
+    Update User.
+    Specify **either userId or email**, but not both.
+    **If nothing specified, authenticated user will be updated**
+    __If no select field specifed no user will be returned__
+    - If password is set to null it will be automatically generated
+  operationId: updateUser
+  security:
+  - Bearer: []
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - role
+      - name
+      - companyId
+      - address
+      - phoneNumber
+      - longitude
+      - latitude
+      - cash
+      - password
+  - in: body
+    name: user
+    required: true
+    schema:
+      $ref: '#/definitions/UserUpdate'
+  responses:
+    200:
+      description: OK
+        schema:
+          $ref: '#/definitions/UserPassword'
+    400:
+      $ref: '#/responses/ClientError'
+    403:
+      $ref: '#/responses/Forbidden'
+
+delete:
+  tags:
+  - users
+  summary: |
+    Update User.
+    Specify **either userId or email**, but not both.
+    **If nothing specified, authenticated user will be updated**
+    __If no select field specifed no user will be returned__
+  operationId: deleteUser
+  security:
+  - Bearer: []
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - role
+      - name
+      - companyId
+      - address
+      - phoneNumber
+      - longitude
+      - latitude
+      - cash
+      - password
+  responses:
+    200:
+      description: OK
+        schema:
+          $ref: '#/definitions/UserPassword'
+    400:
+      $ref: '#/responses/ClientError'
+    403:
+      $ref: '#/responses/Forbidden'

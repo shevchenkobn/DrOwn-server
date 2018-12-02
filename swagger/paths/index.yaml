@@ -15,3 +15,6 @@
 
 /users:
   $ref: ./users.yaml
+
+/users/{userId}:
+  $ref: ./users-user-id.yaml

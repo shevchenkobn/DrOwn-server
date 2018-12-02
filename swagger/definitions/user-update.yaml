@@ -7,6 +7,9 @@ properties:
     type: integer
     minimum: 1
     maximum: 31
+  status:
+    type: integer
+    minimum: 0
   name:
     type: string
   address:
@@ -20,3 +23,8 @@ properties:
     type: number
   cash:
     $ref: '#/definitions/Decimal'
+  password:
+    type: string
+    format: password
+    pattern: ^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,}$
+additionalProperties: false
