@@ -45,4 +45,29 @@ function loadSwaggerSchema() {
     });
 }
 exports.loadSwaggerSchema = loadSwaggerSchema;
+// export async function loadSwaggerSchema() {
+//   const schema = await resolveRefs(
+//     (await resolveRefsAt(resolve('swagger/index.yaml'), {
+//       loaderOptions: {
+//         processContent(content: { text: string }, callback: (err: any, obj?: any) => void) {
+//           try {
+//             callback(null, YAML.load(content.text));
+//           } catch (err) {
+//             // TODO: log error
+//             console.log(err);
+//             callback(err);
+//           }
+//         },
+//       },
+//       resolveCirculars: false,
+//       includeInvalid: false,
+//     })).resolved,
+//     {
+//       resolveCirculars: false,
+//       includeInvalid: false,
+//     },
+//   );
+//   schema.resolved = mergeSchemaAllOf(schema.resolved);
+//   return schema;
+// }
 //# sourceMappingURL=util.service.js.map

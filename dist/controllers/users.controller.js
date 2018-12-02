@@ -12,8 +12,7 @@ let UsersController = class UsersController {
                 try {
                     const select = req.swagger.params.select.value;
                     const user = req.user;
-                    const columns = getColumns(select, !!(user.role & users_model_1.UserRoles.ADMIN
-                        || user.role & users_model_1.UserRoles.MODERATOR));
+                    const columns = getColumns(select, !!(user.role & users_model_1.UserRoles.ADMIN));
                     if (select && columns.length < select.length) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
@@ -30,12 +29,6 @@ let UsersController = class UsersController {
                     const select = req.swagger.params.select.value;
                     const inputUser = req.swagger.params.user.value;
                     const user = req.user;
-                    if (!(user.role & users_model_1.UserRoles.ADMIN)
-                        && (inputUser.role & users_model_1.UserRoles.ADMIN
-                            || inputUser.role & users_model_1.UserRoles.MODERATOR)) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                        return;
-                    }
                     const noPassword = !inputUser.password;
                     const selectPassword = select && select.includes('password');
                     if (noPassword && !(!select || selectPassword)) {
@@ -45,33 +38,6 @@ let UsersController = class UsersController {
                     if (!noPassword && selectPassword) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
-                    }
-                    if (user.role & users_model_1.UserRoles.COMPANY && !(user.role & users_model_1.UserRoles.ADMIN)) {
-                        if (inputUser.companyId) {
-                            const companyId = user.userId;
-                            let users = [inputUser];
-                            let userId;
-                            let found = false;
-                            while (users[0].companyId) {
-                                userId = users[0].companyId;
-                                users = (await userModel.select(['role', 'companyId', 'userId'], { userId }));
-                                if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.COMPANY)) {
-                                    next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_BAD));
-                                    return;
-                                }
-                                if (users[0].userId === companyId) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!found) {
-                                next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_BAD));
-                                return;
-                            }
-                        }
-                        else {
-                            inputUser.companyId = user.userId;
-                        }
                     }
                     inputUser.password = userModel.getPassword(inputUser);
                     await userModel.create(inputUser, true);
@@ -98,7 +64,7 @@ const safeColumns = [
     'userId',
     'role',
     'name',
-    'companyId',
+    'status',
 ];
 const adminFields = [
     'phoneNumber',

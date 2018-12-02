@@ -16,19 +16,7 @@ properties:
     type: integer
     minimum: 0x8
     maximum: 0x8
-  maintainer:
+  admin:
     type: integer
     minimum: 0x10
     maximum: 0x10
-  company:
-    type: integer
-    minimum: 0x20
-    maximum: 0x20
-  moderator:
-    type: integer
-    minimum: 0x40
-    maximum: 0x40
-  admin:
-    type: integer
-    minimum: 0x80
-    maximum: 0x80

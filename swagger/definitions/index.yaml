@@ -9,20 +9,20 @@ Decimal:
 UserRoles:
   $ref: ./user-roles.yaml
 
-UserBase:
-  $ref: ./user-base.yaml
+UserStatuses:
+  $ref: ./user-statuses.yaml
 
-CreateUser:
-  $ref: ./create-user.yaml
+UserCreate:
+  $ref: ./user-create.yaml
 
-RegisterUser:
-  $ref: ./register-user.yaml
+UserRegister:
+  $ref: ./user-register.yaml
 
 User:
   $ref: ./user.yaml
 
-PasswordUser:
-  $ref: ./password-user.yaml
+UserPassword:
+  $ref: ./user-password.yaml
 
 UserCredentials:
   $ref: ./user-credentials.yaml

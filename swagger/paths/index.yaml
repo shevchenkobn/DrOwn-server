@@ -1,6 +1,9 @@
 /user-roles:
   $ref: ./user-roles.yaml
 
+/user-statuses:
+  $ref: ./user-statuses.yaml
+
 /auth:
   $ref: ./auth.yaml
 

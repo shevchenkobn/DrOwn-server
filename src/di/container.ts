@@ -3,7 +3,7 @@ import { Container } from 'inversify';
 import { DbConnection } from '../services/db-connection.class';
 import { UserModel } from '../models/users.model';
 import { AuthService } from '../services/authentication.class';
-import { UserRolesController } from '../controllers/user-roles.controller';
+import { UserHelpersController } from '../controllers/user-helpers.controller';
 import { UsersController } from '../controllers/users.controller';
 import { AuthController } from '../controllers/auth.controller';
 
@@ -18,7 +18,7 @@ const typeMap = new Map<symbol, any>([
 
   [TYPES.UserModel, UserModel],
 
-  [TYPES.UserRolesController, UserRolesController],
+  [TYPES.UserHelpersController, UserHelpersController],
   [TYPES.AuthController, AuthController],
   [TYPES.UsersController, UsersController],
 ]);

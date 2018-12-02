@@ -2,13 +2,11 @@ x-swagger-router-controller: user-helpers
 
 get:
   tags:
-  - auth
   - users
-  operationId: getUserRoles
+  operationId: getUserStatuses
   summary: Returns all user roles
   responses:
     200:
       description: OK
       schema:
         $ref: '#/definitions/UserRoles'
-

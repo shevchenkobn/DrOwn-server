@@ -93,7 +93,7 @@ export class AuthController {
           //   return;
           // }
 
-          if (inputUser.role & UserRoles.ADMIN || inputUser.role & UserRoles.MODERATOR) {
+          if (inputUser.role & UserRoles.ADMIN) {
             next(new LogicError(ErrorCode.USER_ROLE_BAD));
             return;
           }

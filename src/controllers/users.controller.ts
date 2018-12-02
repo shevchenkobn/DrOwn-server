@@ -17,8 +17,7 @@ export class UsersController {
 
           const columns = getColumns(
             select,
-            !!(user.role & UserRoles.ADMIN
-              || user.role & UserRoles.MODERATOR),
+            !!(user.role & UserRoles.ADMIN),
           );
           if (select && columns.length < select.length) {
             next(new LogicError(ErrorCode.SELECT_BAD));
@@ -38,17 +37,6 @@ export class UsersController {
           const inputUser = (req as any).swagger.params.user.value as IUserSeed;
           const user = (req as any).user as IUser;
 
-          if (
-            !(user.role & UserRoles.ADMIN)
-            && (
-              inputUser.role & UserRoles.ADMIN
-              || inputUser.role & UserRoles.MODERATOR
-            )
-          ) {
-            next(new LogicError(ErrorCode.AUTH_ROLE));
-            return;
-          }
-
           const noPassword = !inputUser.password;
           const selectPassword = select && select.includes('password');
           if (noPassword && !(!select || selectPassword)) {
@@ -58,34 +46,6 @@ export class UsersController {
           if (!noPassword && selectPassword) {
             next(new LogicError(ErrorCode.SELECT_BAD));
             return;
-          }
-
-          if (user.role & UserRoles.COMPANY && !(user.role & UserRoles.ADMIN)) {
-            if (inputUser.companyId) {
-              const companyId = user.userId;
-              let users: IUser[] = [inputUser] as IUser[];
-              let userId;
-              let found = false;
-              while (users[0].companyId) {
-                userId = users[0].companyId;
-                users = (await userModel.select(['role', 'companyId', 'userId'], { userId }));
-
-                if (users.length === 0 || !(users[0].role & UserRoles.COMPANY)) {
-                  next(new LogicError(ErrorCode.USER_COMPANY_BAD));
-                  return;
-                }
-                if (users[0].userId === companyId) {
-                  found = true;
-                  break;
-                }
-              }
-              if (!found) {
-                next(new LogicError(ErrorCode.USER_COMPANY_BAD));
-                return;
-              }
-            } else {
-              inputUser.companyId = user.userId;
-            }
           }
 
           inputUser.password = userModel.getPassword(inputUser);
@@ -110,7 +70,7 @@ const safeColumns: ReadonlyArray<keyof IUser> = [
   'userId',
   'role',
   'name',
-  'companyId',
+  'status',
 ];
 const adminFields: ReadonlyArray<keyof IUser> = [
   'phoneNumber',

@@ -68,7 +68,9 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
           enumerable: true,
         },
       });
-      err.code = ErrorCode.SWAGGER;
+      if (!err.code) {
+        err.code = ErrorCode.SWAGGER;
+      }
       res.status(httpCodeFromSwaggerError);
     } else {
       res.status(500);

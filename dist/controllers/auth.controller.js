@@ -80,7 +80,7 @@ let AuthController = class AuthController {
                     //   next(new LogicError(ErrorCode.USER_COMPANY_BAD));
                     //   return;
                     // }
-                    if (inputUser.role & users_model_1.UserRoles.ADMIN || inputUser.role & users_model_1.UserRoles.MODERATOR) {
+                    if (inputUser.role & users_model_1.UserRoles.ADMIN) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_ROLE_BAD));
                         return;
                     }

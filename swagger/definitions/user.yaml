@@ -1,14 +1,34 @@
 type: object
-allOf:
-- $ref: '#/definitions/UserBase'
 required:
 - email
 - role
 - name
 - cash
 - userId
+- status
 properties:
-  companyId:
-    $ref: '#/definitions/BigInt'
+  email:
+    type: string
+    format: email
+  role:
+    type: integer
+    minimum: 1
+    maximum: 31
+  name:
+    type: string
+  address:
+    type: string
+  phoneNumber:
+    type: string
+    format: ^\\d{1,15}$
+  longitude:
+    type: number
+  latitude:
+    type: number
+  cash:
+    $ref: '#/definitions/Decimal'
   userId:
     $ref: '#/definitions/BigInt'
+  status:
+    type: integer
+    minimum: 0

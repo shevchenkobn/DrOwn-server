@@ -16,11 +16,13 @@ var UserRoles;
     UserRoles[UserRoles["OWNER"] = 2] = "OWNER";
     UserRoles[UserRoles["LANDLORD"] = 4] = "LANDLORD";
     UserRoles[UserRoles["PRODUCER"] = 8] = "PRODUCER";
-    UserRoles[UserRoles["MAINTAINER"] = 16] = "MAINTAINER";
-    UserRoles[UserRoles["COMPANY"] = 32] = "COMPANY";
-    UserRoles[UserRoles["MODERATOR"] = 64] = "MODERATOR";
-    UserRoles[UserRoles["ADMIN"] = 128] = "ADMIN";
+    UserRoles[UserRoles["ADMIN"] = 16] = "ADMIN";
 })(UserRoles = exports.UserRoles || (exports.UserRoles = {}));
+var UserStatus;
+(function (UserStatus) {
+    UserStatus[UserStatus["ACTIVE"] = 1] = "ACTIVE";
+    UserStatus[UserStatus["BLOCKED"] = 2] = "BLOCKED";
+})(UserStatus = exports.UserStatus || (exports.UserStatus = {}));
 function isValidRole(role) {
     return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
 }
@@ -47,9 +49,11 @@ let UserModel = class UserModel {
         const user = {
             email: userSeed.email,
             role: userSeed.role,
+            status: UserStatus.ACTIVE,
             name: userSeed.name,
-            companyId: userSeed.companyId,
             address: userSeed.address,
+            longitude: userSeed.longitude,
+            latitude: userSeed.latitude,
             phoneNumber: userSeed.phoneNumber,
             cash: userSeed.cash,
         };

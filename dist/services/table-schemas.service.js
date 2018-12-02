@@ -24,9 +24,8 @@ const tablesToCreate = new Map([
                 table.string('email', 120).notNullable().unique(`unique_email_${TableName.Users}`);
                 table.string('passwordHash', 60).notNullable();
                 table.integer('role').unsigned().notNullable().defaultTo(0);
+                table.integer('status').unsigned().notNullable().defaultTo(0);
                 table.string('name', 120).notNullable();
-                table.bigInteger('companyId').unsigned().nullable()
-                    .references(`${TableName.Users}.userId`).onDelete('CASCADE');
                 table.string('address', 150).nullable();
                 table.string('phoneNumber', 15).nullable();
                 table.decimal('longitude', 9, 6).nullable();
@@ -174,10 +173,7 @@ async function seedDatabase(knex) {
             | users_model_1.UserRoles.OWNER
             | users_model_1.UserRoles.LANDLORD
             | users_model_1.UserRoles.PRODUCER
-            | users_model_1.UserRoles.MAINTAINER
-            | users_model_1.UserRoles.MODERATOR
-            | users_model_1.UserRoles.ADMIN
-            | users_model_1.UserRoles.COMPANY,
+            | users_model_1.UserRoles.ADMIN,
     };
     await container_1.container.get(types_1.TYPES.UserModel).create(adminUser);
 }

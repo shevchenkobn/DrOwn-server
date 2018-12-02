@@ -41,7 +41,6 @@ post:
   security:
   - Bearer: []
   x-security-scopes:
-  - company
   - admin
   parameters:
   - in: query
@@ -67,11 +66,11 @@ post:
     name: user
     required: true
     schema:
-      $ref: '#/definitions/CreateUser'
+      $ref: '#/definitions/UserCreate'
   responses:
     200:
       description: OK
       schema:
         type: array
         items:
-          $ref: '#/definitions/PasswordUser'
+          $ref: '#/definitions/UserPassword'

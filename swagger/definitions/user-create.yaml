@@ -1,4 +1,8 @@
 type: object
+required:
+- email
+- role
+- name
 properties:
   email:
     type: string
@@ -20,3 +24,8 @@ properties:
     type: number
   cash:
     $ref: '#/definitions/Decimal'
+  password:
+    type: string
+    format: password
+    pattern: ^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,}$
+additionalProperties: false

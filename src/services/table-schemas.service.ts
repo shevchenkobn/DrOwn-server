@@ -26,10 +26,9 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.string('email', 120).notNullable().unique(`unique_email_${TableName.Users}`);
       table.string('passwordHash', 60).notNullable();
       table.integer('role').unsigned().notNullable().defaultTo(0);
+      table.integer('status').unsigned().notNullable().defaultTo(0);
 
       table.string('name', 120).notNullable();
-      table.bigInteger('companyId').unsigned().nullable()
-        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
       table.string('address', 150).nullable();
       table.string('phoneNumber', 15).nullable();
       table.decimal('longitude', 9, 6).nullable();
@@ -200,10 +199,7 @@ export async function seedDatabase(knex: Knex) {
       | UserRoles.OWNER
       | UserRoles.LANDLORD
       | UserRoles.PRODUCER
-      | UserRoles.MAINTAINER
-      | UserRoles.MODERATOR
-      | UserRoles.ADMIN
-      | UserRoles.COMPANY,
+      | UserRoles.ADMIN,
   };
 
   await container.get<UserModel>(TYPES.UserModel).create(adminUser);

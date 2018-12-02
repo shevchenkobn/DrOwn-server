@@ -15,10 +15,12 @@ export enum UserRoles {
   OWNER = 0x2, // Can own, buy, order fixes and sell drones within the app
   LANDLORD = 0x4, // Can lease drones
   PRODUCER = 0x8, // Can add new drones and edit produced
-  MAINTAINER = 0x10, // Can fix drones
-  COMPANY = 0x20, // Can CRUD users-employees and promote them to companies
-  MODERATOR = 0x40, // Can CRUD reviews and reports, fine other users, create users (not moderators)
-  ADMIN = 0x80, // Can CRUD all tables + moderate
+  ADMIN = 0x10, // Can CRUD all tables + moderate
+}
+
+export enum UserStatus {
+  ACTIVE = 1,
+  BLOCKED = 2,
 }
 
 export function isValidRole(role: any): role is UserRoles {
@@ -29,7 +31,7 @@ export interface IUserBase {
   email: string;
   role: UserRoles;
   name: string;
-  companyId?: string | null;
+  status?: UserStatus | null;
   address?: string | null;
   phoneNumber?: string | null;
   longitude?: number | null;
@@ -81,9 +83,11 @@ export class UserModel {
     const user: IUser = {
       email: userSeed.email,
       role: userSeed.role,
+      status: UserStatus.ACTIVE,
       name: userSeed.name,
-      companyId: userSeed.companyId,
       address: userSeed.address,
+      longitude: userSeed.longitude,
+      latitude: userSeed.latitude,
       phoneNumber: userSeed.phoneNumber,
       cash: userSeed.cash,
     } as any;
