@@ -6,12 +6,10 @@ import { IUser, IUserSeed, UserModel, UserRoles } from '../models/users.model';
 
 export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
   Users = 'users',
-  Employees = 'employees',
   Drones = 'drones',
   DroneOrders = 'droneOrders',
   DroneMeasurements = 'droneMeasurements',
   Transactions = 'transactions',
-  Reports = 'reports',
   Notifications = 'notifications',
 }
 
@@ -39,14 +37,6 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.dateTime('refreshTokenExpiration').nullable();
     });
   }],
-  [TableName.Employees, knex => {
-    return knex.schema.createTable(TableName.Employees, table => {
-      table.bigInteger('employeeId').unsigned()
-        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.bigInteger('companyId').unsigned()
-        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-    });
-  }],
   [TableName.Drones, knex => {
     return knex.schema.createTable(TableName.Drones, table => {
       table.bigIncrements('droneId').unsigned()
@@ -56,11 +46,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigInteger('ownerId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
 
-      table.string('deviceId').notNullable();
-      table.string('passwordHash').notNullable();
-      table.string('producer', 120).nullable();
-      table.string('model', 120).notNullable();
-      table.string('serialNumber', 120).notNullable();
+      table.string('deviceId').notNullable().unique(`unique_${TableName.Drones}_device`);
       table.integer('status').unsigned().notNullable();
       table.decimal('baseLongitude', 9, 6).notNullable();
       table.decimal('baseLatitude', 9, 6).notNullable();
@@ -71,9 +57,6 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.boolean('canCarryLiquids').notNullable();
 
       table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
-
-      table.unique(['producer', 'model', 'serialNumber'], `unique_${TableName.Drones}`);
-      table.unique(['deviceId', 'passwordHash'], `unique_${TableName.Drones}_auth`);
     });
   }],
   [TableName.DroneOrders, knex => {
@@ -119,26 +102,6 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.decimal('sum', 8, 2).nullable();
       table.integer('period').unsigned().notNullable().defaultTo(0);
       // knex.text('additionalInfo').nullable();
-    });
-  }],
-  [TableName.Reports, knex => {
-    return knex.schema.createTable(TableName.Reports, table => {
-      table.bigIncrements('reportId')
-        .primary(`pk_${TableName.Reports}`);
-      table.bigInteger('reporterId').unsigned()
-        .references(`${TableName.Users}.userId`).onDelete('SET NULL');
-      table.bigInteger('droneId').unsigned().notNullable()
-        .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
-      table.bigInteger('reportedId').unsigned().nullable()
-        .references(`${TableName.Users}.userId`).onDelete('SET NULL');
-      table.bigInteger('adminId').unsigned().nullable()
-        .references(`${TableName.Users}.userId`).onDelete('SET NULL');
-      table.integer('type').unsigned().notNullable();
-      table.integer('status').unsigned().notNullable();
-      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.string('title', 256).notNullable();
-      table.text('text').notNullable();
-      table.integer('mark').unsigned().nullable();
     });
   }],
   [TableName.Notifications, knex => {
