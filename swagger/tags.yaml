@@ -4,3 +4,5 @@
     **These are the only that don't need access token in headers**
 - name: users
   description: Endpoints for CRUD above users
+- name: drones
+  description: Endpoints for CRUD above drones

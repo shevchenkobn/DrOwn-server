@@ -1,20 +1,15 @@
 type: object
 required:
-  - droneId
-  - producerId
-  - ownerId
-  - deviceId
-  - status
-  - baseLongitude
-  - baseLatitude
-  - batteryPower
-  - enginePower
-  - loadCapacity
-  - canCarryLiquids
-  - isWritingTelemetry
+- deviceId
+- status
+- baseLongitude
+- baseLatitude
+- batteryPower
+- enginePower
+- loadCapacity
+- canCarryLiquids
+- isWritingTelemetry
 properties:
-  droneId:
-    $ref: '#/definitions/BigInt'
   producerId:
     $ref: '#/definitions/BigInt'
   ownerId:

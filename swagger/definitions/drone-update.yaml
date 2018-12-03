@@ -1,27 +1,5 @@
 type: object
-required:
-  - droneId
-  - producerId
-  - ownerId
-  - deviceId
-  - status
-  - baseLongitude
-  - baseLatitude
-  - batteryPower
-  - enginePower
-  - loadCapacity
-  - canCarryLiquids
-  - isWritingTelemetry
 properties:
-  droneId:
-    $ref: '#/definitions/BigInt'
-  producerId:
-    $ref: '#/definitions/BigInt'
-  ownerId:
-    $ref: '#/definitions/BigInt'
-  deviceId:
-    type: string
-    pattern: ^[\da-fA-F]{12}$
   status:
     type: integer
   baseLongitude:

@@ -4,6 +4,12 @@ BigInt:
 Decimal:
   $ref: ./decimal.yaml
 
+Latitude:
+  $ref: ./latitude.yaml
+
+Longitude:
+  $ref: ./longitude.yaml
+
 # User types
 
 UserRoles:
@@ -29,6 +35,17 @@ UserPassword:
 
 UserCredentials:
   $ref: ./user-credentials.yaml
+
+# Drone types
+
+Drone:
+  $ref: ./drone.yaml
+
+DroneCreate:
+  $ref: ./drone-create.yaml
+
+DroneUpdate:
+  $ref: ./drone-update.yaml
 
 # Auth types
 Tokens:

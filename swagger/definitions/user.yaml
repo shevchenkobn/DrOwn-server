@@ -25,9 +25,9 @@ properties:
     type: string
     format: ^\\d{1,15}$
   longitude:
-    type: number
+    $ref: '#/definitions/Longitude'
   latitude:
-    type: number
+    $ref: '#/definitions/Latitude'
   cash:
     $ref: '#/definitions/Decimal'
   userId:
