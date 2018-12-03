@@ -3,24 +3,20 @@ x-swagger-router-controller: users
 parameters:
 - in: path
   name: userId
-  schema:
-    $ref: '#/definitions/BigInt'
-  required: false
-- in: query
-  name: email
+  required: true
+  # NOTE: it is BigInt type, but I am not able to reference it
   type: string
-  format: email
-  required: false
+  description: A BitInt value in string format showing user id to alter
+  pattern: ^\d{0,19}$
 
 patch:
   tags:
   - users
-  summary: |
-    Update User.
-    Specify **either userId or email**, but not both.
-    **If nothing specified, authenticated user will be updated**
-    __If no select field specifed no user will be returned__
-    - If password is set to null it will be automatically generated
+  summary: Update User.
+  description: |
+    _If no select field specifed no user will be returned_
+    - If password is set to empty string it will be automatically generated
+    - For admin **always** specify userId
   operationId: updateUser
   security:
   - Bearer: []
@@ -35,6 +31,7 @@ patch:
       type: string
       enum:
       - userId
+      - email
       - role
       - name
       - companyId
@@ -52,8 +49,8 @@ patch:
   responses:
     200:
       description: OK
-        schema:
-          $ref: '#/definitions/UserPassword'
+      schema:
+        $ref: '#/definitions/UserPassword'
     400:
       $ref: '#/responses/ClientError'
     403:
@@ -62,11 +59,10 @@ patch:
 delete:
   tags:
   - users
-  summary: |
-    Update User.
-    Specify **either userId or email**, but not both.
-    **If nothing specified, authenticated user will be updated**
-    __If no select field specifed no user will be returned__
+  summary: Delete User.
+  description: |
+    _If no select field specifed no user will be returned_
+    - For admin **always** specify userId
   operationId: deleteUser
   security:
   - Bearer: []
@@ -81,6 +77,7 @@ delete:
       type: string
       enum:
       - userId
+      - email
       - role
       - name
       - companyId
@@ -89,12 +86,11 @@ delete:
       - longitude
       - latitude
       - cash
-      - password
   responses:
     200:
       description: OK
-        schema:
-          $ref: '#/definitions/UserPassword'
+      schema:
+        $ref: '#/definitions/UserPassword'
     400:
       $ref: '#/responses/ClientError'
     403:

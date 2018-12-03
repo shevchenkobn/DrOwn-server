@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-// import { isUser } from '../services/validators.service';
 const inversify_1 = require("inversify");
 const types_1 = require("../di/types");
 const bcrypt_1 = require("bcrypt");
@@ -39,38 +38,35 @@ let UserModel = class UserModel {
         const query = where ? this.table.where(where) : this.table;
         return query.select(columns);
     }
-    getPassword(userSeed) {
-        return !userSeed.password
-            ? randomatic('aA0!', exports.maxPasswordLength)
-            : userSeed.password;
+    getPassword() {
+        return randomatic('aA0!', exports.maxPasswordLength);
     }
     async create(userSeed, changeSeed = false) {
         const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
-        const user = {
-            email: userSeed.email,
-            role: userSeed.role,
-            status: UserStatus.ACTIVE,
-            name: userSeed.name,
-            address: userSeed.address,
-            longitude: userSeed.longitude,
-            latitude: userSeed.latitude,
-            phoneNumber: userSeed.phoneNumber,
-            cash: userSeed.cash,
-        };
+        const { password, ...user } = userSeed;
         user.passwordHash = await bcrypt_1.hash(editedUserSeed.password, 13);
         try {
-            await this.table.insert(user);
+            return await this.table.insert(user);
         }
         catch (err) {
-            switch (err.errno) {
-                case 1062:
-                    throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_DUPLICATE_EMAIL);
-                case 1452:
-                    throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_COMPANY_NO);
-            }
-            console.log('register user: ', err);
-            throw new error_service_1.LogicError(error_service_1.ErrorCode.SERVER);
+            handleChangeError(err);
         }
+    }
+    async update(userSeed, whereClause, changeSeed = false) {
+        const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
+        const { password, ...user } = userSeed;
+        if (password) {
+            user.passwordHash = await bcrypt_1.hash(editedUserSeed.password, 13);
+        }
+        try {
+            return await this.table.where(whereClause).update(user);
+        }
+        catch (err) {
+            handleChangeError(err);
+        }
+    }
+    async delete(whereClause) {
+        return this.table.where(whereClause).delete();
     }
 };
 UserModel = tslib_1.__decorate([
@@ -79,4 +75,12 @@ UserModel = tslib_1.__decorate([
     tslib_1.__metadata("design:paramtypes", [db_connection_class_1.DbConnection])
 ], UserModel);
 exports.UserModel = UserModel;
+function handleChangeError(err) {
+    switch (err.errno) {
+        case 1062:
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_DUPLICATE_EMAIL);
+    }
+    console.log('change user error: ', err);
+    throw new error_service_1.LogicError(error_service_1.ErrorCode.SERVER);
+}
 //# sourceMappingURL=users.model.js.map

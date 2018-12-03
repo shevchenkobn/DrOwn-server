@@ -98,7 +98,7 @@ export class AuthController {
             return;
           }
           await userModel.create(inputUser);
-          res.json((await userModel.select(
+          res.status(201).json((await userModel.select(
             getColumns(select, true),
             { email: inputUser.email },
           ))[0]);

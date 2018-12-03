@@ -73,10 +73,8 @@ export class UserModel {
     return query.select(columns as any);
   }
 
-  getPassword(userSeed: IUserSeed) {
-    return !userSeed.password
-      ? randomatic('aA0!', maxPasswordLength)
-      : userSeed.password;
+  getPassword() {
+    return randomatic('aA0!', maxPasswordLength);
   }
 
   async create(userSeed: IUserSeed, changeSeed = false) {
@@ -86,7 +84,7 @@ export class UserModel {
 
     user.passwordHash = await hash(editedUserSeed.password, 13);
     try {
-      await this.table.insert(user);
+      return await this.table.insert(user);
     } catch (err) {
       handleChangeError(err);
     }
@@ -105,7 +103,7 @@ export class UserModel {
       user.passwordHash = await hash(editedUserSeed.password, 13);
     }
     try {
-      await this.table.where(whereClause).update(user);
+      return await this.table.where(whereClause).update(user);
     } catch (err) {
       handleChangeError(err);
     }

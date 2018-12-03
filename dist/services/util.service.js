@@ -26,6 +26,15 @@ function bindCallbackOnExit(callback) {
     }
 }
 exports.bindCallbackOnExit = bindCallbackOnExit;
+function getSafeSwaggerParam(req, name) {
+    return req
+        && req.swagger
+        && req.swagger.params
+        && req.swagger.params[name]
+        && req.swagger.params[name].value
+        || undefined;
+}
+exports.getSafeSwaggerParam = getSafeSwaggerParam;
 function loadSwaggerSchema() {
     return json_refs_1.resolveRefsAt(app_root_path_1.resolve('swagger/index.yaml'), {
         loaderOptions: {

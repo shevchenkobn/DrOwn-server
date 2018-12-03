@@ -77,3 +77,101 @@ post:
         $ref: '#/definitions/UserPassword'
     400:
       $ref: '#/responses/ClientError'
+
+patch:
+  tags:
+  - users
+  summary: Update User.
+  description: |
+    **If no email specified, authenticated user will be updated**
+    _If no select field specifed no user will be returned_
+    - If password is set to empty string it will be automatically generated
+    - For admin **always** specify email
+  operationId: updateUser
+  security:
+  - Bearer: []
+  parameters:
+  - in: query
+    name: email
+    type: string
+    format: email
+    required: false
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - email
+      - role
+      - name
+      - companyId
+      - address
+      - phoneNumber
+      - longitude
+      - latitude
+      - cash
+      - password
+  - in: body
+    name: user
+    required: true
+    schema:
+      $ref: '#/definitions/UserUpdate'
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/UserPassword'
+    400:
+      $ref: '#/responses/ClientError'
+    403:
+      $ref: '#/responses/Forbidden'
+
+delete:
+  tags:
+  - users
+  summary: Delete User.
+  description: |
+    _If no select field specifed no user will be returned_
+    - For admin **always** specify email
+  operationId: deleteUser
+  security:
+  - Bearer: []
+  parameters:
+  - in: query
+    name: email
+    type: string
+    format: email
+    required: false
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - email
+      - role
+      - name
+      - companyId
+      - address
+      - phoneNumber
+      - longitude
+      - latitude
+      - cash
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/UserPassword'
+    400:
+      $ref: '#/responses/ClientError'
+    403:
+      $ref: '#/responses/Forbidden'

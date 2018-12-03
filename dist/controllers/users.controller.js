@@ -5,6 +5,7 @@ const types_1 = require("../di/types");
 const inversify_1 = require("inversify");
 const users_model_1 = require("../models/users.model");
 const error_service_1 = require("../services/error.service");
+const util_service_1 = require("../services/util.service");
 let UsersController = class UsersController {
     constructor(userModel) {
         return {
@@ -39,13 +40,95 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
                     }
-                    inputUser.password = userModel.getPassword(inputUser);
+                    if (!inputUser.password) {
+                        inputUser.password = userModel.getPassword();
+                    }
                     await userModel.create(inputUser, true);
                     const newUser = (await userModel.select(getColumns(select, true), { email: inputUser.email }))[0];
                     if (noPassword) {
                         newUser.password = inputUser.password;
                     }
                     res.json(newUser);
+                }
+                catch (err) {
+                    next(err);
+                }
+            },
+            async updateUser(req, res, next) {
+                try {
+                    const select = req.swagger.params.select.value;
+                    const inputUser = req.swagger.params.user.value;
+                    const userId = util_service_1.getSafeSwaggerParam(req, 'userId');
+                    const email = util_service_1.getSafeSwaggerParam(req, 'email');
+                    const user = req.user;
+                    const [whereClause] = getUserWhereClause(userId, email, user);
+                    const passwordUpdated = inputUser.password === '';
+                    const selectPassword = select && select.length > 0 && select.includes('password');
+                    if (passwordUpdated) {
+                        inputUser.password = userModel.getPassword();
+                        if (!selectPassword) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_NO_SAVE_PASSWORD));
+                            return;
+                        }
+                    }
+                    else if (selectPassword) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
+                        return;
+                    }
+                    if (inputUser.role & users_model_1.UserRoles.ADMIN && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                        return;
+                    }
+                    const affectedRows = await userModel.update(inputUser, whereClause);
+                    if (affectedRows === 0) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                        return;
+                    }
+                    if (select && select.length > 0) {
+                        const newUser = (await userModel.select(getColumns(select, true), whereClause))[0];
+                        if (passwordUpdated) {
+                            newUser.password = inputUser.password;
+                        }
+                        res.json(newUser);
+                    }
+                    else {
+                        res.json({});
+                    }
+                }
+                catch (err) {
+                    next(err);
+                }
+            },
+            async deleteUser(req, res, next) {
+                try {
+                    const select = req.swagger.params.select.value;
+                    const userId = util_service_1.getSafeSwaggerParam(req, 'userId');
+                    const email = util_service_1.getSafeSwaggerParam(req, 'email');
+                    const user = req.user;
+                    const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
+                    let oldUser = null;
+                    if (select && select.length > 0) {
+                        const columns = getColumns(select, true);
+                        oldUser = foreignUser
+                            ? (await userModel.select(columns, whereClause))[0]
+                            : Object.keys(user).reduce((mapped, c) => {
+                                if (columns.includes(c)) {
+                                    mapped[c] = user[c];
+                                }
+                                return mapped;
+                            }, {});
+                    }
+                    const affectedRows = await userModel.delete(whereClause);
+                    if (affectedRows === 0) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                        return;
+                    }
+                    if (oldUser) {
+                        res.json(oldUser);
+                    }
+                    else {
+                        res.json({});
+                    }
                 }
                 catch (err) {
                     next(err);
@@ -62,6 +145,7 @@ UsersController = tslib_1.__decorate([
 exports.UsersController = UsersController;
 const safeColumns = [
     'userId',
+    'email',
     'role',
     'name',
     'status',
@@ -73,7 +157,7 @@ const adminFields = [
     'longitude',
     'latitude',
 ];
-function getColumns(columns, includeAdmin = false) {
+function getColumns(columns, includeAdmin) {
     if (!columns || columns.length === 0) {
         return (includeAdmin ? safeColumns.concat(adminFields) : safeColumns);
     }
@@ -81,4 +165,32 @@ function getColumns(columns, includeAdmin = false) {
         || includeAdmin && adminFields.includes(column));
 }
 exports.getColumns = getColumns;
+function getUserWhereClause(userId, email, user) {
+    if (email && userId) {
+        throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_EMAIL_AND_ID);
+    }
+    let foreignUser = false;
+    let whereClause;
+    if (userId) {
+        foreignUser = user.userId !== userId;
+        if (foreignUser && !(user.role & users_model_1.UserRoles.ADMIN)) {
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE);
+        }
+        whereClause = { userId };
+    }
+    else if (email) {
+        foreignUser = user.email !== email;
+        if (foreignUser && !(user.role & users_model_1.UserRoles.ADMIN)) {
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE);
+        }
+        whereClause = { email };
+    }
+    else if (!(user.role & users_model_1.UserRoles.ADMIN)) {
+        whereClause = { userId: user.userId };
+    }
+    else {
+        throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_EMAIL_AND_ID);
+    }
+    return [whereClause, foreignUser];
+}
 //# sourceMappingURL=users.controller.js.map

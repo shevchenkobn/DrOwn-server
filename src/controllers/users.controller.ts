@@ -3,7 +3,8 @@ import { inject, injectable } from 'inversify';
 import { IUser, IUserSeed, UserModel, UserRoles, WhereClause } from '../models/users.model';
 import { NextFunction, Request, Response } from 'express';
 import { ErrorCode, LogicError } from '../services/error.service';
-import { Maybe } from '../../@types/helpers';
+import { Maybe } from '../@types';
+import { getSafeSwaggerParam } from '../services/util.service';
 
 @injectable()
 export class UsersController {
@@ -49,7 +50,9 @@ export class UsersController {
             return;
           }
 
-          inputUser.password = userModel.getPassword(inputUser);
+          if (!inputUser.password) {
+            inputUser.password = userModel.getPassword();
+          }
           await userModel.create(inputUser, true);
           const newUser = (await userModel.select(
             getColumns(select as any, true),
@@ -58,7 +61,7 @@ export class UsersController {
           if (noPassword) {
             newUser.password = inputUser.password;
           }
-          res.json(newUser);
+          res.status(201).json(newUser);
         } catch (err) {
           next(err);
         }
@@ -69,18 +72,45 @@ export class UsersController {
           const select = (req as any).swagger.params.select.value as
             (keyof IUser)[];
           const inputUser = (req as any).swagger.params.user.value as IUserSeed;
-          const userId = (req as any).swagger.params.userId.value as Maybe<string>;
-          const email = (req as any).swagger.params.email.value as Maybe<string>;
+          const userId = getSafeSwaggerParam<string>(req, 'userId');
+          const email = getSafeSwaggerParam<string>(req, 'email');
           const user = (req as any).user as IUser;
 
-          const whereClause = getUserWhereClause(userId, email, user);
+          const [whereClause] = getUserWhereClause(userId, email, user);
 
-          await userModel.update(inputUser, whereClause);
+          const passwordUpdated = inputUser.password === '';
+          const selectPassword = select && select.length > 0 && select.includes('password' as any);
+          if (passwordUpdated) {
+            inputUser.password = userModel.getPassword();
+            if (!selectPassword) {
+              next(new LogicError(ErrorCode.USER_NO_SAVE_PASSWORD));
+              return;
+            }
+          } else if (selectPassword) {
+            next(new LogicError(ErrorCode.SELECT_BAD));
+            return;
+          }
+
+          if (inputUser.role & UserRoles.ADMIN && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+
+          const affectedRows = await userModel.update(inputUser, whereClause);
+          if (affectedRows === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+
           if (select && select.length > 0) {
-            res.json((await userModel.select(
+            const newUser = (await userModel.select(
               getColumns(select, true),
               whereClause,
-            ))[0]);
+            ))[0];
+            if (passwordUpdated) {
+              newUser.password = inputUser.password;
+            }
+            res.json(newUser);
           } else {
             res.json({});
           }
@@ -93,14 +123,36 @@ export class UsersController {
         try {
           const select = (req as any).swagger.params.select.value as
             (keyof IUser)[];
-          const inputUser = (req as any).swagger.params.user.value as IUserSeed;
-          const userId = (req as any).swagger.params.userId.value as Maybe<string>;
-          const email = (req as any).swagger.params.email.value as Maybe<string>;
+          const userId = getSafeSwaggerParam<string>(req, 'userId');
+          const email = getSafeSwaggerParam<string>(req, 'email');
           const user = (req as any).user as IUser;
 
-          const whereClause = getUserWhereClause(userId, email, user);
+          const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
 
-          await userModel.delete(whereClause);
+          let oldUser: IUser | null = null;
+          if (select && select.length > 0) {
+            const columns = getColumns(select, true);
+            oldUser = foreignUser
+              ? (await userModel.select(columns, whereClause))[0]
+              : Object.keys(user).reduce((mapped, c) => {
+                if (columns.includes(c as any)) {
+                  mapped[c] = (user as any)[c];
+                }
+                return mapped;
+              }, {} as { [field: string]: any });
+          }
+
+          const affectedRows = await userModel.delete(whereClause);
+          if (affectedRows === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+
+          if (oldUser) {
+            res.json(oldUser);
+          } else {
+            res.json({});
+          }
         } catch (err) {
           next(err);
         }
@@ -111,6 +163,7 @@ export class UsersController {
 
 const safeColumns: ReadonlyArray<keyof IUser> = [
   'userId',
+  'email',
   'role',
   'name',
   'status',
@@ -140,15 +193,24 @@ function getUserWhereClause(userId: Maybe<string>, email: Maybe<string>, user: I
     throw new LogicError(ErrorCode.USER_EMAIL_AND_ID);
   }
 
+  let foreignUser = false;
   let whereClause: WhereClause;
   if (userId) {
+    foreignUser = user.userId !== userId;
+    if (foreignUser && !(user.role & UserRoles.ADMIN)) {
+      throw new LogicError(ErrorCode.AUTH_ROLE);
+    }
     whereClause = { userId };
   } else if (email) {
+    foreignUser = user.email !== email;
+    if (foreignUser && !(user.role & UserRoles.ADMIN)) {
+      throw new LogicError(ErrorCode.AUTH_ROLE);
+    }
     whereClause = { email };
-  } else if (user) {
+  } else if (!(user.role & UserRoles.ADMIN)) {
     whereClause = { userId: user.userId };
   } else {
     throw new LogicError(ErrorCode.USER_EMAIL_AND_ID);
   }
-  return whereClause;
+  return [whereClause, foreignUser] as [WhereClause, boolean];
 }
