@@ -68,7 +68,7 @@ export class UserModel {
     this._knex = this._connection.knex;
   }
 
-  select(columns?: ReadonlyArray<keyof IUser>, where?: any) {
+  select(columns?: ReadonlyArray<keyof IUser>, where?: any)  {
     const query = where ? this.table.where(where) : this.table;
     return query.select(columns as any);
   }

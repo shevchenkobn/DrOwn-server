@@ -165,6 +165,7 @@ async function createTables(knex, safe = true, tables = exports.tableNames, forE
     }
 }
 exports.createTables = createTables;
+exports.superAdminUserId = '1';
 async function seedDatabase(knex) {
     const adminData = config.get('server.admin');
     const adminUser = {
@@ -174,6 +175,7 @@ async function seedDatabase(knex) {
             | users_model_1.UserRoles.LANDLORD
             | users_model_1.UserRoles.PRODUCER
             | users_model_1.UserRoles.ADMIN,
+        userId: exports.superAdminUserId,
     };
     await container_1.container.get(types_1.TYPES.UserModel).create(adminUser);
 }

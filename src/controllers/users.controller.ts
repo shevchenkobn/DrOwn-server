@@ -5,6 +5,8 @@ import { NextFunction, Request, Response } from 'express';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { Maybe } from '../@types';
 import { getSafeSwaggerParam } from '../services/util.service';
+import * as config from 'config';
+import { superAdminUserId } from '../services/table-schemas.service';
 
 @injectable()
 export class UsersController {
@@ -129,17 +131,66 @@ export class UsersController {
 
           const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
 
+          if (
+            user.role & UserRoles.ADMIN
+            && 'userId' in whereClause
+            && whereClause.userId === superAdminUserId
+          ) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+
           let oldUser: IUser | null = null;
           if (select && select.length > 0) {
             const columns = getColumns(select, true);
-            oldUser = foreignUser
-              ? (await userModel.select(columns, whereClause))[0]
-              : Object.keys(user).reduce((mapped, c) => {
+            const hadUserIdColumn = columns.includes('userId');
+            if (!hadUserIdColumn) {
+              columns.push('userId');
+            }
+
+            if (foreignUser) {
+              const users = await userModel.select(columns, whereClause);
+              if (users.length === 0) {
+                next(new LogicError(ErrorCode.NOT_FOUND));
+                return;
+              }
+
+              oldUser = users[0];
+              if (oldUser!.userId === superAdminUserId) {
+                next(new LogicError(ErrorCode.AUTH_ROLE));
+                return;
+              }
+
+              if (!hadUserIdColumn) {
+                delete oldUser!.userId;
+              }
+            } else {
+              if (user.userId === superAdminUserId) {
+                next(new LogicError(ErrorCode.AUTH_ROLE));
+                return;
+              }
+              oldUser = Object.keys(user).reduce((mapped, c) => {
                 if (columns.includes(c as any)) {
                   mapped[c] = (user as any)[c];
                 }
                 return mapped;
-              }, {} as { [field: string]: any });
+              }, {} as { [field: string]: any }) as IUser;
+            }
+          } else if (user.role & UserRoles.ADMIN) {
+            if (foreignUser) {
+              const users = await userModel.select(['userId'], whereClause);
+              if (users.length === 0) {
+                next(new LogicError(ErrorCode.NOT_FOUND));
+                return;
+              }
+              if (users[0].userId === superAdminUserId) {
+                next(new LogicError(ErrorCode.AUTH_ROLE));
+                return;
+              }
+            } else if (user.userId  === superAdminUserId) {
+              next(new LogicError(ErrorCode.AUTH_ROLE));
+              return;
+            }
           }
 
           const affectedRows = await userModel.delete(whereClause);

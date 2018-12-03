@@ -6,6 +6,7 @@ const inversify_1 = require("inversify");
 const users_model_1 = require("../models/users.model");
 const error_service_1 = require("../services/error.service");
 const util_service_1 = require("../services/util.service");
+const table_schemas_service_1 = require("../services/table-schemas.service");
 let UsersController = class UsersController {
     constructor(userModel) {
         return {
@@ -48,7 +49,7 @@ let UsersController = class UsersController {
                     if (noPassword) {
                         newUser.password = inputUser.password;
                     }
-                    res.json(newUser);
+                    res.status(201).json(newUser);
                 }
                 catch (err) {
                     next(err);
@@ -106,17 +107,63 @@ let UsersController = class UsersController {
                     const email = util_service_1.getSafeSwaggerParam(req, 'email');
                     const user = req.user;
                     const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
+                    if (user.role & users_model_1.UserRoles.ADMIN
+                        && 'userId' in whereClause
+                        && whereClause.userId === table_schemas_service_1.superAdminUserId) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                        return;
+                    }
                     let oldUser = null;
                     if (select && select.length > 0) {
                         const columns = getColumns(select, true);
-                        oldUser = foreignUser
-                            ? (await userModel.select(columns, whereClause))[0]
-                            : Object.keys(user).reduce((mapped, c) => {
+                        const hadUserIdColumn = columns.includes('userId');
+                        if (!hadUserIdColumn) {
+                            columns.push('userId');
+                        }
+                        if (foreignUser) {
+                            const users = await userModel.select(columns, whereClause);
+                            if (users.length === 0) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                                return;
+                            }
+                            oldUser = users[0];
+                            if (oldUser.userId === table_schemas_service_1.superAdminUserId) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                                return;
+                            }
+                            if (!hadUserIdColumn) {
+                                delete oldUser.userId;
+                            }
+                        }
+                        else {
+                            if (user.userId === table_schemas_service_1.superAdminUserId) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                                return;
+                            }
+                            oldUser = Object.keys(user).reduce((mapped, c) => {
                                 if (columns.includes(c)) {
                                     mapped[c] = user[c];
                                 }
                                 return mapped;
                             }, {});
+                        }
+                    }
+                    else if (user.role & users_model_1.UserRoles.ADMIN) {
+                        if (foreignUser) {
+                            const users = await userModel.select(['userId'], whereClause);
+                            if (users.length === 0) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                                return;
+                            }
+                            if (users[0].userId === table_schemas_service_1.superAdminUserId) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                                return;
+                            }
+                        }
+                        else if (user.userId === table_schemas_service_1.superAdminUserId) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                            return;
+                        }
                     }
                     const affectedRows = await userModel.delete(whereClause);
                     if (affectedRows === 0) {
