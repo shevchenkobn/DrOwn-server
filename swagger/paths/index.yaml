@@ -21,3 +21,6 @@
 
 /drones:
   $ref: ./drones.yaml
+
+/drones/{droneId}:
+  $ref: ./drones-drone-id.yaml

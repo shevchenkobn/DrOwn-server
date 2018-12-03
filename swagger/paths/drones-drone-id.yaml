@@ -1,8 +1,8 @@
-x-swagger-router-controller: users
+x-swagger-router-controller: drones
 
 parameters:
 - in: path
-  name: userId
+  name: droneId
   required: true
   # NOTE: it is BigInt type, but I am not able to reference it
   type: string
@@ -11,15 +11,16 @@ parameters:
 
 patch:
   tags:
-  - users
-  summary: Update User.
+  - drone
+  summary: Update Drone.
   description: |
-    _If no select field specifed no user will be returned_
-    - If password is set to empty string it will be automatically generated
-    - For admin **always** specify userId
-  operationId: updateUser
+    _If no select field specifed no drone will be returned_
+  operationId: updateDrone
   security:
   - Bearer: []
+  x-security-scopes:
+  - admin
+  - producer
   parameters:
   - in: query
     name: select
@@ -30,27 +31,28 @@ patch:
     items:
       type: string
       enum:
-      - userId
-      - email
-      - role
-      - name
-      - companyId
-      - address
-      - phoneNumber
-      - longitude
-      - latitude
-      - cash
-      - password
+      - droneId
+      - producerId
+      - ownerId
+      - deviceId
+      - status
+      - baseLongitude
+      - baseLatitude
+      - batteryPower
+      - enginePower
+      - loadCapacity
+      - canCarryLiquids
+      - isWritingTelemetry
   - in: body
     name: user
     required: true
     schema:
-      $ref: '#/definitions/UserUpdate'
+      $ref: '#/definitions/DroneUpdate'
   responses:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/UserPassword'
+        $ref: '#/definitions/Drone'
     400:
       $ref: '#/responses/ClientError'
     403:
@@ -58,14 +60,16 @@ patch:
 
 delete:
   tags:
-  - users
-  summary: Delete User.
+  - drones
+  summary: Delete Drone.
   description: |
-    _If no select field specifed no user will be returned_
-    - For admin **always** specify userId
-  operationId: deleteUser
+    _If no select field specifed no drone will be returned_
+  operationId: deleteDrone
   security:
   - Bearer: []
+  x-security-scopes:
+  - owner
+  - admin
   parameters:
   - in: query
     name: select
@@ -76,21 +80,23 @@ delete:
     items:
       type: string
       enum:
-      - userId
-      - email
-      - role
-      - name
-      - companyId
-      - address
-      - phoneNumber
-      - longitude
-      - latitude
-      - cash
+      - droneId
+      - producerId
+      - ownerId
+      - deviceId
+      - status
+      - baseLongitude
+      - baseLatitude
+      - batteryPower
+      - enginePower
+      - loadCapacity
+      - canCarryLiquids
+      - isWritingTelemetry
   responses:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/UserPassword'
+        $ref: '#/definitions/Drone'
     400:
       $ref: '#/responses/ClientError'
     403:

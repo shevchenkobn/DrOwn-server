@@ -1,12 +1,10 @@
-x-swagger-router-controller: users
+x-swagger-router-controller: drones
 
 get:
   tags:
-  - users
-  summary: List all users with or without filters and sorting
-  operationId: getUsers
-  security:
-  - Bearer: []
+  - drones
+  summary: List all drones
+  operationId: getDrones
   parameters: # TODO: filters and sort
   - in: query
     name: select
@@ -17,15 +15,49 @@ get:
     items:
       type: string
       enum:
-      - userId
-      - role
-      - name
-      - companyId
-      - address
-      - phoneNumber
-      - longitude
-      - latitude
-      - cash
+      - droneId
+      - producerId
+      - ownerId
+      - deviceId
+      - status
+      - baseLongitude
+      - baseLatitude
+      - batteryPower
+      - enginePower
+      - loadCapacity
+      - canCarryLiquids
+      - isWritingTelemetry
+  - in: query
+    name: engine-power-limits
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 0
+  - in: query
+    name: load-capacity-limits
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 0
+  - in: query
+    name: battery-power-limits
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 0
+  - in: query
+    name: can-carry-liquids
+    required: false
+    type: boolean
   responses:
     200:
       description: OK
@@ -38,13 +70,14 @@ get:
 
 post:
   tags:
-  - users
-  summary: Create User
-  operationId: createUser
+  - drones
+  summary: Create Drone
+  operationId: createDrone
   security:
   - Bearer: []
   x-security-scopes:
   - admin
+  - producer
   parameters:
   - in: query
     name: select
@@ -55,21 +88,23 @@ post:
     items:
       type: string
       enum:
-      - userId
-      - role
-      - name
-      - companyId
-      - address
-      - phoneNumber
-      - longitude
-      - latitude
-      - cash
-      - password
+      - droneId
+      - producerId
+      - ownerId
+      - deviceId
+      - status
+      - baseLongitude
+      - baseLatitude
+      - batteryPower
+      - enginePower
+      - loadCapacity
+      - canCarryLiquids
+      - isWritingTelemetry
   - in: body
-    name: user
+    name: drone
     required: true
     schema:
-      $ref: '#/definitions/UserCreate'
+      $ref: '#/definitions/DroneCreate'
   responses:
     200:
       description: OK
@@ -80,22 +115,22 @@ post:
 
 patch:
   tags:
-  - users
-  summary: Update User.
+  - drones
+  summary: Update Drone.
   description: |
-    **If no email specified, authenticated user will be updated**
-    _If no select field specifed no user will be returned_
-    - If password is set to empty string it will be automatically generated
-    - For admin **always** specify email
-  operationId: updateUser
+    _If no select field specifed no drone will be returned_
+  operationId: updateDrone
   security:
   - Bearer: []
+  x-security-scopes:
+  - admin
+  - producer
   parameters:
   - in: query
-    name: email
+    name: device-id
     type: string
-    format: email
-    required: false
+    pattern: ^[\da-fA-F]{12}$
+    required: true
   - in: query
     name: select
     required: false
@@ -105,27 +140,28 @@ patch:
     items:
       type: string
       enum:
-      - userId
-      - email
-      - role
-      - name
-      - companyId
-      - address
-      - phoneNumber
-      - longitude
-      - latitude
-      - cash
-      - password
+      - droneId
+      - producerId
+      - ownerId
+      - deviceId
+      - status
+      - baseLongitude
+      - baseLatitude
+      - batteryPower
+      - enginePower
+      - loadCapacity
+      - canCarryLiquids
+      - isWritingTelemetry
   - in: body
     name: user
     required: true
     schema:
-      $ref: '#/definitions/UserUpdate'
+      $ref: '#/definitions/DroneUpdate'
   responses:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/UserPassword'
+        $ref: '#/definitions/Drone'
     400:
       $ref: '#/responses/ClientError'
     403:
@@ -133,20 +169,22 @@ patch:
 
 delete:
   tags:
-  - users
-  summary: Delete User.
+  - drones
+  summary: Delete Drone.
   description: |
-    _If no select field specifed no user will be returned_
-    - For admin **always** specify email
-  operationId: deleteUser
+    _If no select field specifed no drone will be returned_
+  operationId: deleteDrone
   security:
   - Bearer: []
+  x-security-scopes:
+  - owner
+  - admin
   parameters:
   - in: query
-    name: email
+    name: device-id
     type: string
-    format: email
-    required: false
+    pattern: ^[\da-fA-F]{12}$
+    required: true
   - in: query
     name: select
     required: false
@@ -156,21 +194,23 @@ delete:
     items:
       type: string
       enum:
-      - userId
-      - email
-      - role
-      - name
-      - companyId
-      - address
-      - phoneNumber
-      - longitude
-      - latitude
-      - cash
+      - droneId
+      - producerId
+      - ownerId
+      - deviceId
+      - status
+      - baseLongitude
+      - baseLatitude
+      - batteryPower
+      - enginePower
+      - loadCapacity
+      - canCarryLiquids
+      - isWritingTelemetry
   responses:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/UserPassword'
+        $ref: '#/definitions/Drone'
     400:
       $ref: '#/responses/ClientError'
     403:

@@ -8,8 +8,10 @@ export const TYPES = {
   AuthService: Symbol.for('AuthService'),
 
   UserModel: Symbol.for('UserModel'),
+  DroneModel: Symbol.for('DroneModel'),
 
   UserHelpersController: Symbol.for('UserHelpersController'),
   AuthController: Symbol.for('AuthController'),
   UsersController: Symbol.for('UsersController'),
+  DronesController: Symbol.for('DronesController'),
 };
