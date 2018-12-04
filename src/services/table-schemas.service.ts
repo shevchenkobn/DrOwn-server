@@ -46,8 +46,9 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigInteger('ownerId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
 
-      table.string('deviceId').notNullable().unique(`unique_${TableName.Drones}_device`);
-      table.integer('status').unsigned().notNullable();
+      table.string('deviceId').notNullable();
+      table.string('passwordHash', 60).nullable();
+      table.integer('status').unsigned().notNullable().defaultTo(0);
       table.decimal('baseLongitude', 9, 6).notNullable();
       table.decimal('baseLatitude', 9, 6).notNullable();
 
@@ -57,6 +58,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.boolean('canCarryLiquids').notNullable();
 
       table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
+
+      table.unique(['deviceId', 'passwordHash'], `unique_${TableName.Drones}_auth`)
     });
   }],
   [TableName.DroneOrders, knex => {
@@ -158,7 +161,7 @@ export const superAdminUserId = '1';
 
 export async function seedDatabase(knex: Knex) {
   const adminData = config.get<{ name: string, password: string, email: string }>('server.admin');
-  const adminUser: IUserSeed & { userId: string }= {
+  const adminUser: IUserSeed & { userId: string } = {
     ...adminData,
     role: UserRoles.CUSTOMER
       | UserRoles.OWNER

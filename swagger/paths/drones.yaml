@@ -28,9 +28,38 @@ get:
       - canCarryLiquids
       - isWritingTelemetry
   - in: query
+    name: producer-ids
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      $ref: '#/definitions/BigInt'
+  - in: query
+    name: owner-ids
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      $ref: '#/definitions/BigInt'
+  - in: query
+    name: battery-power-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 0
+  - in: query
     name: engine-power-limits
     required: false
     type: array
+    minItems: 2
+    maxItems: 2
     collectionFormat: csv
     uniqueItems: true
     items:
@@ -40,15 +69,8 @@ get:
     name: load-capacity-limits
     required: false
     type: array
-    collectionFormat: csv
-    uniqueItems: true
-    items:
-      type: number
-      minimum: 0
-  - in: query
-    name: battery-power-limits
-    required: false
-    type: array
+    minItems: 2
+    maxItems: 2
     collectionFormat: csv
     uniqueItems: true
     items:

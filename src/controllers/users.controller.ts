@@ -1,11 +1,17 @@
 import { TYPES } from '../di/types';
 import { inject, injectable } from 'inversify';
-import { IUser, IUserSeed, UserModel, UserRoles, WhereClause } from '../models/users.model';
+import {
+  IUser,
+  IUserBase,
+  IUserSeed,
+  UserModel,
+  UserRoles,
+  WhereClause,
+} from '../models/users.model';
 import { NextFunction, Request, Response } from 'express';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { Maybe } from '../@types';
 import { getSafeSwaggerParam } from '../services/util.service';
-import * as config from 'config';
 import { superAdminUserId } from '../services/table-schemas.service';
 
 @injectable()
@@ -51,10 +57,12 @@ export class UsersController {
             next(new LogicError(ErrorCode.SELECT_BAD));
             return;
           }
+          checkLocation(inputUser);
 
           if (!inputUser.password) {
             inputUser.password = userModel.getPassword();
           }
+
           await userModel.create(inputUser, true);
           const newUser = (await userModel.select(
             getColumns(select as any, true),
@@ -98,6 +106,8 @@ export class UsersController {
             return;
           }
 
+          checkLocation(inputUser);
+
           const affectedRows = await userModel.update(inputUser, whereClause);
           if (affectedRows === 0) {
             next(new LogicError(ErrorCode.NOT_FOUND));
@@ -131,10 +141,11 @@ export class UsersController {
 
           const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
 
+          const hasEmailInWhere = 'email' in whereClause;
           if (
             user.role & UserRoles.ADMIN
-            && 'userId' in whereClause
-            && whereClause.userId === superAdminUserId
+            && !hasEmailInWhere
+            && (whereClause as { userId: string }).userId === superAdminUserId
           ) {
             next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
@@ -143,8 +154,8 @@ export class UsersController {
           let oldUser: IUser | null = null;
           if (select && select.length > 0) {
             const columns = getColumns(select, true);
-            const hadUserIdColumn = columns.includes('userId');
-            if (!hadUserIdColumn) {
+            const hadUserIdColumn = hasEmailInWhere && columns.includes('userId');
+            if (hasEmailInWhere && !hadUserIdColumn) {
               columns.push('userId');
             }
 
@@ -156,16 +167,17 @@ export class UsersController {
               }
 
               oldUser = users[0];
-              if (oldUser!.userId === superAdminUserId) {
-                next(new LogicError(ErrorCode.AUTH_ROLE));
-                return;
-              }
-
-              if (!hadUserIdColumn) {
-                delete oldUser!.userId;
+              if (hasEmailInWhere) {
+                if (oldUser!.userId === superAdminUserId) {
+                  next(new LogicError(ErrorCode.AUTH_ROLE));
+                  return;
+                }
+                if (!hadUserIdColumn) {
+                  delete oldUser!.userId;
+                }
               }
             } else {
-              if (user.userId === superAdminUserId) {
+              if (hasEmailInWhere && user.userId === superAdminUserId) {
                 next(new LogicError(ErrorCode.AUTH_ROLE));
                 return;
               }
@@ -176,7 +188,7 @@ export class UsersController {
                 return mapped;
               }, {} as { [field: string]: any }) as IUser;
             }
-          } else if (user.role & UserRoles.ADMIN) {
+          } else if (hasEmailInWhere && user.role & UserRoles.ADMIN) {
             if (foreignUser) {
               const users = await userModel.select(['userId'], whereClause);
               if (users.length === 0) {
@@ -264,4 +276,10 @@ function getUserWhereClause(userId: Maybe<string>, email: Maybe<string>, user: I
     throw new LogicError(ErrorCode.USER_EMAIL_AND_ID);
   }
   return [whereClause, foreignUser] as [WhereClause, boolean];
+}
+
+function checkLocation(user: IUserBase) {
+  if ((typeof user.latitude !== 'number') !== (typeof user.longitude !== 'number')) {
+    throw new LogicError(ErrorCode.LOCATION_BAD);
+  }
 }

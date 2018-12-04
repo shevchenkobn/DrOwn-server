@@ -8,6 +8,8 @@ const authentication_class_1 = require("../services/authentication.class");
 const user_helpers_controller_1 = require("../controllers/user-helpers.controller");
 const users_controller_1 = require("../controllers/users.controller");
 const auth_controller_1 = require("../controllers/auth.controller");
+const drones_model_1 = require("../models/drones.model");
+const drones_controller_1 = require("../controllers/drones.controller");
 exports.container = new inversify_1.Container({
     defaultScope: 'Singleton',
 });
@@ -15,9 +17,11 @@ const typeMap = new Map([
     [types_1.TYPES.DbConnection, db_connection_class_1.DbConnection],
     [types_1.TYPES.AuthService, authentication_class_1.AuthService],
     [types_1.TYPES.UserModel, users_model_1.UserModel],
+    [types_1.TYPES.DroneModel, drones_model_1.DroneModel],
     [types_1.TYPES.UserHelpersController, user_helpers_controller_1.UserHelpersController],
     [types_1.TYPES.AuthController, auth_controller_1.AuthController],
     [types_1.TYPES.UsersController, users_controller_1.UsersController],
+    [types_1.TYPES.DronesController, drones_controller_1.DronesController],
 ]);
 for (const [symbol, type] of typeMap) {
     exports.container.bind(symbol).to(type);

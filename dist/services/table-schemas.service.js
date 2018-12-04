@@ -41,8 +41,9 @@ const tablesToCreate = new Map([
                     .references(`${TableName.Users}.userId`).onDelete('SET NULL');
                 table.bigInteger('ownerId').unsigned()
                     .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
-                table.string('deviceId').notNullable().unique(`unique_${TableName.Drones}_device`);
-                table.integer('status').unsigned().notNullable();
+                table.string('deviceId').notNullable();
+                table.string('passwordHash', 60).nullable();
+                table.integer('status').unsigned().notNullable().defaultTo(0);
                 table.decimal('baseLongitude', 9, 6).notNullable();
                 table.decimal('baseLatitude', 9, 6).notNullable();
                 table.integer('batteryPower').unsigned().notNullable();
@@ -50,6 +51,7 @@ const tablesToCreate = new Map([
                 table.integer('loadCapacity').unsigned().notNullable();
                 table.boolean('canCarryLiquids').notNullable();
                 table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
+                table.unique(['deviceId', 'passwordHash'], `unique_${TableName.Drones}_auth`);
             });
         }],
     [TableName.DroneOrders, knex => {
