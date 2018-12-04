@@ -1,7 +1,7 @@
 type: object
 properties:
-  status:
-    type: integer
+  ownerId:
+    $ref: '#/definitions/BigInt'
   baseLongitude:
     $ref: '#/definitions/Longitude'
   baseLatitude:

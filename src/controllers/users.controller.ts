@@ -50,7 +50,7 @@ export class UsersController {
           const noPassword = !inputUser.password;
           const selectPassword = select && select.includes('password');
           if (noPassword && !(!select || selectPassword)) {
-            next(new LogicError(ErrorCode.USER_NO_SAVE_PASSWORD));
+            next(new LogicError(ErrorCode.USER_PASSWORD_SAVE_NO));
             return;
           }
           if (!noPassword && selectPassword) {
@@ -93,7 +93,7 @@ export class UsersController {
           if (passwordUpdated) {
             inputUser.password = userModel.getPassword();
             if (!selectPassword) {
-              next(new LogicError(ErrorCode.USER_NO_SAVE_PASSWORD));
+              next(new LogicError(ErrorCode.USER_PASSWORD_SAVE_NO));
               return;
             }
           } else if (selectPassword) {
@@ -253,7 +253,7 @@ export function getColumns(
 
 function getUserWhereClause(userId: Maybe<string>, email: Maybe<string>, user: IUser) {
   if (email && userId) {
-    throw new LogicError(ErrorCode.USER_EMAIL_AND_ID);
+    throw new LogicError(ErrorCode.USER_ID_EMAIL);
   }
 
   let foreignUser = false;
@@ -273,7 +273,7 @@ function getUserWhereClause(userId: Maybe<string>, email: Maybe<string>, user: I
   } else if (!(user.role & UserRoles.ADMIN)) {
     whereClause = { userId: user.userId };
   } else {
-    throw new LogicError(ErrorCode.USER_EMAIL_AND_ID);
+    throw new LogicError(ErrorCode.USER_ID_EMAIL);
   }
   return [whereClause, foreignUser] as [WhereClause, boolean];
 }

@@ -86,7 +86,7 @@ get:
       schema:
         type: array
         items:
-          $ref: '#/definitions/User'
+          $ref: '#/definitions/Drone'
     400:
       $ref: '#/responses/ClientError'
 
@@ -131,7 +131,7 @@ post:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/UserPassword'
+        $ref: '#/definitions/Drone'
     400:
       $ref: '#/responses/ClientError'
 
@@ -146,7 +146,7 @@ patch:
   - Bearer: []
   x-security-scopes:
   - admin
-  - producer
+  - owner
   parameters:
   - in: query
     name: device-id

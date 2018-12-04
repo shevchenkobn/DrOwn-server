@@ -20,7 +20,7 @@ patch:
   - Bearer: []
   x-security-scopes:
   - admin
-  - producer
+  - owner
   parameters:
   - in: query
     name: select

@@ -78,7 +78,7 @@ exports.UserModel = UserModel;
 function handleChangeError(err) {
     switch (err.errno) {
         case 1062:
-            throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_DUPLICATE_EMAIL);
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_EMAIL_DUPLICATE);
     }
     console.log('change user error: ', err);
     throw new error_service_1.LogicError(error_service_1.ErrorCode.SERVER);

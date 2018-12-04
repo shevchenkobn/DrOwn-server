@@ -1,7 +1,6 @@
 type: object
 required:
 - deviceId
-- status
 - batteryPower
 - enginePower
 - loadCapacity
@@ -15,8 +14,6 @@ properties:
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
-  status:
-    type: integer
   baseLongitude:
     $ref: '#/definitions/Longitude'
   baseLatitude:

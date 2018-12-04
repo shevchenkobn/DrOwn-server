@@ -117,7 +117,7 @@ export class UserModel {
 function handleChangeError(err: any): never {
   switch (err.errno) {
     case 1062:
-      throw new LogicError(ErrorCode.USER_DUPLICATE_EMAIL);
+      throw new LogicError(ErrorCode.USER_EMAIL_DUPLICATE);
   }
 
   console.log('change user error: ', err);

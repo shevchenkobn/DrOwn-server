@@ -34,7 +34,7 @@ let UsersController = class UsersController {
                     const noPassword = !inputUser.password;
                     const selectPassword = select && select.includes('password');
                     if (noPassword && !(!select || selectPassword)) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_NO_SAVE_PASSWORD));
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_PASSWORD_SAVE_NO));
                         return;
                     }
                     if (!noPassword && selectPassword) {
@@ -68,7 +68,7 @@ let UsersController = class UsersController {
                     if (passwordUpdated) {
                         inputUser.password = userModel.getPassword();
                         if (!selectPassword) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_NO_SAVE_PASSWORD));
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_PASSWORD_SAVE_NO));
                             return;
                         }
                     }
@@ -214,7 +214,7 @@ function getColumns(columns, includeAdmin) {
 exports.getColumns = getColumns;
 function getUserWhereClause(userId, email, user) {
     if (email && userId) {
-        throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_EMAIL_AND_ID);
+        throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_ID_EMAIL);
     }
     let foreignUser = false;
     let whereClause;
@@ -236,7 +236,7 @@ function getUserWhereClause(userId, email, user) {
         whereClause = { userId: user.userId };
     }
     else {
-        throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_EMAIL_AND_ID);
+        throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_ID_EMAIL);
     }
     return [whereClause, foreignUser];
 }

@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
 import { TableName } from '../services/table-schemas.service';
-import { IUser } from './users.model';
+import { ErrorCode, LogicError } from '../services/error.service';
 
 export enum DroneStatus {
   UNAUTHORIZED = 0,
@@ -33,6 +33,8 @@ export interface IDrone extends IDroneInput{
   baseLongitude: number;
 }
 
+export type WhereClause = { droneId: string } | { deviceId: string };
+
 @injectable()
 export class DroneModel {
   private readonly _connection: DbConnection;
@@ -53,4 +55,43 @@ export class DroneModel {
     const query = where ? this.table.where(where) : this.table;
     return query.select(columns as any);
   }
+
+  async create(drone: IDroneInput) {
+    try {
+      return await this.table.insert(drone);
+    } catch (err) {
+      handleChangeError(err);
+    }
+  }
+
+  async update(drone: IDroneInput, whereClause: WhereClause) {
+    try {
+      return await this.table.where(whereClause).insert(drone);
+    } catch (err) {
+      handleChangeError(err);
+    }
+  }
+
+  delete(whereClause: WhereClause) {
+    return this.table.where(whereClause).delete();
+  }
+}
+
+function handleChangeError(err: any): never {
+  switch (err.errno) {
+    case 1062:
+      // TODO: investigate if caught correctly
+      throw new LogicError(ErrorCode.DRONE_DEVICE_ID_BAD);
+
+    case 1452:
+      // TODO: investigate if caught correctly
+      if (err.message.includes('ownerId')) {
+        throw new LogicError(ErrorCode.DRONE_OWNER_BAD);
+      } else if (err.message.includes('producerId')) {
+        throw new LogicError(ErrorCode.DRONE_PRODUCER_BAD);
+      }
+  }
+
+  console.log('change user error: ', err);
+  throw new LogicError(ErrorCode.SERVER);
 }
