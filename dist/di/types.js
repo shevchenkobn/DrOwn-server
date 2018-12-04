@@ -11,5 +11,6 @@ exports.TYPES = {
     AuthController: Symbol.for('AuthController'),
     UsersController: Symbol.for('UsersController'),
     DronesController: Symbol.for('DronesController'),
+    DroneHelpersController: Symbol.for('DroneHelpersController'),
 };
 //# sourceMappingURL=types.js.map

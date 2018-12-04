@@ -4,9 +4,9 @@ get:
   tags:
   - users
   operationId: getUserStatuses
-  summary: Returns all user roles
+  summary: Returns all user statuses
   responses:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/UserRoles'
+        $ref: '#/definitions/UserStatuses'

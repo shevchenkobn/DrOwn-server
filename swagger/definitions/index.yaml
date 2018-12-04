@@ -47,6 +47,9 @@ DroneCreate:
 DroneUpdate:
   $ref: ./drone-update.yaml
 
+DroneStatuses:
+  $ref: ./drone-statuses.yaml
+
 # Auth types
 Tokens:
   $ref: ./tokens.yaml

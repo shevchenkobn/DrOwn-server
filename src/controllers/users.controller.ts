@@ -86,7 +86,7 @@ export class UsersController {
           const email = getSafeSwaggerParam<string>(req, 'email');
           const user = (req as any).user as IUser;
 
-          const [whereClause] = getUserWhereClause(userId, email, user);
+          const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
 
           const passwordUpdated = inputUser.password === '';
           const selectPassword = select && select.length > 0 && select.includes('password' as any);

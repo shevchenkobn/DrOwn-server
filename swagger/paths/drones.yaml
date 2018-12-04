@@ -5,7 +5,7 @@ get:
   - drones
   summary: List all drones
   operationId: getDrones
-  parameters: # TODO: filters and sort
+  parameters:
   - in: query
     name: select
     required: false
@@ -34,7 +34,9 @@ get:
     collectionFormat: csv
     uniqueItems: true
     items:
-      $ref: '#/definitions/BigInt'
+      # NOTE: it is BigInt type, but I am not able to reference it
+      type: string
+      pattern: ^\d{1,19}$
   - in: query
     name: owner-ids
     required: false
@@ -42,7 +44,9 @@ get:
     collectionFormat: csv
     uniqueItems: true
     items:
-      $ref: '#/definitions/BigInt'
+      # NOTE: it is BigInt type, but I am not able to reference it
+      type: string
+      pattern: ^\d{1,19}$
   - in: query
     name: battery-power-limits
     required: false

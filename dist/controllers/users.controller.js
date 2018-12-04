@@ -41,6 +41,7 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
                     }
+                    checkLocation(inputUser);
                     if (!inputUser.password) {
                         inputUser.password = userModel.getPassword();
                     }
@@ -62,7 +63,7 @@ let UsersController = class UsersController {
                     const userId = util_service_1.getSafeSwaggerParam(req, 'userId');
                     const email = util_service_1.getSafeSwaggerParam(req, 'email');
                     const user = req.user;
-                    const [whereClause] = getUserWhereClause(userId, email, user);
+                    const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
                     const passwordUpdated = inputUser.password === '';
                     const selectPassword = select && select.length > 0 && select.includes('password');
                     if (passwordUpdated) {
@@ -80,6 +81,7 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
                     }
+                    checkLocation(inputUser);
                     const affectedRows = await userModel.update(inputUser, whereClause);
                     if (affectedRows === 0) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
@@ -107,8 +109,9 @@ let UsersController = class UsersController {
                     const email = util_service_1.getSafeSwaggerParam(req, 'email');
                     const user = req.user;
                     const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
+                    const hasEmailInWhere = 'email' in whereClause;
                     if (user.role & users_model_1.UserRoles.ADMIN
-                        && 'userId' in whereClause
+                        && !hasEmailInWhere
                         && whereClause.userId === table_schemas_service_1.superAdminUserId) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
@@ -116,8 +119,8 @@ let UsersController = class UsersController {
                     let oldUser = null;
                     if (select && select.length > 0) {
                         const columns = getColumns(select, true);
-                        const hadUserIdColumn = columns.includes('userId');
-                        if (!hadUserIdColumn) {
+                        const hadUserIdColumn = hasEmailInWhere && columns.includes('userId');
+                        if (hasEmailInWhere && !hadUserIdColumn) {
                             columns.push('userId');
                         }
                         if (foreignUser) {
@@ -127,16 +130,18 @@ let UsersController = class UsersController {
                                 return;
                             }
                             oldUser = users[0];
-                            if (oldUser.userId === table_schemas_service_1.superAdminUserId) {
-                                next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                                return;
-                            }
-                            if (!hadUserIdColumn) {
-                                delete oldUser.userId;
+                            if (hasEmailInWhere) {
+                                if (oldUser.userId === table_schemas_service_1.superAdminUserId) {
+                                    next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                                    return;
+                                }
+                                if (!hadUserIdColumn) {
+                                    delete oldUser.userId;
+                                }
                             }
                         }
                         else {
-                            if (user.userId === table_schemas_service_1.superAdminUserId) {
+                            if (hasEmailInWhere && user.userId === table_schemas_service_1.superAdminUserId) {
                                 next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                                 return;
                             }
@@ -148,7 +153,7 @@ let UsersController = class UsersController {
                             }, {});
                         }
                     }
-                    else if (user.role & users_model_1.UserRoles.ADMIN) {
+                    else if (hasEmailInWhere && user.role & users_model_1.UserRoles.ADMIN) {
                         if (foreignUser) {
                             const users = await userModel.select(['userId'], whereClause);
                             if (users.length === 0) {
@@ -239,5 +244,10 @@ function getUserWhereClause(userId, email, user) {
         throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_ID_EMAIL);
     }
     return [whereClause, foreignUser];
+}
+function checkLocation(user) {
+    if ((typeof user.latitude !== 'number') !== (typeof user.longitude !== 'number')) {
+        throw new error_service_1.LogicError(error_service_1.ErrorCode.LOCATION_BAD);
+    }
 }
 //# sourceMappingURL=users.controller.js.map

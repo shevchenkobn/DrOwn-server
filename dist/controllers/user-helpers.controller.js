@@ -3,26 +3,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 const users_model_1 = require("../models/users.model");
 const inversify_1 = require("inversify");
+const util_service_1 = require("../services/util.service");
 let UserHelpersController = class UserHelpersController {
     constructor() {
         return {
             getUserRoles(req, res) {
-                res.json(Object.keys(users_model_1.UserRoles).reduce((values, key) => {
-                    if (!Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
-                        return values;
-                    }
-                    values[key.toLowerCase()] = users_model_1.UserRoles[key];
-                    return values;
-                }, {}));
+                res.json(util_service_1.enumToObject(users_model_1.UserRoles));
             },
             getUserStatuses(req, res) {
-                res.json(Object.keys(users_model_1.UserStatus).reduce((values, key) => {
-                    if (!Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
-                        return values;
-                    }
-                    values[key.toLowerCase()] = users_model_1.UserStatus[key];
-                    return values;
-                }, {}));
+                res.json(util_service_1.enumToObject(users_model_1.UserStatus));
             },
         };
     }

@@ -11,7 +11,7 @@ parameters:
 
 patch:
   tags:
-  - drone
+  - drones
   summary: Update Drone.
   description: |
     _If no select field specifed no drone will be returned_

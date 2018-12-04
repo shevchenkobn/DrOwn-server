@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import { DroneModel, DroneStatus, IDrone, IDroneInput, WhereClause } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { NextFunction, Request, Response } from 'express';
-import { IUser, UserRoles } from '../models/users.model';
+import { IUser, UserModel, UserRoles, UserStatus } from '../models/users.model';
 import { Maybe } from '../@types';
 import { getSafeSwaggerParam } from '../services/util.service';
 
@@ -11,6 +11,7 @@ import { getSafeSwaggerParam } from '../services/util.service';
 export class DronesController {
   constructor(
     @inject(TYPES.DroneModel) droneModel: DroneModel,
+    @inject(TYPES.UserModel) userModel: UserModel,
   ) {
     return {
       async getDrones(req: Request, res: Response, next: NextFunction) {
@@ -97,6 +98,8 @@ export class DronesController {
               return;
             }
             drone.ownerId = user.userId;
+          } else {
+            const users = await .select(['role'])
           }
           if (!drone.producerId) {
             if (user.role & UserRoles.ADMIN && !(user.role & UserRoles.PRODUCER)) {
@@ -132,6 +135,10 @@ export class DronesController {
 
           if (droneUpdate.ownerId && !(user.role & UserRoles.ADMIN)) {
             next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+          if (user.status === UserStatus.BLOCKED && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.USER_BLOCKED));
             return;
           }
 

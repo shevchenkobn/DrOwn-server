@@ -1,0 +1,12 @@
+x-swagger-router-controller: drone-helpers
+
+get:
+  tags:
+  - drones
+  operationId: getDroneStatuses
+  summary: Returns all drone statuses
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/DroneStatuses'

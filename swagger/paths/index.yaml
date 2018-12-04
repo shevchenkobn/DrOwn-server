@@ -24,3 +24,6 @@
 
 /drones/{droneId}:
   $ref: ./drones-drone-id.yaml
+
+/drone-statuses:
+  $ref: ./drone-statuses.yaml

@@ -8,6 +8,7 @@ import { UsersController } from '../controllers/users.controller';
 import { AuthController } from '../controllers/auth.controller';
 import { DroneModel } from '../models/drones.model';
 import { DronesController } from '../controllers/drones.controller';
+import { DroneHelpersController } from '../controllers/drone-helpers.controller';
 
 export const container = new Container({
   defaultScope: 'Singleton',
@@ -25,6 +26,7 @@ const typeMap = new Map<symbol, any>([
   [TYPES.AuthController, AuthController],
   [TYPES.UsersController, UsersController],
   [TYPES.DronesController, DronesController],
+  [TYPES.DroneHelpersController, DroneHelpersController],
 ]);
 
 for (const [symbol, type] of typeMap) {

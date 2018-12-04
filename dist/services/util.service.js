@@ -54,29 +54,15 @@ function loadSwaggerSchema() {
     });
 }
 exports.loadSwaggerSchema = loadSwaggerSchema;
-// export async function loadSwaggerSchema() {
-//   const schema = await resolveRefs(
-//     (await resolveRefsAt(resolve('swagger/index.yaml'), {
-//       loaderOptions: {
-//         processContent(content: { text: string }, callback: (err: any, obj?: any) => void) {
-//           try {
-//             callback(null, YAML.load(content.text));
-//           } catch (err) {
-//             // TODO: log error
-//             console.log(err);
-//             callback(err);
-//           }
-//         },
-//       },
-//       resolveCirculars: false,
-//       includeInvalid: false,
-//     })).resolved,
-//     {
-//       resolveCirculars: false,
-//       includeInvalid: false,
-//     },
-//   );
-//   schema.resolved = mergeSchemaAllOf(schema.resolved);
-//   return schema;
-// }
+function enumToObject(enumType) {
+    const values = {};
+    for (const key of Object.keys(enumType)) {
+        if (!Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
+            return values;
+        }
+        values[key.toLowerCase()] = enumType[key];
+    }
+    return values;
+}
+exports.enumToObject = enumToObject;
 //# sourceMappingURL=util.service.js.map
