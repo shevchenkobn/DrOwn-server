@@ -44,7 +44,7 @@ patch:
       - canCarryLiquids
       - isWritingTelemetry
   - in: body
-    name: user
+    name: drone
     required: true
     schema:
       $ref: '#/definitions/DroneUpdate'

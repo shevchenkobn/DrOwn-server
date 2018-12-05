@@ -30,6 +30,7 @@ let DronesController = class DronesController {
                         enginePowerLimits.sort();
                     }
                     const loadCapacityLimits = util_service_1.getSafeSwaggerParam(req, 'load-capacity-limits');
+                    const statuses = util_service_1.getSafeSwaggerParam(req, 'load-capacity-limits');
                     if (loadCapacityLimits) {
                         loadCapacityLimits.sort();
                     }
@@ -52,6 +53,9 @@ let DronesController = class DronesController {
                     }
                     if (typeof canCarryLiquids === 'boolean') {
                         query.andWhere({ canCarryLiquids });
+                    }
+                    if (statuses) {
+                        query.whereIn('status', statuses);
                     }
                     console.debug(query.toSQL());
                     res.json(await query);
@@ -163,31 +167,31 @@ let DronesController = class DronesController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
                         return;
                     }
-                    const drone = drones[0];
-                    if (!(user.role & users_model_1.UserRoles.ADMIN) && drone.ownerId !== user.userId) {
+                    const droneFromDB = drones[0];
+                    if (!(user.role & users_model_1.UserRoles.ADMIN) && droneFromDB.ownerId !== user.userId) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
                     }
-                    if (drone.status === drones_model_1.DroneStatus.UNAUTHORIZED) {
+                    if (droneFromDB.status === drones_model_1.DroneStatus.UNAUTHORIZED) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_UNAUTHORIZED));
                         return;
                     }
-                    if (drone.status === drones_model_1.DroneStatus.RENTED
-                        && !('isWritingTelemetry' in drone
-                            && Object.keys(drone).length === 1)) {
+                    if (droneFromDB.status === drones_model_1.DroneStatus.RENTED
+                        && !('isWritingTelemetry' in droneFromDB
+                            && Object.keys(droneFromDB).length === 1)) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_RENTED));
                         return;
                     }
                     checkLocation(droneUpdate);
-                    await droneModel.update(drone, whereClause);
+                    await droneModel.update(droneUpdate, whereClause);
                     if (returnDrone) {
                         if (!hadOwnerId) {
-                            delete drone.ownerId;
+                            delete droneFromDB.ownerId;
                         }
                         if (!hadStatus) {
-                            delete drone.status;
+                            delete droneFromDB.status;
                         }
-                        res.json(drone);
+                        res.json(droneFromDB);
                     }
                     else {
                         res.json({});
@@ -242,7 +246,11 @@ let DronesController = class DronesController {
                             return;
                         }
                     }
-                    await droneModel.delete(whereClause);
+                    const affectedRows = await droneModel.delete(whereClause);
+                    if (affectedRows === 0) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                        return;
+                    }
                     if (drone) {
                         if (!hadOwnerId) {
                             delete drone.ownerId;
@@ -299,7 +307,7 @@ function checkLocation(drone) {
     }
 }
 function getDroneWhereClause(req) {
-    const droneId = util_service_1.getSafeSwaggerParam(req, 'drone-id');
+    const droneId = util_service_1.getSafeSwaggerParam(req, 'droneId');
     if (droneId) {
         return { droneId };
     }

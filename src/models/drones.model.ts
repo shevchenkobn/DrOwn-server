@@ -66,7 +66,7 @@ export class DroneModel {
 
   async update(drone: IDroneInput, whereClause: WhereClause) {
     try {
-      return await this.table.where(whereClause).insert(drone);
+      return await this.table.where(whereClause).update(drone);
     } catch (err) {
       handleChangeError(err);
     }

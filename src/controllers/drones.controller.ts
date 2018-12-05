@@ -45,6 +45,11 @@ export class DronesController {
             req,
             'load-capacity-limits',
           );
+          const statuses = getSafeSwaggerParam<number[]>(
+            req,
+            'load-capacity-limits',
+          );
+
           if (loadCapacityLimits) {
             loadCapacityLimits.sort();
           }
@@ -74,6 +79,9 @@ export class DronesController {
           }
           if (typeof canCarryLiquids === 'boolean') {
             query.andWhere({ canCarryLiquids });
+          }
+          if (statuses) {
+            query.whereIn('status', statuses);
           }
 
           console.debug(query.toSQL());
@@ -224,23 +232,23 @@ export class DronesController {
             next(new LogicError(ErrorCode.NOT_FOUND));
             return;
           }
-          const drone: IDrone = drones[0];
+          const droneFromDB: IDrone = drones[0];
 
           if (!(
             user.role & UserRoles.ADMIN
-          ) && drone.ownerId !== user.userId) {
+          ) && droneFromDB.ownerId !== user.userId) {
             next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
           }
-          if (drone.status === DroneStatus.UNAUTHORIZED) {
+          if (droneFromDB.status === DroneStatus.UNAUTHORIZED) {
             next(new LogicError(ErrorCode.DRONE_UNAUTHORIZED));
             return;
           }
           if (
-            drone.status === DroneStatus.RENTED
+            droneFromDB.status === DroneStatus.RENTED
             && !(
-              'isWritingTelemetry' in drone
-              && Object.keys(drone).length === 1
+              'isWritingTelemetry' in droneFromDB
+              && Object.keys(droneFromDB).length === 1
             )
           ) {
             next(new LogicError(ErrorCode.DRONE_RENTED));
@@ -249,15 +257,15 @@ export class DronesController {
 
           checkLocation(droneUpdate);
 
-          await droneModel.update(drone, whereClause);
+          await droneModel.update(droneUpdate, whereClause);
           if (returnDrone) {
             if (!hadOwnerId) {
-              delete drone.ownerId;
+              delete droneFromDB.ownerId;
             }
             if (!hadStatus) {
-              delete drone.status;
+              delete droneFromDB.status;
             }
-            res.json(drone);
+            res.json(droneFromDB);
           } else {
             res.json({});
           }
@@ -322,7 +330,11 @@ export class DronesController {
             }
           }
 
-          await droneModel.delete(whereClause);
+          const affectedRows = await droneModel.delete(whereClause);
+          if (affectedRows === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
 
           if (drone) {
             if (!hadOwnerId) {
@@ -381,7 +393,7 @@ function checkLocation(drone: IDroneInput) {
 }
 
 function getDroneWhereClause(req: Request): WhereClause {
-  const droneId = getSafeSwaggerParam<string>(req, 'drone-id');
+  const droneId = getSafeSwaggerParam<string>(req, 'droneId');
   if (droneId) {
     return { droneId };
   }

@@ -35,7 +35,7 @@ let DroneModel = class DroneModel {
     }
     async update(drone, whereClause) {
         try {
-            return await this.table.where(whereClause).insert(drone);
+            return await this.table.where(whereClause).update(drone);
         }
         catch (err) {
             handleChangeError(err);

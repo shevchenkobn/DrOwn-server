@@ -63,6 +63,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
         res.status(500);
         break;
 
+      case ErrorCode.NOT_FOUND:
+        res.status(404);
+        break;
+
       default:
         res.status(400);
         break;

@@ -33,6 +33,7 @@ get:
     type: array
     collectionFormat: csv
     uniqueItems: true
+    minItems: 1
     items:
       # NOTE: it is BigInt type, but I am not able to reference it
       type: string
@@ -43,6 +44,7 @@ get:
     type: array
     collectionFormat: csv
     uniqueItems: true
+    minItems: 1
     items:
       # NOTE: it is BigInt type, but I am not able to reference it
       type: string
@@ -84,6 +86,15 @@ get:
     name: can-carry-liquids
     required: false
     type: boolean
+  - in: query
+    name: statuses
+    type: array
+    collectionFormat: csv
+    required: false
+    items:
+      type: number
+      minimum: -1
+      maximum: 3
   responses:
     200:
       description: OK
@@ -179,7 +190,7 @@ patch:
       - canCarryLiquids
       - isWritingTelemetry
   - in: body
-    name: user
+    name: drone
     required: true
     schema:
       $ref: '#/definitions/DroneUpdate'
