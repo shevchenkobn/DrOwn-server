@@ -7,29 +7,34 @@ const drones_model_1 = require("../models/drones.model");
 const error_service_1 = require("../services/error.service");
 const users_model_1 = require("../models/users.model");
 const util_service_1 = require("../services/util.service");
+const authentication_class_1 = require("../services/authentication.class");
 let DronesController = class DronesController {
-    constructor(droneModel) {
+    constructor(droneModel, userModel, authService) {
         return {
             async getDrones(req, res, next) {
                 try {
-                    const user = req.user;
+                    let user = null;
+                    try {
+                        user = await authService.getUserFromRequest(req);
+                    }
+                    catch { }
                     const producerIds = util_service_1.getSafeSwaggerParam(req, 'producer-ids');
-                    const ownerIds = util_service_1.getSafeSwaggerParam(req, 'producer-ids');
+                    const ownerIds = util_service_1.getSafeSwaggerParam(req, 'owner-ids');
                     const select = req.swagger.params.select.value;
                     const batteryPowerLimits = util_service_1.getSafeSwaggerParam(req, 'battery-power-limits');
                     if (batteryPowerLimits) {
                         batteryPowerLimits.sort();
                     }
-                    const enginePowerLimits = util_service_1.getSafeSwaggerParam(req, 'battery-power-limits');
+                    const enginePowerLimits = util_service_1.getSafeSwaggerParam(req, 'engine-power-limits');
                     if (enginePowerLimits) {
                         enginePowerLimits.sort();
                     }
-                    const loadCapacityLimits = util_service_1.getSafeSwaggerParam(req, 'battery-power-limits');
+                    const loadCapacityLimits = util_service_1.getSafeSwaggerParam(req, 'load-capacity-limits');
                     if (loadCapacityLimits) {
                         loadCapacityLimits.sort();
                     }
                     const canCarryLiquids = util_service_1.getSafeSwaggerParam(req, 'can-carry-liquids');
-                    const query = droneModel.table.columns(getColumns(select, !!(user.role & users_model_1.UserRoles.ADMIN) || !!(ownerIds && ownerIds.length && ownerIds[0] === user.userId)));
+                    const query = droneModel.table.columns(getColumns(select, !!user && (!!(user.role & users_model_1.UserRoles.ADMIN) || !!(ownerIds && ownerIds.length && ownerIds[0] === user.userId))));
                     if (producerIds) { // TODO: Ensure it works properly
                         query.whereIn('producerId', producerIds);
                     }
@@ -60,21 +65,61 @@ let DronesController = class DronesController {
                     const user = req.user;
                     const select = req.swagger.params.select.value;
                     const drone = req.swagger.params.drone.value;
+                    let ownerUser;
                     if (!drone.ownerId) {
                         if (!(user.role & users_model_1.UserRoles.OWNER)) {
                             next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_NO));
                             return;
                         }
                         drone.ownerId = user.userId;
+                        ownerUser = user;
+                    }
+                    else if (drone.ownerId !== user.userId) {
+                        if (!(user.role & users_model_1.UserRoles.ADMIN)) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                            return;
+                        }
+                        const columns = ['role'];
+                        if (typeof drone.baseLongitude !== 'number' || typeof drone.baseLatitude !== 'number') {
+                            columns.push('longitude', 'latitude');
+                        }
+                        const users = await userModel.select(columns, { userId: drone.ownerId });
+                        if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.OWNER)) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_BAD));
+                            return;
+                        }
+                        ownerUser = users[0];
+                    }
+                    else {
+                        ownerUser = user;
                     }
                     if (!drone.producerId) {
-                        if (user.role & users_model_1.UserRoles.ADMIN && !(user.role & users_model_1.UserRoles.PRODUCER)) {
+                        if (!(user.role & users_model_1.UserRoles.PRODUCER)) {
                             next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_PRODUCER_NO));
                             return;
                         }
                         drone.producerId = user.userId;
                     }
+                    else if (drone.producerId !== user.userId) {
+                        if (!(user.role & users_model_1.UserRoles.ADMIN)) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                            return;
+                        }
+                        const users = await userModel.select(['role'], { userId: drone.producerId });
+                        if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.PRODUCER)) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_BAD));
+                            return;
+                        }
+                    }
                     checkLocation(drone);
+                    if (typeof drone.baseLongitude !== 'number') {
+                        drone.baseLongitude = ownerUser.longitude;
+                        drone.baseLatitude = ownerUser.latitude;
+                    }
+                    if (typeof drone.baseLongitude !== 'number') {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.LOCATION_BAD));
+                        return;
+                    }
                     await droneModel.create(drone);
                     res.json((await droneModel.select(getColumns(select, true), { deviceId: drone.deviceId }))[0]);
                 }
@@ -88,9 +133,16 @@ let DronesController = class DronesController {
                     const select = req.swagger.params.select.value;
                     const droneUpdate = req.swagger.params.drone.value;
                     const whereClause = getDroneWhereClause(req);
-                    if (droneUpdate.ownerId && !(user.role & users_model_1.UserRoles.ADMIN)) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                        return;
+                    if (droneUpdate.ownerId) {
+                        if (!(user.role & users_model_1.UserRoles.ADMIN)) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                            return;
+                        }
+                        const users = await userModel.select(['role'], { userId: droneUpdate.ownerId });
+                        if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.OWNER)) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_BAD));
+                            return;
+                        }
                     }
                     if (user.status === users_model_1.UserStatus.BLOCKED && !(user.role & users_model_1.UserRoles.ADMIN)) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_BLOCKED));
@@ -211,7 +263,11 @@ let DronesController = class DronesController {
 DronesController = tslib_1.__decorate([
     inversify_1.injectable(),
     tslib_1.__param(0, inversify_1.inject(types_1.TYPES.DroneModel)),
-    tslib_1.__metadata("design:paramtypes", [drones_model_1.DroneModel])
+    tslib_1.__param(1, inversify_1.inject(types_1.TYPES.UserModel)),
+    tslib_1.__param(2, inversify_1.inject(types_1.TYPES.AuthService)),
+    tslib_1.__metadata("design:paramtypes", [drones_model_1.DroneModel,
+        users_model_1.UserModel,
+        authentication_class_1.AuthService])
 ], DronesController);
 exports.DronesController = DronesController;
 const safeColumns = [

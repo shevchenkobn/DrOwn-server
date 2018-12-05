@@ -58,7 +58,7 @@ function enumToObject(enumType) {
     const values = {};
     for (const key of Object.keys(enumType)) {
         if (!Number.isNaN(Number.parseInt(key, 10))) { // Filter for non-numeric values
-            return values;
+            continue;
         }
         values[key.toLowerCase()] = enumType[key];
     }

@@ -6,21 +6,24 @@ import { NextFunction, Request, Response } from 'express';
 import { IUser, UserModel, UserRoles, UserStatus } from '../models/users.model';
 import { Maybe } from '../@types';
 import { getSafeSwaggerParam } from '../services/util.service';
+import { AuthService } from '../services/authentication.class';
 
 @injectable()
 export class DronesController {
   constructor(
     @inject(TYPES.DroneModel) droneModel: DroneModel,
     @inject(TYPES.UserModel) userModel: UserModel,
+    @inject(TYPES.AuthService) authService: AuthService,
   ) {
     return {
       async getDrones(req: Request, res: Response, next: NextFunction) {
         try {
-          const user = (
-            req as any
-          ).user as IUser;
+          let user: IUser | null = null;
+          try {
+            user = await authService.getUserFromRequest(req);
+          } catch {}
           const producerIds = getSafeSwaggerParam<string[]>(req, 'producer-ids');
-          const ownerIds = getSafeSwaggerParam<string[]>(req, 'producer-ids');
+          const ownerIds = getSafeSwaggerParam<string[]>(req, 'owner-ids');
           const select = (
             req as any
           ).swagger.params.select.value as (keyof IDrone)[];
@@ -33,14 +36,14 @@ export class DronesController {
           }
           const enginePowerLimits = getSafeSwaggerParam<[number, number]>(
             req,
-            'battery-power-limits',
+            'engine-power-limits',
           );
           if (enginePowerLimits) {
             enginePowerLimits.sort();
           }
           const loadCapacityLimits = getSafeSwaggerParam<[number, number]>(
             req,
-            'battery-power-limits',
+            'load-capacity-limits',
           );
           if (loadCapacityLimits) {
             loadCapacityLimits.sort();
@@ -48,11 +51,11 @@ export class DronesController {
           const canCarryLiquids = getSafeSwaggerParam<boolean>(req, 'can-carry-liquids');
           const query = droneModel.table.columns(getColumns(
             select,
-            !!(
+            !!user && (!!(
               user.role & UserRoles.ADMIN
             ) || !!(
               ownerIds && ownerIds.length && ownerIds[0] === user.userId
-            ),
+            )),
           ));
           if (producerIds) { // TODO: Ensure it works properly
             query.whereIn('producerId', producerIds);
@@ -92,28 +95,77 @@ export class DronesController {
             req as any
           ).swagger.params.drone.value as IDroneInput;
 
+          let ownerUser: IUser;
           if (!drone.ownerId) {
-            if (!(user.role & UserRoles.OWNER)) {
+            if (!(
+              user.role & UserRoles.OWNER
+            )) {
               next(new LogicError(ErrorCode.DRONE_OWNER_NO));
               return;
             }
             drone.ownerId = user.userId;
+            ownerUser = user;
+          } else if (drone.ownerId !== user.userId) {
+            if (!(
+              user.role & UserRoles.ADMIN
+            )) {
+              next(new LogicError(ErrorCode.AUTH_ROLE));
+              return;
+            }
+            const columns: (keyof IUser)[] = ['role'];
+            if (typeof drone.baseLongitude !== 'number' || typeof drone.baseLatitude !== 'number') {
+              columns.push('longitude', 'latitude');
+            }
+            const users = await userModel.select(columns, { userId: drone.ownerId });
+            if (users.length === 0 || !(
+              users[0].role & UserRoles.OWNER
+            )) {
+              next(new LogicError(ErrorCode.DRONE_OWNER_BAD));
+              return;
+            }
+            ownerUser = users[0];
           } else {
-            const users = await .select(['role'])
+            ownerUser = user;
           }
           if (!drone.producerId) {
-            if (user.role & UserRoles.ADMIN && !(user.role & UserRoles.PRODUCER)) {
+            if (!(
+              user.role & UserRoles.PRODUCER
+            )) {
               next(new LogicError(ErrorCode.DRONE_PRODUCER_NO));
               return;
             }
             drone.producerId = user.userId;
+          } else if (drone.producerId !== user.userId) {
+            if (!(
+              user.role & UserRoles.ADMIN
+            )) {
+              next(new LogicError(ErrorCode.AUTH_ROLE));
+              return;
+            }
+            const users = await userModel.select(['role'], { userId: drone.producerId });
+            if (users.length === 0 || !(
+              users[0].role & UserRoles.PRODUCER
+            )) {
+              next(new LogicError(ErrorCode.DRONE_OWNER_BAD));
+              return;
+            }
           }
 
           checkLocation(drone);
+          if (typeof drone.baseLongitude !== 'number') {
+            drone.baseLongitude = ownerUser.longitude;
+            drone.baseLatitude = ownerUser.latitude;
+          }
+          if (typeof drone.baseLongitude !== 'number') {
+            next(new LogicError(ErrorCode.LOCATION_BAD));
+            return;
+          }
 
           await droneModel.create(drone);
           res.json(
-            (await droneModel.select(getColumns(select, true), { deviceId: drone.deviceId }))[0],
+            (
+              await droneModel.select(getColumns(select, true), { deviceId: drone.deviceId })
+            )[0],
           );
         } catch (err) {
           next(err);
@@ -133,11 +185,25 @@ export class DronesController {
           ).swagger.params.drone.value as IDroneInput;
           const whereClause = getDroneWhereClause(req);
 
-          if (droneUpdate.ownerId && !(user.role & UserRoles.ADMIN)) {
-            next(new LogicError(ErrorCode.AUTH_ROLE));
-            return;
+          if (droneUpdate.ownerId) {
+            if (!(
+              user.role & UserRoles.ADMIN
+            )) {
+              next(new LogicError(ErrorCode.AUTH_ROLE));
+              return;
+            }
+
+            const users = await userModel.select(['role'], { userId: droneUpdate.ownerId });
+            if (users.length === 0 || !(
+              users[0].role & UserRoles.OWNER
+            )) {
+              next(new LogicError(ErrorCode.DRONE_OWNER_BAD));
+              return;
+            }
           }
-          if (user.status === UserStatus.BLOCKED && !(user.role & UserRoles.ADMIN)) {
+          if (user.status === UserStatus.BLOCKED && !(
+            user.role & UserRoles.ADMIN
+          )) {
             next(new LogicError(ErrorCode.USER_BLOCKED));
             return;
           }
@@ -160,7 +226,9 @@ export class DronesController {
           }
           const drone: IDrone = drones[0];
 
-          if (!(user.role & UserRoles.ADMIN) && drone.ownerId !== user.userId) {
+          if (!(
+            user.role & UserRoles.ADMIN
+          ) && drone.ownerId !== user.userId) {
             next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
           }
@@ -212,7 +280,9 @@ export class DronesController {
           let hadOwnerId = false;
           if (select && select.length > 0) {
             const columns = getColumns(select, true);
-            if (!(user.role & UserRoles.ADMIN)) {
+            if (!(
+              user.role & UserRoles.ADMIN
+            )) {
               hadOwnerId = columns.includes('ownerId');
               if (!hadOwnerId) {
                 columns.push('ownerId');
@@ -237,7 +307,9 @@ export class DronesController {
               }
               drone = drones[0];
             }
-          } else if (!(user.role & UserRoles.ADMIN)) {
+          } else if (!(
+            user.role & UserRoles.ADMIN
+          )) {
             const drones = await droneModel.select(['ownerId'], whereClause);
             if (drones.length === 0) {
               next(new LogicError(ErrorCode.NOT_FOUND));

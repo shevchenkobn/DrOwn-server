@@ -21,6 +21,10 @@ export const authenticateBearer: SwaggerSecurityHandler = async (
       next(new LogicError(ErrorCode.AUTH_EXPIRED));
       return;
     }
+    if (err instanceof LogicError) {
+      next(err);
+      return;
+    }
     next(new LogicError(ErrorCode.AUTH_NO));
     return;
   }

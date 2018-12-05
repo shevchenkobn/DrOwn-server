@@ -17,8 +17,8 @@ export interface IDroneInput {
   ownerId: string;
   deviceId: string;
   status: number;
-  baseLongitude?: number;
-  baseLatitude?: number;
+  baseLongitude?: number | null;
+  baseLatitude?: number | null;
   batteryPower: number;
   enginePower: number;
   loadCapacity: number;

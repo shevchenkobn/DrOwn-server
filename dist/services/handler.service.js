@@ -15,6 +15,10 @@ exports.authenticateBearer = async (req, securityDefinition, authorizationHeader
             next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_EXPIRED));
             return;
         }
+        if (err instanceof error_service_1.LogicError) {
+            next(err);
+            return;
+        }
         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_NO));
         return;
     }

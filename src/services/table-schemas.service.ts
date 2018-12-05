@@ -47,7 +47,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
         .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
 
       table.string('deviceId').notNullable();
-      table.string('passwordHash', 60).nullable();
+      table.string('passwordHash', 60).notNullable().defaultTo('');
       table.integer('status').unsigned().notNullable().defaultTo(0);
       table.decimal('baseLongitude', 9, 6).notNullable();
       table.decimal('baseLatitude', 9, 6).notNullable();
