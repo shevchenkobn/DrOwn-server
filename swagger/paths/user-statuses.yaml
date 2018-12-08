@@ -3,6 +3,7 @@ x-swagger-router-controller: user-helpers
 get:
   tags:
   - users
+  - no-auth
   operationId: getUserStatuses
   summary: Returns all user statuses
   responses:

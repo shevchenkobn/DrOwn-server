@@ -1,0 +1,23 @@
+x-swagger-router-controller: drones
+
+post:
+  tags:
+  - drones
+  - no-auth
+  summary: Authorize Drone (get secret for **only once**)
+  operationId: authorizeDrone
+  parameters:
+  - in: query
+    name: device-id
+    type: string
+    pattern: ^[\da-fA-F]{12}$
+    required: true
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/DroneSecret'
+    400:
+      $ref: '#/responses/ClientError'
+    404:
+      $ref: '#/responses/NotFound'

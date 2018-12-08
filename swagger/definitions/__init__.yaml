@@ -50,6 +50,9 @@ DroneUpdate:
 DroneStatuses:
   $ref: ./drone-statuses.yaml
 
+DroneSecret:
+  $ref: ./drone-secret.yaml
+
 # Auth types
 Tokens:
   $ref: ./tokens.yaml

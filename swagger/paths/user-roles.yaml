@@ -4,6 +4,7 @@ get:
   tags:
   - auth
   - users
+  - no-auth
   operationId: getUserRoles
   summary: Returns all user roles
   responses:

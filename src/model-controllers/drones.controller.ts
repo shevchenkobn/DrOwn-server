@@ -257,6 +257,20 @@ export class DronesController {
 
           checkLocation(droneUpdate);
 
+          if (typeof droneUpdate.status === 'number') {
+            if (droneFromDB.status === DroneStatus.RENTED) {
+              next(new LogicError(ErrorCode.DRONE_RENTED));
+              return;
+            }
+            if (droneUpdate.status === DroneStatus.RENTED) {
+              next(new LogicError(ErrorCode.DRONE_STATUS_BAD));
+              return;
+            }
+            if (droneUpdate.status === DroneStatus.UNAUTHORIZED) {
+              (droneUpdate as any).passwordHash = null;
+            }
+          }
+
           await droneModel.update(droneUpdate, whereClause);
           if (returnDrone) {
             if (!hadOwnerId) {
@@ -357,7 +371,6 @@ const safeColumns: ReadonlyArray<keyof IDrone> = [
   'droneId',
   'producerId',
   'ownerId',
-  'deviceId',
   'status',
   'batteryPower',
   'enginePower',
@@ -365,6 +378,7 @@ const safeColumns: ReadonlyArray<keyof IDrone> = [
   'canCarryLiquids',
 ];
 const adminFields: ReadonlyArray<keyof IDrone> = [
+  'deviceId',
   'baseLatitude',
   'baseLongitude',
   'isWritingTelemetry',

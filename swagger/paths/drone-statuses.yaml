@@ -3,6 +3,7 @@ x-swagger-router-controller: drone-helpers
 get:
   tags:
   - drones
+  - no-auth
   operationId: getDroneStatuses
   summary: Returns all drone statuses
   responses:
