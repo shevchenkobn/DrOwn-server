@@ -1,23 +1,26 @@
-import { initAsync } from './di/container'; // Import first to initialize all dependencies
+import { TYPES } from './di/types'; // Import first to initialize all dependencies
+import { container, initAsync } from './di/container';
+
 import * as express from 'express';
-import * as config from 'config';
 import { bindCallbackOnExit, loadSwaggerSchema } from './services/util.service';
 import { initializeMiddleware } from 'swagger-tools';
 import { authenticateBearer } from './services/handler.service';
 import { resolve } from 'path';
 import { errorHandler, notFoundHandler } from './services/error.service';
 
-const { host, port, swaggerDocsPrefix } = config.get<{
-  host: string,
-  port: number,
-  swaggerDocsPrefix: string,
-}>('server');
+export interface ServerConfig {
+  host: string;
+  port: number;
+  swaggerDocsPrefix: string;
+}
+
+const { host, port, swaggerDocsPrefix } = container.get<ServerConfig>(TYPES.ServerConfig);
 
 const app = express();
 
 Promise.all([
   loadSwaggerSchema(),
-  initAsync,
+  initAsync(),
 ]).then(([schemaResults, initResults]) => {
   const notProduction = process.env.NODE_ENV !== 'production';
 

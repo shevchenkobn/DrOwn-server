@@ -6,6 +6,9 @@ properties:
     $ref: '#/definitions/Longitude'
   baseLatitude:
     $ref: '#/definitions/Latitude'
+  status:
+    type: number
+    minimum: 0
   batteryPower:
     type: number
     minimum: 0

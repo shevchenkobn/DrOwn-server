@@ -8,6 +8,10 @@ const error_service_1 = require("../services/error.service");
 const users_model_1 = require("../models/users.model");
 const util_service_1 = require("../services/util.service");
 const authentication_class_1 = require("../services/authentication.class");
+const crypto_1 = require("crypto");
+const util_1 = require("util");
+const SECRET_BYTE_LENGTH = 128;
+const randomBytesAsync = util_1.promisify(crypto_1.randomBytes);
 let DronesController = class DronesController {
     constructor(droneModel, userModel, authService) {
         return {
@@ -183,6 +187,19 @@ let DronesController = class DronesController {
                         return;
                     }
                     checkLocation(droneUpdate);
+                    if (typeof droneUpdate.status === 'number') {
+                        if (droneFromDB.status === drones_model_1.DroneStatus.RENTED) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_RENTED));
+                            return;
+                        }
+                        if (droneUpdate.status === drones_model_1.DroneStatus.RENTED) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_STATUS_BAD));
+                            return;
+                        }
+                        if (droneUpdate.status === drones_model_1.DroneStatus.UNAUTHORIZED) {
+                            droneUpdate.secret = null;
+                        }
+                    }
                     await droneModel.update(droneUpdate, whereClause);
                     if (returnDrone) {
                         if (!hadOwnerId) {
@@ -265,6 +282,29 @@ let DronesController = class DronesController {
                     next(err);
                 }
             },
+            async authorizeDrone(req, res, next) {
+                try {
+                    const deviceId = req.swagger.params['device-id'].value;
+                    const drones = await droneModel.select(['status'], { deviceId });
+                    if (drones.length === 0) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                        return;
+                    }
+                    if (drones[0].status !== drones_model_1.DroneStatus.UNAUTHORIZED) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_AUTHORIZED));
+                        return;
+                    }
+                    const secret = (await randomBytesAsync(SECRET_BYTE_LENGTH)).toString('base64');
+                    await droneModel.update({
+                        secret,
+                        status: drones_model_1.DroneStatus.IDLE,
+                    }, { deviceId });
+                    res.json({ deviceId, secret });
+                }
+                catch (err) {
+                    next(err);
+                }
+            },
         };
     }
 };
@@ -282,7 +322,6 @@ const safeColumns = [
     'droneId',
     'producerId',
     'ownerId',
-    'deviceId',
     'status',
     'batteryPower',
     'enginePower',
@@ -290,6 +329,7 @@ const safeColumns = [
     'canCarryLiquids',
 ];
 const adminFields = [
+    'deviceId',
     'baseLatitude',
     'baseLongitude',
     'isWritingTelemetry',

@@ -39,7 +39,7 @@ export function getSafeSwaggerParam<T>(req: Request, name: string): Maybe<T> {
 }
 
 export function loadSwaggerSchema() {
-  return resolveRefsAt(resolve('swagger/index.yaml'), {
+  return resolveRefsAt(resolve('swagger/__init__.yaml'), {
     loaderOptions: {
       processContent(content: { text: string }, callback: (err: any, obj?: any) => void) {
         try {

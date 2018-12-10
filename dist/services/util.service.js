@@ -36,7 +36,7 @@ function getSafeSwaggerParam(req, name) {
 }
 exports.getSafeSwaggerParam = getSafeSwaggerParam;
 function loadSwaggerSchema() {
-    return json_refs_1.resolveRefsAt(app_root_path_1.resolve('swagger/index.yaml'), {
+    return json_refs_1.resolveRefsAt(app_root_path_1.resolve('swagger/__init__.yaml'), {
         loaderOptions: {
             processContent(content, callback) {
                 try {

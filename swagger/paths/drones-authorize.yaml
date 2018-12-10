@@ -4,7 +4,7 @@ post:
   tags:
   - drones
   - no-auth
-  summary: Authorize Drone (get secret for **only once**)
+  summary: Authorize Drone (get passwordHash for **only once**)
   operationId: authorizeDrone
   parameters:
   - in: query

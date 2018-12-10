@@ -7,6 +7,11 @@ import { IUser, UserModel, UserRoles, UserStatus } from '../models/users.model';
 import { Maybe } from '../@types';
 import { getSafeSwaggerParam } from '../services/util.service';
 import { AuthService } from '../services/authentication.class';
+import { randomBytes } from 'crypto';
+import { promisify } from 'util';
+
+const SECRET_BYTE_LENGTH = 128;
+const randomBytesAsync = promisify(randomBytes);
 
 @injectable()
 export class DronesController {
@@ -359,6 +364,34 @@ export class DronesController {
             res.json({});
           }
 
+        } catch (err) {
+          next(err);
+        }
+      },
+
+      async authorizeDrone(req: Request, res: Response, next: NextFunction) {
+        try {
+          const deviceId = (
+            req as any
+          ).swagger.params['device-id'].value as string;
+
+          const drones = await droneModel.select(['status'], { deviceId });
+          if (drones.length === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+          if (drones[0].status !== DroneStatus.UNAUTHORIZED) {
+            next(new LogicError(ErrorCode.DRONE_AUTHORIZED));
+            return;
+          }
+
+          const secret = (await randomBytesAsync(SECRET_BYTE_LENGTH)).toString('base64');
+          await droneModel.update({
+            secret,
+            status: DroneStatus.IDLE,
+          } as any, { deviceId });
+
+          res.json({ deviceId, secret });
         } catch (err) {
           next(err);
         }

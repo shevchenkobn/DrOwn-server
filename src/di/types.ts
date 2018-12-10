@@ -15,4 +15,9 @@ export const TYPES = {
   UsersController: Symbol.for('UsersController'),
   DronesController: Symbol.for('DronesController'),
   DroneHelpersController: Symbol.for('DroneHelpersController'),
+
+  AutobahnController: Symbol.for('AutobahnController'),
+  // FirebaseController: Symbol.for('FirebaseController'),
+
+  ServerConfig: Symbol.for('ServerConfig'),
 };

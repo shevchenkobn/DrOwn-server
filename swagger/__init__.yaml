@@ -9,16 +9,16 @@ produces:
   - application/json
 
 paths:
-  $ref: ./paths/index.yaml
+  $ref: ./paths/__init__.yaml
 
 securityDefinitions:
-  $ref: ./securityDefinitions/index.yaml
+  $ref: ./securityDefinitions/__init__.yaml
 
 definitions:
-  $ref: ./definitions/index.yaml
+  $ref: ./definitions/__init__.yaml
 
 responses:
-  $ref: ./responses/index.yaml
+  $ref: ./responses/__init__.yaml
 
 tags:
   $ref: ./tags.yaml
