@@ -7,6 +7,8 @@ import { initializeMiddleware } from 'swagger-tools';
 import { authenticateBearer } from './services/handler.service';
 import { resolve } from 'path';
 import { errorHandler, notFoundHandler } from './services/error.service';
+import { Server } from 'http';
+import { SocketIoController } from './controllers/socket-io.controller';
 
 export interface ServerConfig {
   host: string;
@@ -54,6 +56,10 @@ Promise.all([
     app.use(notFoundHandler);
 
     const server = app.listen(port, host);
+    container.bind<Server>(TYPES.ServerConfig).toConstantValue(server);
+
+    const ioApp = container.get<SocketIoController>(TYPES.SocketIoController);
+
     bindCallbackOnExit(() => server.close());
 
     console.log(`Listening at ${host}:${port}`);

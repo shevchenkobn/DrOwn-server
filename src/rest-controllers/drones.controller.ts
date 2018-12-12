@@ -1,11 +1,18 @@
 import { TYPES } from '../di/types';
 import { inject, injectable } from 'inversify';
-import { DroneModel, DroneStatus, IDrone, IDroneInput, WhereClause } from '../models/drones.model';
+import {
+  DroneModel,
+  DroneStatus,
+  IDrone,
+  IDroneInput,
+  maxPasswordLength,
+  WhereClause,
+} from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { NextFunction, Request, Response } from 'express';
 import { IUser, UserModel, UserRoles, UserStatus } from '../models/users.model';
 import { Maybe } from '../@types';
-import { getSafeSwaggerParam } from '../services/util.service';
+import { getRandomString, getSafeSwaggerParam } from '../services/util.service';
 import { AuthService } from '../services/authentication.class';
 import { randomBytes } from 'crypto';
 import { promisify } from 'util';
@@ -385,13 +392,10 @@ export class DronesController {
             return;
           }
 
-          const secret = (await randomBytesAsync(SECRET_BYTE_LENGTH)).toString('base64');
-          await droneModel.update({
-            secret,
-            status: DroneStatus.IDLE,
-          } as any, { deviceId });
+          const password = getRandomString(maxPasswordLength);
+          await droneModel.authorize({ deviceId }, password);
 
-          res.json({ deviceId, secret });
+          res.json({ deviceId, password });
         } catch (err) {
           next(err);
         }

@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
 var _a;
 "use strict";
-global.AUTOBAHN_DEBUG = true;
 const types_1 = require("../di/types");
 const config = require("config");
 const inversify_1 = require("inversify");

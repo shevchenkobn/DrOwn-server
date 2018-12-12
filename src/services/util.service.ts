@@ -3,6 +3,7 @@ import { resolveRefsAt, resolveRefs } from 'json-refs';
 import * as YAML from 'js-yaml';
 import { Maybe } from '../@types';
 import { Request } from 'express';
+import * as randomatic from 'randomatic';
 
 export function bindCallbackOnExit(callback: (...args: any[]) => any) {
   const events = ['SIGTERM', 'SIGINT', 'SIGQUIT'] as NodeJS.Signals[];
@@ -69,4 +70,8 @@ export function enumToObject(enumType: IEnum) {
     values[key.toLowerCase()] = enumType[key] as number;
   }
   return values;
+}
+
+export function getRandomString(length: number) {
+  return randomatic('aA0!', length);
 }

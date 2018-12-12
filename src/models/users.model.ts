@@ -73,10 +73,6 @@ export class UserModel {
     return query.select(columns as any);
   }
 
-  getPassword() {
-    return randomatic('aA0!', maxPasswordLength);
-  }
-
   async create(userSeed: IUserSeed, changeSeed = false) {
     const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;
 

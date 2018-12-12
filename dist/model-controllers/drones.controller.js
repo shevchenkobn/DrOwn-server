@@ -197,7 +197,7 @@ let DronesController = class DronesController {
                             return;
                         }
                         if (droneUpdate.status === drones_model_1.DroneStatus.UNAUTHORIZED) {
-                            droneUpdate.secret = null;
+                            droneUpdate.passwordHash = null;
                         }
                     }
                     await droneModel.update(droneUpdate, whereClause);

@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import {
   IUser,
   IUserBase,
-  IUserSeed,
+  IUserSeed, maxPasswordLength,
   UserModel,
   UserRoles,
   WhereClause,
@@ -11,7 +11,7 @@ import {
 import { NextFunction, Request, Response } from 'express';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { Maybe } from '../@types';
-import { getSafeSwaggerParam } from '../services/util.service';
+import { getRandomString, getSafeSwaggerParam } from '../services/util.service';
 import { superAdminUserId } from '../services/table-schemas.service';
 
 @injectable()
@@ -60,7 +60,7 @@ export class UsersController {
           checkLocation(inputUser);
 
           if (!inputUser.password) {
-            inputUser.password = userModel.getPassword();
+            inputUser.password = getRandomString(maxPasswordLength);
           }
 
           await userModel.create(inputUser, true);
@@ -91,7 +91,7 @@ export class UsersController {
           const passwordUpdated = inputUser.password === '';
           const selectPassword = select && select.length > 0 && select.includes('password' as any);
           if (passwordUpdated) {
-            inputUser.password = userModel.getPassword();
+            inputUser.password = getRandomString(maxPasswordLength);
             if (!selectPassword) {
               next(new LogicError(ErrorCode.USER_PASSWORD_SAVE_NO));
               return;

@@ -4,6 +4,9 @@ import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
 import { TableName } from '../services/table-schemas.service';
 import { ErrorCode, LogicError } from '../services/error.service';
+import { hash } from 'bcrypt';
+
+export const maxPasswordLength = 72 - 29;
 
 export enum DroneStatus {
   UNAUTHORIZED = 0,
@@ -75,6 +78,17 @@ export class DroneModel {
 
   delete(whereClause: WhereClause) {
     return this.table.where(whereClause).delete();
+  }
+
+  async authorize(whereClause: WhereClause, password: string) {
+    if (password.length > maxPasswordLength) {
+      throw new Error('Password is too long');
+    }
+    const passwordHash = await hash(password, 13);
+    return await this.update({
+      passwordHash,
+      status: DroneStatus.IDLE,
+    } as any, whereClause);
   }
 }
 

@@ -1,12 +1,10 @@
-import { ASYNC_INIT, TYPES } from '../di/types';
+import { TYPES } from '../di/types';
 import * as config from 'config';
+import * as SocketIO from 'socket.io';
 import { inject, injectable } from 'inversify';
-import { auth_cra, Connection, IEvent, Session } from 'autobahn';
 import { DroneModel, DroneStatus } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { bindCallbackOnExit } from '../services/util.service';
-
-const autobahnConfig = config.get<AutobahnConfig>('autobahn');
 
 export interface AutobahnConfig {
   route: string;
@@ -29,10 +27,8 @@ export interface AutobahnServeConfig {
 }
 
 @injectable()
-export class AutobahnController {
-  static [ASYNC_INIT] = true;
-
-  protected _connection: Connection;
+export class SocketIoController {
+  protected _server: SocketIO.Server;
   protected _openPromise?: Promise<void>;
   protected _session?: Session;
   protected _details?: any;
@@ -55,8 +51,9 @@ export class AutobahnController {
       },
     },
   ) {
+
     this._droneModel = droneModel;
-    this._connection = new Connection({
+    this._server = new Connection({
       ...errorCallbacks,
       use_es6_promises: true,
       url: `ws://${hostConfig.host}:${hostConfig.port}${autobahnConfig.route}`,
@@ -70,19 +67,15 @@ export class AutobahnController {
 
     this._deviceIds = new Map<number, string>();
 
-    bindCallbackOnExit(() => this._connection.close('closed', 'Process exit'));
-  }
-
-  public get [ASYNC_INIT]() {
-    return this.open();
+    bindCallbackOnExit(() => this._server.close('closed', 'Process exit'));
   }
 
   public set onclose(onclose) {
-    this._connection.onclose = onclose;
+    this._server.onclose = onclose;
   }
 
   public get onclose() {
-    return this._connection.onclose;
+    return this._server.onclose;
   }
 
   public open() {
@@ -90,7 +83,7 @@ export class AutobahnController {
       return this._openPromise;
     }
     this._openPromise = new Promise<void>((resolve, reject) => {
-      this._connection.onopen = (session, details) => {
+      this._server.onopen = (session, details) => {
         this._session = session;
         this._details = details;
 
@@ -101,7 +94,7 @@ export class AutobahnController {
 
         resolve();
       };
-      this._connection.open();
+      this._server.open();
     });
     return this._openPromise;
   }

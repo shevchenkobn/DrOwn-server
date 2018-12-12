@@ -16,7 +16,7 @@ export const TYPES = {
   DronesController: Symbol.for('DronesController'),
   DroneHelpersController: Symbol.for('DroneHelpersController'),
 
-  AutobahnController: Symbol.for('AutobahnController'),
+  SocketIoController: Symbol.for('SocketIoController'),
   // FirebaseController: Symbol.for('FirebaseController'),
 
   ServerConfig: Symbol.for('ServerConfig'),

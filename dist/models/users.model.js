@@ -5,7 +5,6 @@ const inversify_1 = require("inversify");
 const types_1 = require("../di/types");
 const bcrypt_1 = require("bcrypt");
 const table_schemas_service_1 = require("../services/table-schemas.service");
-const randomatic = require("randomatic");
 const db_connection_class_1 = require("../services/db-connection.class");
 const error_service_1 = require("../services/error.service");
 exports.maxPasswordLength = 72 - 29;
@@ -37,9 +36,6 @@ let UserModel = class UserModel {
     select(columns, where) {
         const query = where ? this.table.where(where) : this.table;
         return query.select(columns);
-    }
-    getPassword() {
-        return randomatic('aA0!', exports.maxPasswordLength);
     }
     async create(userSeed, changeSeed = false) {
         const editedUserSeed = changeSeed ? { ...userSeed } : userSeed;

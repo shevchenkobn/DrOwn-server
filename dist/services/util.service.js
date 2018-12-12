@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const app_root_path_1 = require("app-root-path");
 const json_refs_1 = require("json-refs");
 const YAML = require("js-yaml");
+const randomatic = require("randomatic");
 function bindCallbackOnExit(callback) {
     const events = ['SIGTERM', 'SIGINT', 'SIGQUIT'];
     const handlers = events.map(signal => [
@@ -65,4 +66,8 @@ function enumToObject(enumType) {
     return values;
 }
 exports.enumToObject = enumToObject;
+function getRandomString(length) {
+    return randomatic('aA0!', length);
+}
+exports.getRandomString = getRandomString;
 //# sourceMappingURL=util.service.js.map

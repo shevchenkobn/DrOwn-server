@@ -43,7 +43,7 @@ let UsersController = class UsersController {
                     }
                     checkLocation(inputUser);
                     if (!inputUser.password) {
-                        inputUser.password = userModel.getPassword();
+                        inputUser.password = util_service_1.getRandomString(users_model_1.maxPasswordLength);
                     }
                     await userModel.create(inputUser, true);
                     const newUser = (await userModel.select(getColumns(select, true), { email: inputUser.email }))[0];
@@ -67,7 +67,7 @@ let UsersController = class UsersController {
                     const passwordUpdated = inputUser.password === '';
                     const selectPassword = select && select.length > 0 && select.includes('password');
                     if (passwordUpdated) {
-                        inputUser.password = userModel.getPassword();
+                        inputUser.password = util_service_1.getRandomString(users_model_1.maxPasswordLength);
                         if (!selectPassword) {
                             next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_PASSWORD_SAVE_NO));
                             return;
