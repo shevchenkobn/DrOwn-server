@@ -14,6 +14,6 @@ exports.TYPES = {
     DroneHelpersController: Symbol.for('DroneHelpersController'),
     AutobahnController: Symbol.for('SocketIoController'),
     // FirebaseController: Symbol.for('FirebaseController'),
-    ServerConfig: Symbol.for('ServerConfig'),
+    ServerConfig: Symbol.for('HttpServer'),
 };
 //# sourceMappingURL=types.js.map

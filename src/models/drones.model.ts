@@ -4,7 +4,7 @@ import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
 import { TableName } from '../services/table-schemas.service';
 import { ErrorCode, LogicError } from '../services/error.service';
-import { hash } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
 
 export const maxPasswordLength = 72 - 29;
 
@@ -89,6 +89,27 @@ export class DroneModel {
       passwordHash,
       status: DroneStatus.IDLE,
     } as any, whereClause);
+  }
+
+  async authenticateDrone(
+    deviceId: string,
+    password: string,
+    columns?: ReadonlyArray<keyof IDrone>,
+  ) {
+    const hadPassword = !columns || columns.length === 0 || columns.includes('passwordHash');
+    const select: (keyof IDrone)[] = !columns || columns.length === 0 ? [] : columns.slice();
+    if (!hadPassword) {
+      select.push('passwordHash');
+    }
+    const drones = await this.select(select, { deviceId });
+    if (drones.length === 0 || !await compare(password, drones[0].passwordHash)) {
+      throw new LogicError(ErrorCode.AUTH_BAD);
+    }
+    if (!hadPassword) {
+      select.pop();
+      delete drones[0].passwordHash;
+    }
+    return drones[0];
   }
 }
 

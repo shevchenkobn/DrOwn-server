@@ -19,5 +19,5 @@ export const TYPES = {
   SocketIoController: Symbol.for('SocketIoController'),
   // FirebaseController: Symbol.for('FirebaseController'),
 
-  ServerConfig: Symbol.for('ServerConfig'),
+  HttpServer: Symbol.for('HttpServer'),
 };

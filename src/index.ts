@@ -16,7 +16,7 @@ export interface ServerConfig {
   swaggerDocsPrefix: string;
 }
 
-const { host, port, swaggerDocsPrefix } = container.get<ServerConfig>(TYPES.ServerConfig);
+const { host, port, swaggerDocsPrefix } = container.get<ServerConfig>(TYPES.HttpServer);
 
 const app = express();
 
@@ -56,7 +56,7 @@ Promise.all([
     app.use(notFoundHandler);
 
     const server = app.listen(port, host);
-    container.bind<Server>(TYPES.ServerConfig).toConstantValue(server);
+    container.bind<Server>(TYPES.HttpServer).toConstantValue(server);
 
     const ioApp = container.get<SocketIoController>(TYPES.SocketIoController);
 
