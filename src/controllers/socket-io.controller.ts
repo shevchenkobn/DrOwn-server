@@ -1,44 +1,33 @@
 import { TYPES } from '../di/types';
 import * as http from 'http';
-import * as config from 'config';
 import * as url from 'url';
 import * as SocketIOServer from 'socket.io';
 import { inject, injectable } from 'inversify';
 import { DroneModel, DroneStatus, IDrone } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { bindCallbackOnExit } from '../services/util.service';
-import { AuthService } from '../services/authentication.class';
-
-export interface AutobahnConfig {
-  route: string;
-  defaultRealm: string;
-  appPrefix: string;
-  authRPC: {
-    authId: string;
-    droneRole: string;
-  };
-}
-
-export interface ErrorCallbacks {
-  on_user_error: (err: any, customErrorMessage: any) => any;
-  on_internal_error: (err: any, customErrorMessage: any) => any;
-}
-
-export interface AutobahnServeConfig {
-  host: string;
-  port: number;
-}
+import {
+  DroneMeasurements,
+  IDroneMeasurement,
+  isDroneMeasurementInput,
+} from '../models/drone-measurements';
 
 @injectable()
 export class SocketIoController {
+  protected _httpServer: http.Server;
+  protected _droneModel: DroneModel;
+  protected _droneMeasurementModel: DroneMeasurements;
   protected _server: SocketIO.Server;
-  protected _socketToDeviceId: Map<string, string>;
-  protected _deviceIds: Set<string>;
+  // TODO: add sync between nodes
+  protected _socketIdToDeviceId: Map<string, string>;
+  protected _deviceIdToSocketId: Map<string, string>;
+  protected _devices: Map<string, IDrone>;
 
   constructor(
     // @inject(TYPES.HttpServer) hostConfig: AutobahnServeConfig,
-    @inject(TYPES.HttpServer) server: http.Server,
+    @inject(TYPES.HttpServer) httpServer: http.Server,
     @inject(TYPES.DroneModel) droneModel: DroneModel,
+    @inject(TYPES.DroneMeasurementModel) droneMeasurementModel: DroneMeasurements,
 
     // errorCallbacks: ErrorCallbacks = {
     //   on_user_error: (err, customErrorMessage) => {
@@ -51,37 +40,90 @@ export class SocketIoController {
     //   },
     // },
   ) {
-    this._socketToDeviceId = new Map<string, string>();
-    this._deviceIds = new Set<string>();
+    this._httpServer = httpServer;
+    this._droneModel = droneModel;
+    this._droneMeasurementModel = droneMeasurementModel;
 
-    this._server = SocketIOServer(server, {
+    this._socketIdToDeviceId = new Map<string, string>();
+    this._deviceIdToSocketId = new Map<string, string>();
+    this._devices = new Map<string, IDrone>();
+
+    this._server = SocketIOServer(httpServer, {
       path: '/socket.io',
       serveClient: true,
       origins: '*',
-      allowRequest: async (request, callback) => {
-        try {
-          const req = request as http.IncomingMessage;
-          const { password, 'device-id': deviceId } = url.parse(req.url || '', true).query;
-          if (!deviceId || !password || Array.isArray(deviceId) || Array.isArray(password)) {
-            callback(1, false);
-            return;
-          }
-          let drone: IDrone | null = null;
-          try {
-            drone = await droneModel.authenticateDrone(deviceId, password);
-          } catch (err) {
-            callback(2, false);
-            return;
-          }
+    });
 
-          this._deviceIds.add(deviceId);
-        } catch (err) {
-          console.error(err);
-          callback(10, false);
+    this._server.use(async (socket, fn) => {
+      try {
+        const req = socket.request as http.IncomingMessage;
+        const { password, 'device-id': deviceId } = url.parse(req.url || '', true).query;
+        if (!deviceId || !password || Array.isArray(deviceId) || Array.isArray(password)) {
+          fn(new LogicError(ErrorCode.DRONE_DEVICE_ID_PASSWORD));
+          return;
         }
-      },
+        let drone: IDrone | null = null;
+        try {
+          drone = await droneModel.authenticateDrone(deviceId, password);
+        } catch (err) {
+          fn(new LogicError(ErrorCode.AUTH_BAD));
+          return;
+        }
+        if (drone!.status !== DroneStatus.OFFLINE) {
+          fn(new LogicError(ErrorCode.DRONE_STATUS_BAD));
+          return;
+        }
+        await droneModel.update({ status: DroneStatus.IDLE } as any, { deviceId });
+
+        this._devices.set(deviceId, drone!);
+        this._socketIdToDeviceId.set(socket.id, deviceId);
+        this._deviceIdToSocketId.set(deviceId, socket.id);
+      } catch (err) {
+        console.error(err);
+        fn(new LogicError(ErrorCode.SERVER)); // Send unknown error
+      }
     });
 
     bindCallbackOnExit(() => this._server.close());
+
+    this.initialize();
+  }
+
+  public listen(port: number) {
+    this._server.listen(port);
+  }
+
+  public close(cb: () => void) {
+    this._server.close(cb);
+  }
+
+  public disconnect(deviceId: string) {
+    this._server.sockets.connected[this._deviceIdToSocketId.get(deviceId)!].disconnect();
+  }
+
+  protected initialize() {
+    this._server.on('connection', socket => {
+      socket.on('telemetry', async (data: unknown) => {
+        if (!isDroneMeasurementInput(data)) {
+          return;
+        }
+        const deviceId = this._socketIdToDeviceId.get(socket.id);
+        if (!deviceId) {
+          return;
+        }
+        try {
+          await this._droneMeasurementModel.save(deviceId, data);
+        } catch (err) {
+          console.log(err);
+        }
+      });
+
+      socket.on('disconnecting', (reason: string) => {
+        const deviceId = this._socketIdToDeviceId.get(socket.id)!;
+        this._deviceIdToSocketId.delete(deviceId);
+        this._devices.delete(deviceId);
+        this._socketIdToDeviceId.delete(socket.id);
+      });
+    });
   }
 }

@@ -46,7 +46,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigInteger('ownerId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
 
-      table.string('deviceId').notNullable();
+      table.string('deviceId').notNullable().unique();
       table.string('passwordHash', 60).notNullable().defaultTo('');
       table.integer('status').unsigned().notNullable().defaultTo(0);
       table.decimal('baseLongitude', 9, 6).notNullable();
@@ -58,8 +58,6 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.boolean('canCarryLiquids').notNullable();
 
       table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
-
-      table.unique(['deviceId', 'passwordHash'], `unique_${TableName.Drones}_auth`)
     });
   }],
   [TableName.DroneOrders, knex => {
@@ -76,8 +74,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   }],
   [TableName.DroneMeasurements, knex => {
     return knex.schema.createTable(TableName.DroneMeasurements, table => {
-      table.bigInteger('droneId').unsigned()
-        .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
+      table.bigInteger('deviceId').unsigned()
+        .references(`${TableName.Drones}.deviceId`).onDelete('CASCADE');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
 
       table.integer('status').unsigned().notNullable();

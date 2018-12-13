@@ -9,6 +9,7 @@ export const TYPES = {
 
   UserModel: Symbol.for('UserModel'),
   DroneModel: Symbol.for('DroneModel'),
+  DroneMeasurementModel: Symbol.for('DroneMeasurementModel'),
 
   UserHelpersController: Symbol.for('UserHelpersController'),
   AuthController: Symbol.for('AuthController'),

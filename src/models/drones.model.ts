@@ -87,7 +87,7 @@ export class DroneModel {
     const passwordHash = await hash(password, 13);
     return await this.update({
       passwordHash,
-      status: DroneStatus.IDLE,
+      status: DroneStatus.OFFLINE,
     } as any, whereClause);
   }
 
