@@ -7,9 +7,10 @@ import { IUser, IUserSeed, UserModel, UserRoles } from '../models/users.model';
 export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
   Users = 'users',
   Drones = 'drones',
+  DroneSupplyPrices = 'droneSupplyPrices',
+  Transactions = 'transactions',
   DroneOrders = 'droneOrders',
   DroneMeasurements = 'droneMeasurements',
-  Transactions = 'transactions',
   Notifications = 'notifications',
 }
 
@@ -62,7 +63,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   }],
   [TableName.DroneOrders, knex => {
     return knex.schema.createTable(TableName.DroneOrders, table => {
-      table.bigInteger('droneId').unsigned()
+      table.bigInteger('deviceId').unsigned()
         .primary(`pk_${TableName.Drones}`);
       table.bigInteger('userId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
@@ -87,20 +88,31 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
 
     });
   }],
-  [TableName.Transactions, knex => {
+  [TableName.DroneSupplyPrices, knex => {
     return knex.schema.createTable(TableName.Transactions, table => {
-      table.bigIncrements('transactionId')
-        .primary(`pk_${TableName.Transactions}`);
+      table.bigIncrements('supplyId')
+        .primary(`pk_${TableName.DroneSupplyPrices}`);
+      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
       table.bigInteger('droneId').unsigned()
         .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
       table.integer('actionType').unsigned().notNullable();
-      table.bigInteger('user1Id').unsigned()
+      table.decimal('price', 8, 2).nullable();
+      // knex.text('additionalInfo').nullable();
+    });
+  }],
+  [TableName.Transactions, knex => {
+    return knex.schema.createTable(TableName.Transactions, table => {
+      table.bigIncrements('transactionId')
+        .primary(`pk_${TableName.Transactions}`);
+      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
+      table.bigIncrements('supplyId').unsigned().notNullable()
+        .references(`${TableName.DroneSupplyPrices}.supplyId`).onDelete('CASCADE');
+      table.bigInteger('user1Id').unsigned().notNullable()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.bigInteger('user2Id').unsigned().nullable()
+      table.bigInteger('user2Id').unsigned().notNullable()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
       table.integer('status').unsigned().notNullable();
-      table.decimal('sum', 8, 2).nullable();
       table.integer('period').unsigned().notNullable().defaultTo(0);
       // knex.text('additionalInfo').nullable();
     });

@@ -4,8 +4,14 @@ import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
 import { TableName } from '../services/table-schemas.service';
 
+export enum DroneRealtimeStatus {
+  WAITING = 0,
+  TAKING_CARGO = 1,
+  MOVING = 2,
+}
+
 export interface IDroneMeasurementInput {
-  status: number;
+  status: DroneRealtimeStatus;
   batteryPower: number;
   longitude: number;
   latitude: number;
@@ -19,7 +25,7 @@ export interface IDroneMeasurement extends IDroneMeasurementInput{
 }
 
 @injectable()
-export class DroneMeasurements {
+export class DroneMeasurementsModel {
   private readonly _connection: DbConnection;
   private readonly _knex: Knex;
 
@@ -51,6 +57,6 @@ export function isDroneMeasurementInput(obj: any): obj is IDroneMeasurementInput
   );
   return (
     isObj && obj.longitude >= -180 && obj.longitude <= 180
-    && obj.latitude >= -90 && obj.latitude <= 90
+    && obj.latitude >= -90 && obj.latitude <= 90 && !!DroneRealtimeStatus[obj.status]
   );
 }

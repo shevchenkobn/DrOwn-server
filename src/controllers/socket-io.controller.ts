@@ -7,16 +7,23 @@ import { DroneModel, DroneStatus, IDrone } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { bindCallbackOnExit } from '../services/util.service';
 import {
-  DroneMeasurements,
+  DroneMeasurementsModel,
   IDroneMeasurement,
   isDroneMeasurementInput,
-} from '../models/drone-measurements';
+} from '../models/drone-measurements.model';
+import { IDroneOrder } from '../models/drone-orders.model';
+
+export enum OrderAcceptance {
+  STARTED = 0,
+  ERROR = 1,
+  ENQUEUED = 2,
+}
 
 @injectable()
 export class SocketIoController {
   protected _httpServer: http.Server;
   protected _droneModel: DroneModel;
-  protected _droneMeasurementModel: DroneMeasurements;
+  protected _droneMeasurementModel: DroneMeasurementsModel;
   protected _server: SocketIO.Server;
   // TODO: add sync between nodes
   protected _socketIdToDeviceId: Map<string, string>;
@@ -24,21 +31,9 @@ export class SocketIoController {
   protected _devices: Map<string, IDrone>;
 
   constructor(
-    // @inject(TYPES.HttpServer) hostConfig: AutobahnServeConfig,
     @inject(TYPES.HttpServer) httpServer: http.Server,
     @inject(TYPES.DroneModel) droneModel: DroneModel,
-    @inject(TYPES.DroneMeasurementModel) droneMeasurementModel: DroneMeasurements,
-
-    // errorCallbacks: ErrorCallbacks = {
-    //   on_user_error: (err, customErrorMessage) => {
-    //     // TODO: add logging
-    //     console.error('Autobahn callback error: ', err, customErrorMessage);
-    //   },
-    //   on_internal_error: (err, customErrorMessage) => {
-    //     // TODO: add logging
-    //     console.error('Autobahn internal error: ', err, customErrorMessage);
-    //   },
-    // },
+    @inject(TYPES.DroneMeasurementModel) droneMeasurementModel: DroneMeasurementsModel,
   ) {
     this._httpServer = httpServer;
     this._droneModel = droneModel;
@@ -98,11 +93,33 @@ export class SocketIoController {
   }
 
   public disconnect(deviceId: string) {
-    this._server.sockets.connected[this._deviceIdToSocketId.get(deviceId)!].disconnect();
+    const socketId = this._deviceIdToSocketId.get(deviceId);
+    if (!socketId) {
+      throw new Error(`No connected device for ${deviceId}`);
+    }
+    this._server.sockets.connected[socketId].disconnect();
+  }
+
+  public sendOrder(order: IDroneOrder) {
+    return new Promise<OrderAcceptance>((resolve, reject) => {
+      const socketId = this._deviceIdToSocketId.get(order.deviceId);
+      if (!socketId) {
+        reject(new Error(`No connected device for ${order.deviceId}`));
+        return;
+      }
+      const { userId, deviceId, ...orderInfo } = order;
+      this._server.sockets.connected[socketId].emit('order', orderInfo, (status: unknown) => {
+        if (!isOrderAcceptance(status)) {
+          console.error(`Not a valid order acceptance status ${status}`);
+          return;
+        }
+        resolve(status);
+      });
+    });
   }
 
   protected initialize() {
-    this._server.on('connection', socket => {
+    this._server.on('connection', async socket => {
       socket.on('telemetry', async (data: unknown) => {
         if (!isDroneMeasurementInput(data)) {
           return;
@@ -118,12 +135,18 @@ export class SocketIoController {
         }
       });
 
-      socket.on('disconnecting', (reason: string) => {
+      socket.on('disconnecting', async (reason: string) => {
         const deviceId = this._socketIdToDeviceId.get(socket.id)!;
         this._deviceIdToSocketId.delete(deviceId);
         this._devices.delete(deviceId);
         this._socketIdToDeviceId.delete(socket.id);
+
+        this._droneModel.update({ status: DroneStatus.OFFLINE } as any, { deviceId });
       });
     });
   }
+}
+
+export function isOrderAcceptance(value: any): value is OrderAcceptance {
+  return typeof value === 'number' && !!OrderAcceptance[value];
 }

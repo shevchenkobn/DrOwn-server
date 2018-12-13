@@ -9,7 +9,7 @@ var TableName;
     TableName["Users"] = "users";
     TableName["Drones"] = "drones";
     TableName["DroneOrders"] = "droneOrders";
-    TableName["DroneMeasurements"] = "droneMeasurements";
+    TableName["DroneMeasurementsModel"] = "droneMeasurements";
     TableName["Transactions"] = "transactions";
     TableName["Notifications"] = "notifications";
 })(TableName = exports.TableName || (exports.TableName = {}));

@@ -3,10 +3,8 @@ import { TYPES } from '../di/types';
 import * as Knex from 'knex';
 import { hash } from 'bcrypt';
 import { TableName } from '../services/table-schemas.service';
-import * as randomatic from 'randomatic';
 import { DbConnection } from '../services/db-connection.class';
 import { ErrorCode, LogicError } from '../services/error.service';
-import { matchAny } from 'fast-glob/out/utils/pattern';
 
 export const maxPasswordLength = 72 - 29;
 
@@ -114,6 +112,9 @@ function handleChangeError(err: any): never {
   switch (err.errno) {
     case 1062:
       throw new LogicError(ErrorCode.USER_EMAIL_DUPLICATE);
+
+    case 1051:
+      throw new LogicError(ErrorCode.USER_HAS_DRONES);
   }
 
   console.log('change user error: ', err);
