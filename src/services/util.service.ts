@@ -4,6 +4,7 @@ import * as YAML from 'js-yaml';
 import { Maybe } from '../@types';
 import { Request } from 'express';
 import * as randomatic from 'randomatic';
+import { ErrorCode, LogicError } from './error.service';
 
 export function bindCallbackOnExit(callback: (...args: any[]) => any) {
   const events = ['SIGTERM', 'SIGINT', 'SIGQUIT'] as NodeJS.Signals[];
@@ -74,4 +75,18 @@ export function enumToObject(enumType: IEnum) {
 
 export function getRandomString(length: number) {
   return randomatic('aA0!', length);
+}
+
+export function getSortFields(columns: Maybe<string[]>) {
+  if (!columns || columns.length === 0) {
+    return undefined;
+  }
+  const columnSet = new Set<string>();
+  for (const sortColumn of columns) {
+    const column = sortColumn.slice(1);
+    if (columnSet.has(column)) {
+      throw new LogicError(ErrorCode.SORT_BAD);
+    }
+  }
+  return columns.map(column => [column, column[0] === '-' ? 'asc' : 'desc']);
 }

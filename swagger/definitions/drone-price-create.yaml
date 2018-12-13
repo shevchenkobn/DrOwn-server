@@ -1,0 +1,11 @@
+type: object
+properties:
+  droneId:
+    $ref: '#/definitions/BigInt'
+  actionType:
+    type: integer
+    minimum: 1
+    maximum: 2
+  price:
+    $ref: '#/definitions/Decimal'
+additionalProperties: false

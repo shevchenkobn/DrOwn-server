@@ -1,0 +1,40 @@
+x-swagger-router-controller: drone-prices
+
+parameters:
+- in: path
+  name: priceId
+  required: true
+  # NOTE: it is BigInt type, but I am not able to reference it
+  type: string
+  description: A BitInt value in string format showing user id to alter
+  pattern: ^\d{1,19}$
+
+get:
+  tags:
+  - drone-prices
+  summary: List drone prices
+  operationId: getPrice
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - priceId
+      - droneId
+      - createdAt
+      - actionType
+      - price
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/IDronePrice'
+    400:
+      $ref: '#/responses/ClientError'
+    404:
+      $ref: '#/responses/NotFound'

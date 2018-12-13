@@ -4,30 +4,29 @@ import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
 import { TableName } from '../services/table-schemas.service';
 
-export enum DroneOrderAction {
-  STOP_AND_WAIT = 0,
-  MOVE_TO_LOCATION = 1,
-  TAKE_CARGO = 2,
-  RELEASE_CARGO = 3,
-
-  DELIVER = 4,
+export enum DronePriceActionType {
+  SELLING = 1,
+  RENTING = 2,
 }
 
-export interface IDroneOrder {
-  deviceId: string;
-  userId: string;
-  action: DroneOrderAction;
-  longitude?: number;
-  latitude?: number;
+export interface IDronePriceInput {
+  droneId: string;
+  actionType: DronePriceActionType;
+  price: string;
+}
+
+export interface IDronePrice extends IDronePriceInput{
+  priceId: string;
+  createdAt: Date;
 }
 
 @injectable()
-export class DroneMeasurementsModel {
+export class DronePricesModel {
   private readonly _connection: DbConnection;
   private readonly _knex: Knex;
 
   public get table() {
-    return this._knex(TableName.DroneOrders);
+    return this._knex(TableName.Drones);
   }
 
   constructor(
@@ -35,5 +34,10 @@ export class DroneMeasurementsModel {
   ) {
     this._connection = connection;
     this._knex = this._connection.knex;
+  }
+
+  select(columns?: ReadonlyArray<keyof IDronePrice>, where?: any)  {
+    const query = where ? this.table.where(where) : this.table;
+    return query.select(columns as any);
   }
 }

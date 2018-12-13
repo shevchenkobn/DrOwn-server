@@ -15,18 +15,29 @@ get:
     items:
       type: string
       enum:
-      - droneId
-      - producerId
-      - ownerId
-      - deviceId
-      - status
-      - baseLongitude
-      - baseLatitude
-      - batteryPower
-      - enginePower
-      - loadCapacity
-      - canCarryLiquids
-      - isWritingTelemetry
+      - +droneId
+      - +producerId
+      - +ownerId
+      - +deviceId
+      - +status
+      - +baseLongitude
+      - +baseLatitude
+      - +batteryPower
+      - +enginePower
+      - +loadCapacity
+      - +canCarryLiquids
+      - +isWritingTelemetrydroneId
+      - -producerId
+      - -ownerId
+      - -deviceId
+      - -status
+      - -baseLongitude
+      - -baseLatitude
+      - -batteryPower
+      - -enginePower
+      - -loadCapacity
+      - -canCarryLiquids
+      - -isWritingTelemetry
   - in: query
     name: producer-ids
     required: false
@@ -91,10 +102,31 @@ get:
     type: array
     collectionFormat: csv
     required: false
+    uniqueItems: true
     items:
       type: number
       minimum: -1
       maximum: 3
+  - in: query
+      name: sort
+      type: array
+      minItems: 1
+      maxItems: 5
+      collectionFormat: csv
+      uniqueItems: true
+      items:
+        type: string
+        enum:
+        - +priceId
+        - +droneId
+        - +createdAt
+        - +actionType
+        - +price
+        - -priceId
+        - -droneId
+        - -createdAt
+        - -actionType
+        - -price
   responses:
     200:
       description: OK

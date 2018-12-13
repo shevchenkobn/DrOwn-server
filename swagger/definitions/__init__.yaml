@@ -10,6 +10,9 @@ Latitude:
 Longitude:
   $ref: ./longitude.yaml
 
+Date:
+  $ref: ./date.yaml
+
 # User types
 
 UserRoles:
@@ -52,6 +55,14 @@ DroneStatuses:
 
 DroneSecret:
   $ref: ./drone-passwordHash.yaml
+
+# Drone prices
+
+DronePriceCreate:
+  $ref: ./drone-price-create.yaml
+
+DronePrice:
+  $ref: ./drone-price.yaml
 
 # Auth types
 Tokens:

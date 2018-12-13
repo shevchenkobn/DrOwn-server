@@ -12,13 +12,10 @@ import { ErrorCode, LogicError } from '../services/error.service';
 import { NextFunction, Request, Response } from 'express';
 import { IUser, UserModel, UserRoles, UserStatus } from '../models/users.model';
 import { Maybe } from '../@types';
-import { getRandomString, getSafeSwaggerParam } from '../services/util.service';
+import { getRandomString, getSafeSwaggerParam, getSortFields } from '../services/util.service';
 import { AuthService } from '../services/authentication.class';
 import { randomBytes } from 'crypto';
 import { promisify } from 'util';
-
-const SECRET_BYTE_LENGTH = 128;
-const randomBytesAsync = promisify(randomBytes);
 
 @injectable()
 export class DronesController {
@@ -61,11 +58,12 @@ export class DronesController {
             req,
             'load-capacity-limits',
           );
-
           if (loadCapacityLimits) {
             loadCapacityLimits.sort();
           }
           const canCarryLiquids = getSafeSwaggerParam<boolean>(req, 'can-carry-liquids');
+          const sortings = getSortFields(getSafeSwaggerParam<string[]>(req, 'sort'));
+
           const query = droneModel.table.columns(getColumns(
             select,
             !!user && (!!(
@@ -94,6 +92,11 @@ export class DronesController {
           }
           if (statuses) {
             query.whereIn('status', statuses);
+          }
+          if (sortings) {
+            for (const [column, direction] of sortings) {
+              query.orderBy(column, direction);
+            }
           }
 
           console.debug(query.toSQL());

@@ -8,3 +8,5 @@
   description: Endpoints for CRUD above drones
 - name: no-auth
   description: Paths, that don't require authentication
+- name: drone-prices
+  description: Path for setting prices

@@ -30,3 +30,9 @@
 
 /drone-statuses:
   $ref: ./drone-statuses.yaml
+
+/drone-prices:
+  $ref: ./drone-prices.yaml
+
+/drone-prices/{priceId}:
+  $ref: ./drone-prices-price-id.yaml
