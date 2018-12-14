@@ -11,8 +11,9 @@ parameters:
 
 get:
   tags:
+  - no-auth
   - drone-prices
-  summary: List drone prices
+  summary: Get specific drone price
   operationId: getPrice
   parameters:
   - in: query
@@ -33,7 +34,42 @@ get:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/IDronePrice'
+        $ref: '#/definitions/DronePrice'
+    400:
+      $ref: '#/responses/ClientError'
+    404:
+      $ref: '#/responses/NotFound'
+
+delete:
+  tags:
+  - drone-prices
+  summary: Deactivate price
+  operationId: deactivatePrice
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - owner
+  - landlord
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - priceId
+      - droneId
+      - createdAt
+      - actionType
+      - price
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/DronePrice'
     400:
       $ref: '#/responses/ClientError'
     404:

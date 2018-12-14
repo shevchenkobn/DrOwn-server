@@ -11,12 +11,15 @@ export const TYPES = {
   DroneModel: Symbol.for('DroneModel'),
   DroneMeasurementModel: Symbol.for('DroneMeasurementModel'),
   DronePriceModel: Symbol.for('DronePriceModel'),
+  TransactionModel: Symbol.for('TransactionModel'),
 
   UserHelpersController: Symbol.for('UserHelpersController'),
   AuthController: Symbol.for('AuthController'),
   UsersController: Symbol.for('UsersController'),
   DronesController: Symbol.for('DronesController'),
   DroneHelpersController: Symbol.for('DroneHelpersController'),
+  DronePriceController: Symbol.for('DronePriceController'),
+  TransactionController: Symbol.for('TransactionController'),
 
   SocketIoController: Symbol.for('SocketIoController'),
   // FirebaseController: Symbol.for('FirebaseController'),

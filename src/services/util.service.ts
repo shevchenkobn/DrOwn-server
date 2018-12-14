@@ -5,6 +5,7 @@ import { Maybe } from '../@types';
 import { Request } from 'express';
 import * as randomatic from 'randomatic';
 import { ErrorCode, LogicError } from './error.service';
+import { TableName } from './table-schemas.service';
 
 export function bindCallbackOnExit(callback: (...args: any[]) => any) {
   const events = ['SIGTERM', 'SIGINT', 'SIGQUIT'] as NodeJS.Signals[];
@@ -77,7 +78,7 @@ export function getRandomString(length: number) {
   return randomatic('aA0!', length);
 }
 
-export function getSortFields(columns: Maybe<string[]>) {
+export function getSortFields(columns: Maybe<string[]>, tableName?: TableName) {
   if (!columns || columns.length === 0) {
     return undefined;
   }
@@ -88,5 +89,17 @@ export function getSortFields(columns: Maybe<string[]>) {
       throw new LogicError(ErrorCode.SORT_BAD);
     }
   }
-  return columns.map(column => [column, column[0] === '-' ? 'asc' : 'desc']);
+  return tableName
+    ? columns.map(
+      column => [`${tableName}.${column} as ${column}`, column[0] === '-' ? 'asc' : 'desc'],
+    )
+    : columns.map(column => [column, column[0] === '-' ? 'asc' : 'desc']);
 }
+
+export function getSelectAsColumns(columns: Maybe<string[]>, tableName: TableName) {
+  if (!columns || columns.length === 0) {
+    return [];
+  }
+  return columns.map(col => `${tableName}.${col} as ${col}`);
+}
+

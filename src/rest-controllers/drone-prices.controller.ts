@@ -10,9 +10,10 @@ import { NextFunction, Request, Response } from 'express';
 import { getSafeSwaggerParam, getSortFields } from '../services/util.service';
 import { Maybe } from '../@types';
 import { DroneModel } from '../models/drones.model';
-import { IUser } from '../models/users.model';
+import { IUser, UserRoles } from '../models/users.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { DbConnection } from '../services/db-connection.class';
+import { TableName } from '../services/table-schemas.service';
 
 @injectable()
 export class DronePricesController {
@@ -84,27 +85,37 @@ export class DronePricesController {
             ownerId: user.userId,
           });
           if (drones.length === 0) {
-            next(new LogicError(ErrorCode.NOT_FOUND));
+            next(new LogicError(ErrorCode.DRONE_PRICE_DRONE_BAD));
+            return;
+          }
+          if (
+            !(user.role & UserRoles.OWNER) && dronePrice.actionType === DronePriceActionType.SELLING
+            || (
+              !(user.role & UserRoles.LANDLORD)
+              && dronePrice.actionType === DronePriceActionType.RENTING
+            )
+          ) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
           }
 
-          dbConnection.knex.transaction(async trx => {
+          await dbConnection.knex.transaction(async trx => {
             try {
-              await dronePricesModel.table.insert(dronePrice).transacting(trx);
-              const newDronePrice = await dronePricesModel.table
-                .columns(select)
-                .transacting(trx)
-                .whereIn(
-                  'priceId',
-                  dronePricesModel.table.max('priceId'),
-                );
-              trx.commit(newDronePrice);
-              res.json(newDronePrice);
+              dronePricesModel.update(
+                { droneId: dronePrice.droneId, actionType: dronePrice.actionType },
+                { isActive: false },
+                trx,
+              );
+              dronePricesModel.table.insert(dronePrice).transacting(trx);
+              trx.commit();
             } catch (err) {
-              next(err);
               trx.rollback(err);
+              next(err);
             }
-          }).catch(err => console.error(err));
+          });
+          res.json(
+            (await dronePricesModel.select(select, { isActive: true }))[0],
+          );
         } catch (err) {
           next(err);
         }
@@ -125,6 +136,55 @@ export class DronePricesController {
             return;
           }
           res.json(dronePrices[0]);
+        } catch (err) {
+          next(err);
+        }
+      },
+
+      async deactivatePrice(req: Request, res: Response, next: NextFunction) {
+        try {
+          const user = (req as any).user as IUser;
+          const select = (
+            req as any
+          ).swagger.params.select.value as (keyof IDronePrice)[];
+          const priceId = (
+            req as any
+          ).swagger.params.priceId.value as string;
+
+          const hasSelect = select && select.length > 0;
+          const droneOwnerId = `${TableName.Drones}.ownerId`;
+          const columns: string[] = [droneOwnerId];
+          if (hasSelect) {
+            columns.push(...select!.map(col => `${TableName.DronePrices}.${col}`));
+          }
+          const dronePrices = await dronePricesModel.table
+            .where({ priceId })
+            .columns(columns)
+            .join(
+              TableName.Drones,
+              `${TableName.Drones}.droneId`,
+              `${TableName.Drones}.droneId`,
+            );
+          if (dronePrices.length === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+          const dronePrice = dronePrices[0];
+          if (dronePrices[0][droneOwnerId] !== user.userId) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+
+          await dronePricesModel.update({ priceId }, { isActive: false });
+          if (hasSelect) {
+            const returnPrice = {} as {[column: string]: any};
+            for (const column of select) {
+              returnPrice[column] = dronePrice[`${TableName.DronePrices}.${column}`];
+            }
+            res.json(returnPrice);
+          } else {
+            res.json({});
+          }
         } catch (err) {
           next(err);
         }

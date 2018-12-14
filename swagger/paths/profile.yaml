@@ -1,0 +1,35 @@
+x-swagger-router-controller: users
+
+get:
+  tags:
+  - users
+  summary: Get current user
+  operationId: getProfile
+  security:
+  - Bearer: []
+  parameters: # TODO: filters and sort
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - role
+      - name
+      - companyId
+      - address
+      - phoneNumber
+      - longitude
+      - latitude
+      - cash
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/User'
+    400:
+      $ref: '#/responses/ClientError'

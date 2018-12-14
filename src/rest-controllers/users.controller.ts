@@ -40,6 +40,21 @@ export class UsersController {
         }
       },
 
+      async getProfile(req: Request, res: Response) {
+        const select = (req as any).swagger.params.select.value as (keyof IUser)[];
+        const user = (req as any).user as IUser;
+
+        if (!select || select.length === 0) {
+          res.json(user);
+        } else {
+          const returnUser = {} as {[field: string]: any};
+          for (const column of select) {
+            returnUser[column] = user[column];
+          }
+          res.json(returnUser);
+        }
+      },
+
       async createUser(req: Request, res: Response, next: NextFunction) {
         try {
           const select = (req as any).swagger.params.select.value as
@@ -238,7 +253,7 @@ const adminFields: ReadonlyArray<keyof IUser> = [
   'longitude',
   'latitude',
 ];
-export function getColumns(
+function getColumns(
   columns: Maybe<(keyof IUser)[]>,
   includeAdmin: boolean,
 ): (keyof IUser)[] {

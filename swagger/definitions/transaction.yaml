@@ -1,24 +1,25 @@
 type: object
 required:
-- droneId
-- actionType
-- price
-- priceId
+- transactionId
 - createdAt
-- isActive
+- priceId
+- userId
+- period
+- status
 properties:
-  priceId:
+  transactionId:
     $ref: '#/definitions/BigInt'
   createdAt:
     $ref: '#/definitions/Date'
-  droneId:
+  priceId:
     $ref: '#/definitions/BigInt'
-  actionType:
+  userId:
+    $ref: '#/definitions/BigInt'
+  period:
     type: integer
     minimum: 1
+  status:
+    type: integer
+    minimum: 0
     maximum: 2
-  price:
-    $ref: '#/definitions/Decimal'
-  isActive:
-    type: boolean
 additionalProperties: false

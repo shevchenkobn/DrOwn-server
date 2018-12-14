@@ -3,6 +3,7 @@ import { inject, injectable } from 'inversify';
 import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
 import { TableName } from '../services/table-schemas.service';
+import { Transaction } from 'knex';
 
 export enum DronePriceActionType {
   SELLING = 1,
@@ -18,6 +19,7 @@ export interface IDronePriceInput {
 export interface IDronePrice extends IDronePriceInput{
   priceId: string;
   createdAt: Date;
+  isActive: boolean;
 }
 
 @injectable()
@@ -39,5 +41,13 @@ export class DronePricesModel {
   select(columns?: ReadonlyArray<keyof IDronePrice>, where?: any)  {
     const query = where ? this.table.where(where) : this.table;
     return query.select(columns as any);
+  }
+
+  update(where: Partial<IDronePrice>, query: Partial<IDronePrice>, transaction?: Transaction) {
+    const updateQuery = this.table.where(where).update(query);
+    if (transaction) {
+      updateQuery.transacting(transaction);
+    }
+    return updateQuery;
   }
 }

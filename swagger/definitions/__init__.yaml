@@ -64,6 +64,22 @@ DronePriceCreate:
 DronePrice:
   $ref: ./drone-price.yaml
 
+DronePriceActionTypes:
+  $ref: ./drone-price-action-types.yaml
+
+# Transactions
+
+Transaction:
+  $ref: ./transaction.yaml
+
+TransactionCreate:
+  $ref: ./transaction-create.yaml
+
+# Drone Orders
+
+DroneOrder:
+  $ref: ./drone-order.yaml
+
 # Auth types
 Tokens:
   $ref: ./tokens.yaml

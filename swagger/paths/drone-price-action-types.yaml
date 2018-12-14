@@ -1,0 +1,13 @@
+x-swagger-router-controller: drone-helpers
+
+get:
+  tags:
+  - drone-prices
+  - no-auth
+  operationId: getDronePriceActionTypes
+  summary: Returns drone price action types
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/DronePriceActionTypes'

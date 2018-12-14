@@ -11,7 +11,7 @@ export enum TableName { // NOTE: the order is important otherwise errors with fo
   Transactions = 'transactions',
   DroneOrders = 'droneOrders',
   DroneMeasurements = 'droneMeasurements',
-  Notifications = 'notifications',
+  // Notifications = 'notifications',
 }
 
 export const tableNames: ReadonlyArray<TableName> = Object.values(TableName);
@@ -64,7 +64,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   [TableName.DroneOrders, knex => {
     return knex.schema.createTable(TableName.DroneOrders, table => {
       table.bigInteger('deviceId').unsigned()
-        .primary(`pk_${TableName.Drones}`);
+        .primary(`pk_${TableName.Drones}`)
+        .references(`${TableName.Drones}.deviceId`).onDelete('CASCADE');
       table.bigInteger('userId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
 
@@ -97,6 +98,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
         .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
       table.integer('actionType').unsigned().notNullable();
       table.decimal('price', 8, 2).nullable();
+      table.boolean('isActive').notNullable().defaultTo(false);
       // knex.text('additionalInfo').nullable();
     });
   }],
@@ -105,26 +107,24 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigIncrements('transactionId')
         .primary(`pk_${TableName.Transactions}`);
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.bigIncrements('supplyId').unsigned().notNullable()
+      table.bigIncrements('priceId').unsigned().notNullable()
         .references(`${TableName.DronePrices}.supplyId`).onDelete('CASCADE');
-      table.bigInteger('user1Id').unsigned().notNullable()
+      table.bigInteger('userId').unsigned().notNullable()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.bigInteger('user2Id').unsigned().notNullable()
-        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.integer('status').unsigned().notNullable();
+      table.integer('status').unsigned().notNullable().defaultTo(0);
       table.integer('period').unsigned().notNullable().defaultTo(0);
       // knex.text('additionalInfo').nullable();
     });
   }],
-  [TableName.Notifications, knex => {
-    return knex.schema.createTable(TableName.Notifications, table => {
-      table.bigInteger('userId').unsigned()
-        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.integer('type').unsigned().notNullable();
-      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.bigInteger('entityId').unsigned().nullable();
-    });
-  }],
+  // [TableName.Notifications, knex => {
+  //   return knex.schema.createTable(TableName.Notifications, table => {
+  //     table.bigInteger('userId').unsigned()
+  //       .references(`${TableName.Users}.userId`).onDelete('CASCADE');
+  //     table.integer('type').unsigned().notNullable();
+  //     table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
+  //     table.bigInteger('entityId').unsigned().nullable();
+  //   });
+  // }],
 ]);
 
 export async function dropTables(

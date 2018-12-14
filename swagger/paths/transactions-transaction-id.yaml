@@ -1,0 +1,118 @@
+x-swagger-router-controller: transactions
+
+parameters:
+- in: path
+  name: transactionId
+  required: true
+  # NOTE: it is BigInt type, but I am not able to reference it
+  type: string
+  description: A BitInt value in string format showing user id to alter
+  pattern: ^\d{1,19}$
+
+get:
+  tags:
+  - transactions
+  summary: Get transaction
+  operationId: getTransaction
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - owner
+  - landlord
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - transactionId
+      - createdAt
+      - priceId
+      - userId
+      - period
+      - status
+  responses:
+    200:
+      description: OK
+      schema:
+        type: array
+        items:
+          $ref: '#/definitions/Transaction'
+    400:
+      $ref: '#/responses/ClientError'
+
+post:
+  tags:
+  - transactions
+  summary: Confirm transaction
+  operationId: confirmTransaction
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - owner
+  - landlord
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - transactionId
+      - createdAt
+      - priceId
+      - userId
+      - period
+      - status
+  responses:
+    200:
+      description: OK
+      schema:
+        type: array
+        items:
+          $ref: '#/definitions/Transaction'
+    400:
+      $ref: '#/responses/ClientError'
+
+delete:
+  tags:
+  - transactions
+  summary: Reject transaction
+  operationId: rejectTransaction
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - owner
+  - landlord
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - transactionId
+      - createdAt
+      - priceId
+      - userId
+      - period
+      - status
+  responses:
+    200:
+      description: OK
+      schema:
+        type: array
+        items:
+          $ref: '#/definitions/Transaction'
+    400:
+      $ref: '#/responses/ClientError'
