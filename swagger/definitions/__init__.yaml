@@ -75,10 +75,13 @@ Transaction:
 TransactionCreate:
   $ref: ./transaction-create.yaml
 
-# Drone Orders
+# Drone orders
 
 DroneOrder:
   $ref: ./drone-order.yaml
+
+DroneOrderCreate:
+  $ref: ./drone-order-create.yaml
 
 # Auth types
 Tokens:

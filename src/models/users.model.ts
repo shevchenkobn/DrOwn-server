@@ -85,7 +85,7 @@ export class UserModel {
   }
 
   async update(
-    userSeed: IUserSeed,
+    userSeed: Partial<IUserSeed>,
     whereClause: WhereClause,
     changeSeed = false,
   ) {

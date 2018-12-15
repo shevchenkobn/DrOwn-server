@@ -1,0 +1,22 @@
+type: object
+required:
+- deviceId
+- userId
+- action
+- longitude
+- latitude
+properties:
+  deviceId:
+    type: string
+    pattern: ^[\da-fA-F]{12}$
+  userId:
+    $ref: '#/definitions/BigInt'
+  action:
+    type: integer
+    minimum: 0
+    maximum: 4
+  longitude:
+    $ref: '#/definitions/Longitude'
+  latitude:
+    $ref: '#/definitions/Latitude'
+additionalProperties: false

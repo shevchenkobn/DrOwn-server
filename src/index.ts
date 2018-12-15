@@ -59,8 +59,12 @@ Promise.all([
     container.bind<Server>(TYPES.HttpServer).toConstantValue(server);
 
     const ioApp = container.get<SocketIoController>(TYPES.SocketIoController);
+    ioApp.listen(port);
 
-    bindCallbackOnExit(() => server.close());
+    bindCallbackOnExit(() => {
+      server.close();
+      ioApp.close();
+    });
 
     console.log(`Listening at ${host}:${port}`);
     if (global.gc) {

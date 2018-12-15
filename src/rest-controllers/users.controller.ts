@@ -253,7 +253,7 @@ const adminFields: ReadonlyArray<keyof IUser> = [
   'longitude',
   'latitude',
 ];
-function getColumns(
+export function getColumns(
   columns: Maybe<(keyof IUser)[]>,
   includeAdmin: boolean,
 ): (keyof IUser)[] {

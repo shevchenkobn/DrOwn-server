@@ -37,4 +37,9 @@ export class TransactionsModel {
     this._connection = connection;
     this._knex = this._connection.knex;
   }
+
+  select(columns?: ReadonlyArray<keyof ITransaction>, where?: any)  {
+    const query = where ? this.table.where(where) : this.table;
+    return query.select(columns as any);
+  }
 }

@@ -67,7 +67,7 @@ export class DroneModel {
     }
   }
 
-  async update(drone: IDroneInput, whereClause: WhereClause) {
+  async update(drone: Partial<IDroneInput>, whereClause: WhereClause) {
     try {
       return await this.table.where(whereClause).update(drone);
     } catch (err) {

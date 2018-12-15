@@ -48,3 +48,6 @@
 
 /transactions/{transactionId}:
   $ref: ./transactions-transaction-id.yaml
+
+/drone-orders:
+  $ref: ./drone-orders.yaml

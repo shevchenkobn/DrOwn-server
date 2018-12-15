@@ -85,11 +85,11 @@ export class SocketIoController {
   }
 
   public listen(port: number) {
-    this._server.listen(port);
+    return this._server.listen(port);
   }
 
-  public close(cb: () => void) {
-    this._server.close(cb);
+  public close(cb?: () => void) {
+    return this._server.close(cb);
   }
 
   public disconnect(deviceId: string) {

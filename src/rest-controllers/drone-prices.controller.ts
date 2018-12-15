@@ -101,21 +101,23 @@ export class DronePricesController {
 
           await dbConnection.knex.transaction(async trx => {
             try {
-              dronePricesModel.update(
+              await dronePricesModel.update(
                 { droneId: dronePrice.droneId, actionType: dronePrice.actionType },
                 { isActive: false },
                 trx,
               );
-              dronePricesModel.table.insert(dronePrice).transacting(trx);
+              await dronePricesModel.table.insert(dronePrice).transacting(trx);
+              res.json(
+                (await dronePricesModel.select(
+                  select,
+                  { isActive: true, droneId: dronePrice.droneId },
+                ))[0],
+              );
               trx.commit();
             } catch (err) {
               trx.rollback(err);
-              next(err);
             }
           });
-          res.json(
-            (await dronePricesModel.select(select, { isActive: true }))[0],
-          );
         } catch (err) {
           next(err);
         }

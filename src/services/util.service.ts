@@ -103,3 +103,14 @@ export function getSelectAsColumns(columns: Maybe<string[]>, tableName: TableNam
   return columns.map(col => `${tableName}.${col} as ${col}`);
 }
 
+export function mapObject(
+  entity: {[column: string]: any},
+  tableName: TableName,
+  columns: string[],
+) {
+  const obj = {} as typeof entity;
+  for (const col of columns) {
+    obj[col] = entity[`${tableName}.${col} as ${col}`];
+  }
+  return obj;
+}

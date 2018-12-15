@@ -5,5 +5,6 @@
     "no-duplicate-imports": false,
     "align": false,
     "ter-arrow-parens": false
-  }
+  },
+  "no-increment-decrement": false
 }

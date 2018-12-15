@@ -7,20 +7,30 @@ import {
   TransactionStatus,
 } from '../models/transactions.model';
 import { NextFunction, Request, Response } from 'express';
-import { IUser, UserRoles } from '../models/users.model';
-import { getSafeSwaggerParam, getSelectAsColumns, getSortFields } from '../services/util.service';
+import { IUser, UserModel, UserRoles } from '../models/users.model';
+import {
+  getSafeSwaggerParam,
+  getSelectAsColumns,
+  getSortFields,
+  mapObject,
+} from '../services/util.service';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { Maybe } from '../@types';
 import { TableName } from '../services/table-schemas.service';
 import { DronePriceActionType, DronePricesModel } from '../models/drone-prices.model';
-import { DroneStatus } from '../models/drones.model';
+import { DroneModel, DroneStatus } from '../models/drones.model';
 import { Decimal } from 'decimal.js';
+import { DbConnection } from '../services/db-connection.class';
+import { scheduleTimer } from '../services/scheduler.service';
 
 @injectable()
 export class TransactionsController {
   constructor(
     @inject(TYPES.TransactionModel) transactionModel: TransactionsModel,
     @inject(TYPES.DronePriceModel) dronePriceModel: DronePricesModel,
+    @inject(TYPES.UserModel) userModel: UserModel,
+    @inject(TYPES.DroneModel) droneModel: DroneModel,
+    @inject(TYPES.DbConnection) dbConnection: DbConnection,
   ) {
     return {
       async getTransactions(req: Request, res: Response, next: NextFunction) {
@@ -145,12 +155,12 @@ export class TransactionsController {
           }
 
           const droneInfo = dronePriceData[0];
-          if (droneInfo.droneStatus !== DroneStatus.IDLE) {
-            next(new LogicError(ErrorCode.DRONE_STATUS_BAD));
-            return;
-          }
           if (droneInfo.ownerId === user.userId) {
             next(new LogicError(ErrorCode.TRANSACTION_USER_SAME));
+            return;
+          }
+          if (droneInfo.droneStatus !== DroneStatus.IDLE) {
+            next(new LogicError(ErrorCode.DRONE_STATUS_BAD));
             return;
           }
           switch (droneInfo.actionType) {
@@ -211,6 +221,66 @@ export class TransactionsController {
 
       async getTransaction(req: Request, res: Response, next: NextFunction) {
         try {
+          const user = (
+            req as any
+          ).user as IUser;
+          const transactionId = (
+            req as any
+          ).swagger.params.transactionId.value as string;
+          const select = (
+            req as any
+          ).swagger.params.select.value as (keyof ITransaction)[];
+          const hadUserId = select.includes('userId');
+
+          if (!hadUserId) {
+            select.push('userId');
+          }
+          const columns = getSelectAsColumns(select, TableName.Transactions);
+
+          const dronePriceData = await dronePriceModel.table.columns([
+            ...columns,
+            // `${TableName.DronePrices}.isActive as isActive`,
+            `${TableName.Drones}.ownerId as ownerId`,
+          ])
+            .join(
+              TableName.DronePrices,
+              `${TableName.Transactions}.priceId`,
+              `${TableName.DronePrices}.priceId`,
+            )
+            .join(
+              TableName.Drones,
+              `${TableName.DronePrices}.droneId`,
+              `${TableName.Drones}.droneId`,
+            )
+            .where({ transactionId });
+          if (dronePriceData.length === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+
+          const droneInfo = dronePriceData[0];
+          if (droneInfo.ownerId !== user.userId || droneInfo.userId !== user.userId) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+          let transaction;
+          if (!select || select.length === 0 || !hadUserId && select.length === 1) {
+            transaction = await transactionModel.select([], { transactionId });
+          } else {
+            transaction = await transactionModel.select(
+              hadUserId ? select.slice(1) : select,
+              { transactionId },
+            );
+          }
+          res.json(transaction);
+        } catch (err) {
+          next(err);
+        }
+      },
+
+      async confirmTransaction(req: Request, res: Response, next: NextFunction) {
+        try {
+          const user = (req as any).user as IUser;
           const transactionId = (
             req as any
           ).swagger.params.transactionId.value as string;
@@ -218,17 +288,14 @@ export class TransactionsController {
             req as any
           ).swagger.params.select.value as (keyof ITransaction)[];
 
-          const hadPeriod = select.includes('period');
-          if (!hadPeriod) {
-            select.push('period');
-          }
-          const columns = getSelectAsColumns(select, TableName.Transactions);
-
           const dronePriceData = await dronePriceModel.table.columns([
-              ...columns,
-            // `${TableName.DronePrices}.actionType as actionType`,
+            `${TableName.Transactions}.status as status`,
+            `${TableName.Transactions}.period as period`,
+            `${TableName.Transactions}.userId as userId`,
             // `${TableName.DronePrices}.isActive as isActive`,
             `${TableName.DronePrices}.price as price`,
+            `${TableName.DronePrices}.actionType as actionType`,
+            `${TableName.DronePrices}.droneId as droneId`,
             `${TableName.Drones}.status as droneStatus`,
             `${TableName.Drones}.ownerId as ownerId`,
           ]).join(
@@ -246,6 +313,156 @@ export class TransactionsController {
           }
 
           const droneInfo = dronePriceData[0];
+          if (droneInfo.ownerId !== user.userId) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+          if (droneInfo.status !== TransactionStatus.PENDING) {
+            next(new LogicError(ErrorCode.TRANSACTION_STATUS_BAD));
+            return;
+          }
+          if (droneInfo.droneStatus !== DroneStatus.IDLE) {
+            next(new LogicError(ErrorCode.DRONE_STATUS_BAD));
+            return;
+          }
+          switch (droneInfo.actionType) {
+            case DronePriceActionType.RENTING: {
+              const sum = new Decimal(droneInfo.price).mul(droneInfo.period);
+              if (sum.greaterThan(user.cash!)) {
+                next(new LogicError(ErrorCode.TRANSACTION_CASH));
+                return;
+              }
+              await dbConnection.knex.transaction(async trx => {
+                try {
+                  await userModel.table
+                    .where({ userId: droneInfo.userId })
+                    .update({
+                      cash: dbConnection.knex.raw(`cash - ${sum.toString()}`), // maybe problem
+                    })
+                    .transacting(trx);
+                  await droneModel.table
+                    .where({ ownerId: droneInfo.userId })
+                    .update({ status: DroneStatus.RENTED })
+                    .transacting(trx);
+                  await userModel.table
+                    .where({ userId: user.userId })
+                    .update({
+                      cash: dbConnection.knex.raw(`cash + ${sum.toString()}`), // maybe problem
+                    })
+                    .transacting(trx);
+                  await transactionModel.table
+                    .update({ status: TransactionStatus.CONFIRMED })
+                    .where({ transactionId })
+                    .transacting(trx);
+                } catch (err) {
+                  trx.rollback(err);
+                }
+              });
+              break;
+            }
+
+            case DronePriceActionType.SELLING: {
+              if (new Decimal(droneInfo.price).greaterThan(user.cash!)) {
+                next(new LogicError(ErrorCode.TRANSACTION_CASH));
+                return;
+              }
+              await dbConnection.knex.transaction(async trx => {
+                try {
+                  await userModel.table
+                    .where({ userId: droneInfo.userId })
+                    .update({
+                      cash: dbConnection.knex.raw(`cash - ${droneInfo.price}`), // maybe problem
+                    })
+                    .transacting(trx);
+                  await droneModel.table
+                    .where({ ownerId: droneInfo.userId })
+                    .update({ status: DroneStatus.RENTED })
+                    .transacting(trx);
+                  scheduleTimer(() => {
+                    droneModel.update(
+                      { status: DroneStatus.IDLE },
+                      { droneId: droneInfo.droneId },
+                    ).catch((err) => {
+                      console.error(err);
+                      console.error('renting stop failed');
+                    });
+                  }, droneInfo.period);
+                  await userModel.table
+                    .where({ userId: user.userId })
+                    .update({
+                      cash: dbConnection.knex.raw(`cash + ${droneInfo.price}`), // maybe problem
+                    })
+                    .transacting(trx);
+                  await transactionModel.table
+                    .update({ status: TransactionStatus.CONFIRMED })
+                    .where({ transactionId })
+                    .transacting(trx);
+                } catch (err) {
+                  trx.rollback(err);
+                }
+              });
+              break;
+            }
+          }
+          res.json(
+            (await transactionModel.select(select, { transactionId }))[0],
+          );
+        } catch (err) {
+          next(err);
+        }
+      },
+
+      async rejectTransaction(req: Request, res: Response, next: NextFunction) {
+        try {
+          const user = (req as any).user as IUser;
+          const transactionId = (
+            req as any
+          ).swagger.params.transactionId.value as string;
+          const select = (
+            req as any
+          ).swagger.params.select.value as (keyof ITransaction)[];
+
+          const dronePriceData = await dronePriceModel.table.columns([
+            `${TableName.Transactions}.status as status`,
+            `${TableName.Transactions}.userId as userId`,
+            // `${TableName.DronePrices}.isActive as isActive`,
+            `${TableName.Drones}.status as droneStatus`,
+            `${TableName.Drones}.ownerId as ownerId`,
+          ]).join(
+            TableName.DronePrices,
+            `${TableName.Transactions}.priceId`,
+            `${TableName.DronePrices}.priceId`,
+          ).join(
+            TableName.Drones,
+            `${TableName.DronePrices}.droneId`,
+            `${TableName.Drones}.droneId`,
+          ).where({ transactionId });
+          if (dronePriceData.length === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+
+          const droneInfo = dronePriceData[0];
+          if (droneInfo.ownerId !== user.userId) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+          if (droneInfo.status !== TransactionStatus.PENDING) {
+            next(new LogicError(ErrorCode.TRANSACTION_STATUS_BAD));
+            return;
+          }
+          if (droneInfo.droneStatus !== DroneStatus.IDLE) {
+            next(new LogicError(ErrorCode.DRONE_STATUS_BAD));
+            return;
+          }
+
+          await transactionModel.table
+            .where({ transactionId })
+            .update({ status: TransactionStatus.REJECTED });
+
+          res.json(
+            (await transactionModel.select(select, { transactionId }))[0],
+          );
         } catch (err) {
           next(err);
         }
