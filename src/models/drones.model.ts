@@ -26,7 +26,6 @@ export interface IDroneInput {
   enginePower: number;
   loadCapacity: number;
   canCarryLiquids: boolean;
-  isWritingTelemetry: boolean;
   passwordHash: string;
 }
 

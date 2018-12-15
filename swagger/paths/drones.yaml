@@ -25,7 +25,6 @@ get:
       - enginePower
       - loadCapacity
       - canCarryLiquids
-      - isWritingTelemetry
   - in: query
     name: producer-ids
     required: false
@@ -116,7 +115,6 @@ get:
       - +enginePower
       - +loadCapacity
       - +canCarryLiquids
-      - +isWritingTelemetry
       - -droneId
       - -producerId
       - -ownerId
@@ -128,7 +126,6 @@ get:
       - -enginePower
       - -loadCapacity
       - -canCarryLiquids
-      - -isWritingTelemetry
   responses:
     200:
       description: OK
@@ -170,7 +167,6 @@ post:
       - enginePower
       - loadCapacity
       - canCarryLiquids
-      - isWritingTelemetry
   - in: body
     name: drone
     required: true
@@ -222,7 +218,6 @@ patch:
       - enginePower
       - loadCapacity
       - canCarryLiquids
-      - isWritingTelemetry
   - in: body
     name: drone
     required: true
@@ -276,7 +271,6 @@ delete:
       - enginePower
       - loadCapacity
       - canCarryLiquids
-      - isWritingTelemetry
   responses:
     200:
       description: OK

@@ -5,7 +5,6 @@ required:
 - enginePower
 - loadCapacity
 - canCarryLiquids
-- isWritingTelemetry
 properties:
   producerId:
     $ref: '#/definitions/BigInt'
@@ -28,7 +27,5 @@ properties:
     type: number
     minimum: 0
   canCarryLiquids:
-    type: boolean
-  isWritingTelemetry:
     type: boolean
 additionalProperties: false

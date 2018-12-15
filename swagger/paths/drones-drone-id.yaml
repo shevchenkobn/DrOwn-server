@@ -42,7 +42,6 @@ patch:
       - enginePower
       - loadCapacity
       - canCarryLiquids
-      - isWritingTelemetry
   - in: body
     name: drone
     required: true
@@ -91,7 +90,6 @@ delete:
       - enginePower
       - loadCapacity
       - canCarryLiquids
-      - isWritingTelemetry
   responses:
     200:
       description: OK

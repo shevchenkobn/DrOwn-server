@@ -20,6 +20,4 @@ properties:
     minimum: 0
   canCarryLiquids:
     type: boolean
-  isWritingTelemetry:
-    type: boolean
 additionalProperties: false

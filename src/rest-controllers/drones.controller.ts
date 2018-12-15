@@ -259,13 +259,7 @@ export class DronesController {
             next(new LogicError(ErrorCode.DRONE_UNAUTHORIZED));
             return;
           }
-          if (
-            droneFromDB.status === DroneStatus.RENTED
-            && !(
-              'isWritingTelemetry' in droneFromDB
-              && Object.keys(droneFromDB).length === 1
-            )
-          ) {
+          if (droneFromDB.status === DroneStatus.RENTED) {
             next(new LogicError(ErrorCode.DRONE_RENTED));
             return;
           }
@@ -421,7 +415,6 @@ const adminFields: ReadonlyArray<keyof IDrone> = [
   'deviceId',
   'baseLatitude',
   'baseLongitude',
-  'isWritingTelemetry',
 ];
 
 function getColumns(columns: Maybe<(keyof IDrone)[]>, includeAdmin: boolean) {

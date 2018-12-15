@@ -16,7 +16,6 @@ export interface IDroneMeasurementInput {
   longitude: number;
   latitude: number;
   batteryCharge: number;
-  problemCodes?: number;
 }
 
 export interface IDroneMeasurement extends IDroneMeasurementInput{
@@ -51,9 +50,7 @@ export function isDroneMeasurementInput(obj: any): obj is IDroneMeasurementInput
   const isObj = (
     obj instanceof Object && typeof obj.status === 'number' && typeof obj.batteryPower === 'number'
     && typeof obj.longitude === 'number' && typeof obj.latitude === 'number'
-    && typeof obj.batteryCharge === 'number' && (
-      typeof obj.problemCodes === 'number' || obj.problemCodes === undefined
-    )
+    && typeof obj.batteryCharge === 'number'
   );
   return (
     isObj && obj.longitude >= -180 && obj.longitude <= 180

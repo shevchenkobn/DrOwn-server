@@ -58,7 +58,6 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.integer('loadCapacity').unsigned().notNullable();
       table.boolean('canCarryLiquids').notNullable();
 
-      table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
     });
   }],
   [TableName.DroneOrders, knex => {
@@ -68,6 +67,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
         .references(`${TableName.Drones}.deviceId`).onDelete('CASCADE');
       table.bigInteger('userId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
+      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
 
       table.integer('action').unsigned().notNullable();
       table.decimal('longitude', 9, 6).nullable();
@@ -85,7 +85,6 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.decimal('longitude', 9, 6).notNullable();
       table.decimal('latitude', 9, 6).notNullable();
       table.integer('batteryCharge').unsigned().notNullable();
-      table.integer('problemCodes').unsigned().notNullable().defaultTo(0);
 
     });
   }],
