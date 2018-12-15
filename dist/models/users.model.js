@@ -4,7 +4,7 @@ const tslib_1 = require("tslib");
 const inversify_1 = require("inversify");
 const types_1 = require("../di/types");
 const bcrypt_1 = require("bcrypt");
-const table_schemas_service_1 = require("../services/table-schemas.service");
+const table_names_1 = require("../services/table-names");
 const db_connection_class_1 = require("../services/db-connection.class");
 const error_service_1 = require("../services/error.service");
 exports.maxPasswordLength = 72 - 29;
@@ -31,7 +31,7 @@ let UserModel = class UserModel {
         this._knex = this._connection.knex;
     }
     get table() {
-        return this._knex(table_schemas_service_1.TableName.Users);
+        return this._knex(table_names_1.TableName.Users);
     }
     select(columns, where) {
         const query = where ? this.table.where(where) : this.table;
@@ -75,6 +75,8 @@ function handleChangeError(err) {
     switch (err.errno) {
         case 1062:
             throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_EMAIL_DUPLICATE);
+        case 1051:
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_HAS_DRONES);
     }
     console.log('change user error: ', err);
     throw new error_service_1.LogicError(error_service_1.ErrorCode.SERVER);

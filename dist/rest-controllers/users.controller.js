@@ -26,6 +26,20 @@ let UsersController = class UsersController {
                     next(err);
                 }
             },
+            async getProfile(req, res) {
+                const select = req.swagger.params.select.value;
+                const user = req.user;
+                if (!select || select.length === 0) {
+                    res.json(user);
+                }
+                else {
+                    const returnUser = {};
+                    for (const column of select) {
+                        returnUser[column] = user[column];
+                    }
+                    res.json(returnUser);
+                }
+            },
             async createUser(req, res, next) {
                 try {
                     const select = req.swagger.params.select.value;

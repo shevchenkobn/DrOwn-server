@@ -16,12 +16,14 @@ import {
 } from '../services/util.service';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { Maybe } from '../@types';
-import { TableName } from '../services/table-schemas.service';
+import { TableName } from '../services/table-names';
 import { DronePriceActionType, DronePricesModel } from '../models/drone-prices.model';
 import { DroneModel, DroneStatus } from '../models/drones.model';
 import { Decimal } from 'decimal.js';
 import { DbConnection } from '../services/db-connection.class';
 import { scheduleTimer } from '../services/scheduler.service';
+import { container } from '../di/container';
+import * as Knex from 'knex';
 
 @injectable()
 export class TransactionsController {
@@ -263,16 +265,15 @@ export class TransactionsController {
             next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
           }
-          let transaction;
           if (!select || select.length === 0 || !hadUserId && select.length === 1) {
-            transaction = await transactionModel.select([], { transactionId });
+            res.json(mapObject(droneInfo, TableName.Transactions, select));
           } else {
-            transaction = await transactionModel.select(
-              hadUserId ? select.slice(1) : select,
-              { transactionId },
-            );
+            res.json(mapObject(
+              droneInfo,
+              TableName.Transactions,
+              hadUserId ? select : select.slice(0, -1),
+            ));
           }
-          res.json(transaction);
         } catch (err) {
           next(err);
         }
@@ -378,15 +379,16 @@ export class TransactionsController {
                     .where({ ownerId: droneInfo.userId })
                     .update({ status: DroneStatus.RENTED })
                     .transacting(trx);
-                  scheduleTimer(() => {
-                    droneModel.update(
-                      { status: DroneStatus.IDLE },
-                      { droneId: droneInfo.droneId },
-                    ).catch((err) => {
-                      console.error(err);
-                      console.error('renting stop failed');
-                    });
-                  }, droneInfo.period);
+                  scheduleDroneUpdate(droneModel, droneInfo.droneId, droneInfo.period * 3600);
+                  // scheduleTimer(() => {
+                  //   droneModel.update(
+                  //     { status: DroneStatus.IDLE },
+                  //     { droneId: droneInfo.droneId },
+                  //   ).catch((err) => {
+                  //     console.error(err);
+                  //     console.error('renting stop failed');
+                  //   });
+                  // }, droneInfo.period * 3600);
                   await userModel.table
                     .where({ userId: user.userId })
                     .update({
@@ -404,9 +406,14 @@ export class TransactionsController {
               break;
             }
           }
-          res.json(
-            (await transactionModel.select(select, { transactionId }))[0],
-          );
+
+          if (select && select.length > 0) {
+            res.json(
+              (await transactionModel.select(select, { transactionId }))[0],
+            );
+          } else {
+            res.json({});
+          }
         } catch (err) {
           next(err);
         }
@@ -471,8 +478,88 @@ export class TransactionsController {
   }
 }
 
+export function restoreRentingQueue() {
+  return new Promise((resolve, reject) => {
+    const db = container.get<DbConnection>(TYPES.DbConnection);
+    const droneModel = container.get<DroneModel>(TYPES.DroneModel);
+
+    if (container.get<DbConnection>(TYPES.DbConnection).config.client !== 'mysql') {
+      throw new TypeError('Restoring renting queue is not supported for this DB driver');
+    }
+    const knex = db.knex;
+
+    const update = (async () => {
+      const dronesAlias = TableName.Drones.split('').reverse().join('');
+      await knex.schema.raw(`CREATE TEMPORARY TABLE ${knex.raw('??', [dronesAlias])} ${knex(TableName.Drones)
+        .columns([
+          `${TableName.Drones}.droneId as droneId`,
+        ])
+        .join(
+          TableName.DronePrices,
+          `${TableName.Drones}.droneId`,
+          `${TableName.DronePrices}.droneId`,
+        )
+        .join(
+          TableName.Transactions,
+          `${TableName.DronePrices}.priceId`,
+          `${TableName.Transactions}.priceId`,
+        )
+        .where(`${TableName.Transactions}.status`, TransactionStatus.CONFIRMED)
+        .andWhere(`${TableName.Drones}.status`, DroneStatus.RENTED)
+        .whereRaw(
+          `${knex.raw('??.??', [TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [TableName.Transactions, 'period'])} * 60 * 60) < now()`,
+        )}`);
+      await knex(TableName.Drones)
+        .whereIn(
+          'droneId',
+          function () {
+            this.column('droneId').from(dronesAlias);
+          },
+        )
+        .update({
+          status: DroneStatus.IDLE,
+        });
+      // knex.schema.raw(knex.raw('DROP VIEW ?? IF EXISTS', [dronesAlias]).toQuery()),
+      await knex.schema.dropTable(dronesAlias);
+    })();
+
+    const select = knex(TableName.Transactions)
+      .columns([
+        `${TableName.DronePrices}.droneId as droneId`,
+        knex.raw(
+          `${knex.raw('??.??', [TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [TableName.Transactions, 'period'])} * 60 * 60) as ${knex.raw('??', ['timeout'])}`,
+        ),
+      ])
+      .join(
+        TableName.DronePrices,
+        `${TableName.Transactions}.priceId`,
+        `${TableName.DronePrices}.priceId`,
+      )
+      .havingRaw(`${knex.raw('??', ['timeout'])} > NOW()`)
+      .andWhere(`${TableName.Transactions}.status`, TransactionStatus.CONFIRMED)
+      .then((transactions: { droneId: string, timeout: Date }[]) => {
+        for (const { droneId, timeout } of transactions) {
+          scheduleDroneUpdate(droneModel, droneId, timeout.getTime() - Date.now());
+        }
+      });
+    Promise.all([update, select]).then(() => resolve());
+  });
+}
+
 function isCustomerOnly(user: IUser) {
   return user.role & UserRoles.CUSTOMER
     && !!(user.role & UserRoles.OWNER)
     && !!(user.role & UserRoles.LANDLORD);
+}
+
+function scheduleDroneUpdate(droneModel: DroneModel, droneId: string, timeout: number) {
+  scheduleTimer(() => {
+    droneModel.update(
+      { status: DroneStatus.IDLE },
+      { droneId },
+    ).catch((err) => {
+      console.error(err);
+      console.error('renting stop failed');
+    });
+  }, timeout);
 }

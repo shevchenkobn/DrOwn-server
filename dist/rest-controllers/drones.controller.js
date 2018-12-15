@@ -8,10 +8,6 @@ const error_service_1 = require("../services/error.service");
 const users_model_1 = require("../models/users.model");
 const util_service_1 = require("../services/util.service");
 const authentication_class_1 = require("../services/authentication.class");
-const crypto_1 = require("crypto");
-const util_1 = require("util");
-const SECRET_BYTE_LENGTH = 128;
-const randomBytesAsync = util_1.promisify(crypto_1.randomBytes);
 let DronesController = class DronesController {
     constructor(droneModel, userModel, authService) {
         return {
@@ -39,6 +35,7 @@ let DronesController = class DronesController {
                         loadCapacityLimits.sort();
                     }
                     const canCarryLiquids = util_service_1.getSafeSwaggerParam(req, 'can-carry-liquids');
+                    const sortings = util_service_1.getSortFields(util_service_1.getSafeSwaggerParam(req, 'sort'));
                     const query = droneModel.table.columns(getColumns(select, !!user && (!!(user.role & users_model_1.UserRoles.ADMIN) || !!(ownerIds && ownerIds.length && ownerIds[0] === user.userId))));
                     if (producerIds) { // TODO: Ensure it works properly
                         query.whereIn('producerId', producerIds);
@@ -60,6 +57,11 @@ let DronesController = class DronesController {
                     }
                     if (statuses) {
                         query.whereIn('status', statuses);
+                    }
+                    if (sortings) {
+                        for (const [column, direction] of sortings) {
+                            query.orderBy(column, direction);
+                        }
                     }
                     console.debug(query.toSQL());
                     res.json(await query);
@@ -180,9 +182,7 @@ let DronesController = class DronesController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_UNAUTHORIZED));
                         return;
                     }
-                    if (droneFromDB.status === drones_model_1.DroneStatus.RENTED
-                        && !('isWritingTelemetry' in droneFromDB
-                            && Object.keys(droneFromDB).length === 1)) {
+                    if (droneFromDB.status === drones_model_1.DroneStatus.RENTED) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_RENTED));
                         return;
                     }
@@ -294,12 +294,9 @@ let DronesController = class DronesController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_AUTHORIZED));
                         return;
                     }
-                    const secret = (await randomBytesAsync(SECRET_BYTE_LENGTH)).toString('base64');
-                    await droneModel.update({
-                        secret,
-                        status: drones_model_1.DroneStatus.IDLE,
-                    }, { deviceId });
-                    res.json({ deviceId, secret });
+                    const password = util_service_1.getRandomString(drones_model_1.maxPasswordLength);
+                    await droneModel.authorize({ deviceId }, password);
+                    res.json({ deviceId, password });
                 }
                 catch (err) {
                     next(err);
@@ -332,7 +329,6 @@ const adminFields = [
     'deviceId',
     'baseLatitude',
     'baseLongitude',
-    'isWritingTelemetry',
 ];
 function getColumns(columns, includeAdmin) {
     if (!columns || columns.length === 0) {

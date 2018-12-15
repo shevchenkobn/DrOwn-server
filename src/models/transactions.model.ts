@@ -2,7 +2,7 @@ import { TYPES } from '../di/types';
 import { inject, injectable } from 'inversify';
 import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
-import { TableName } from '../services/table-schemas.service';
+import { TableName } from '../services/table-names';
 
 export enum TransactionStatus {
   PENDING = 0,

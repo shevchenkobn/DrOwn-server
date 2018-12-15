@@ -5,14 +5,18 @@ const inversify_1 = require("inversify");
 const db_connection_class_1 = require("../services/db-connection.class");
 const users_model_1 = require("../models/users.model");
 const authentication_class_1 = require("../services/authentication.class");
-const user_helpers_controller_1 = require("../model-controllers/user-helpers.controller");
-const users_controller_1 = require("../model-controllers/users.controller");
-const auth_controller_1 = require("../model-controllers/auth.controller");
+const user_helpers_controller_1 = require("../rest-controllers/user-helpers.controller");
+const users_controller_1 = require("../rest-controllers/users.controller");
+const auth_controller_1 = require("../rest-controllers/auth.controller");
 const drones_model_1 = require("../models/drones.model");
-const drones_controller_1 = require("../model-controllers/drones.controller");
-const drone_helpers_controller_1 = require("../model-controllers/drone-helpers.controller");
-const autobahn_controller_1 = require("../controllers/autobahn.controller");
-const config = require("config");
+const drones_controller_1 = require("../rest-controllers/drones.controller");
+const drone_helpers_controller_1 = require("../rest-controllers/drone-helpers.controller");
+const socket_io_controller_1 = require("../controllers/socket-io.controller");
+const drone_measurements_model_1 = require("../models/drone-measurements.model");
+const drone_prices_model_1 = require("../models/drone-prices.model");
+const transactions_model_1 = require("../models/transactions.model");
+const transactions_controller_1 = require("../rest-controllers/transactions.controller");
+const drone_prices_controller_1 = require("../rest-controllers/drone-prices.controller");
 exports.container = new inversify_1.Container({
     defaultScope: 'Singleton',
 });
@@ -21,14 +25,18 @@ const typeMap = new Map([
     [types_1.TYPES.AuthService, authentication_class_1.AuthService],
     [types_1.TYPES.UserModel, users_model_1.UserModel],
     [types_1.TYPES.DroneModel, drones_model_1.DroneModel],
+    [types_1.TYPES.DroneMeasurementModel, drone_measurements_model_1.DroneMeasurementsModel],
+    [types_1.TYPES.DronePriceModel, drone_prices_model_1.DronePricesModel],
+    [types_1.TYPES.TransactionModel, transactions_model_1.TransactionsModel],
     [types_1.TYPES.UserHelpersController, user_helpers_controller_1.UserHelpersController],
     [types_1.TYPES.AuthController, auth_controller_1.AuthController],
     [types_1.TYPES.UsersController, users_controller_1.UsersController],
     [types_1.TYPES.DronesController, drones_controller_1.DronesController],
     [types_1.TYPES.DroneHelpersController, drone_helpers_controller_1.DroneHelpersController],
-    [types_1.TYPES.AutobahnController, autobahn_controller_1.AutobahnController],
+    [types_1.TYPES.DronePriceController, drone_prices_controller_1.DronePricesController],
+    [types_1.TYPES.TransactionController, transactions_controller_1.TransactionsController],
+    [types_1.TYPES.SocketIoController, socket_io_controller_1.SocketIoController],
 ]);
-exports.container.bind(types_1.TYPES.ServerConfig).toConstantValue(config.get('server'));
 for (const [symbol, type] of typeMap) {
     exports.container.bind(symbol).to(type);
 }

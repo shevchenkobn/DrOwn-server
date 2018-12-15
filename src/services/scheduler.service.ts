@@ -1,7 +1,7 @@
-const scheduleTable = new Map<number, NodeJS.Timeout>();
+const scheduleTable = new Map<symbol, NodeJS.Timeout>();
 
 export function scheduleTimer(fn: () => void, timeout: number) {
-  const id = Date.now();
+  const id = Symbol(Date.now());
   setTimeout(() => {
     cancelTimer(id);
     fn();
@@ -9,7 +9,7 @@ export function scheduleTimer(fn: () => void, timeout: number) {
   return id;
 }
 
-export function cancelTimer(id: number) {
+export function cancelTimer(id: symbol) {
   clearTimeout(scheduleTable.get(id)!);
   scheduleTable.delete(id);
 }

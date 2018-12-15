@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { TYPES } from '../di/types';
 import * as Knex from 'knex';
 import { hash } from 'bcrypt';
-import { TableName } from '../services/table-schemas.service';
+import { TableName } from '../services/table-names';
 import { DbConnection } from '../services/db-connection.class';
 import { ErrorCode, LogicError } from '../services/error.service';
 

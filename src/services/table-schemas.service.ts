@@ -3,16 +3,17 @@ import * as config from 'config';
 import { TYPES } from '../di/types';
 import { container } from '../di/container';
 import { IUser, IUserSeed, UserModel, UserRoles } from '../models/users.model';
+import { TableName } from './table-names';
 
-export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
-  Users = 'users',
-  Drones = 'drones',
-  DronePrices = 'dronePrices',
-  Transactions = 'transactions',
-  DroneOrders = 'droneOrders',
-  DroneMeasurements = 'droneMeasurements',
-  // Notifications = 'notifications',
-}
+// export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
+//   Users = 'users',
+//   Drones = 'drones',
+//   DronePrices = 'dronePrices',
+//   Transactions = 'transactions',
+//   DroneOrders = 'droneOrders',
+//   DroneMeasurements = 'droneMeasurements',
+//   // Notifications = 'notifications',
+// }
 
 export const tableNames: ReadonlyArray<TableName> = Object.values(TableName);
 
@@ -62,8 +63,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   }],
   [TableName.DroneOrders, knex => {
     return knex.schema.createTable(TableName.DroneOrders, table => {
-      table.bigInteger('deviceId').unsigned()
-        .primary(`pk_${TableName.Drones}`)
+      table.string('deviceId').notNullable().unique()
+        .primary(`pk_${TableName.DroneOrders}`)
         .references(`${TableName.Drones}.deviceId`).onDelete('CASCADE');
       table.bigInteger('userId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
@@ -76,7 +77,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   }],
   [TableName.DroneMeasurements, knex => {
     return knex.schema.createTable(TableName.DroneMeasurements, table => {
-      table.bigInteger('deviceId').unsigned()
+      table.string('deviceId').notNullable().unique()
         .references(`${TableName.Drones}.deviceId`).onDelete('CASCADE');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
 
@@ -89,7 +90,7 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
     });
   }],
   [TableName.DronePrices, knex => {
-    return knex.schema.createTable(TableName.Transactions, table => {
+    return knex.schema.createTable(TableName.DronePrices, table => {
       table.bigIncrements('priceId')
         .primary(`pk_${TableName.DronePrices}`);
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
@@ -106,8 +107,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigIncrements('transactionId')
         .primary(`pk_${TableName.Transactions}`);
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.bigIncrements('priceId').unsigned().notNullable()
-        .references(`${TableName.DronePrices}.supplyId`).onDelete('CASCADE');
+      table.bigInteger('priceId').unsigned().notNullable()
+        .references(`${TableName.DronePrices}.priceId`).onDelete('CASCADE');
       table.bigInteger('userId').unsigned().notNullable()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
       table.integer('status').unsigned().notNullable().defaultTo(0);

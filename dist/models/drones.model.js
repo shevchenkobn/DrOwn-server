@@ -4,8 +4,10 @@ const tslib_1 = require("tslib");
 const types_1 = require("../di/types");
 const inversify_1 = require("inversify");
 const db_connection_class_1 = require("../services/db-connection.class");
-const table_schemas_service_1 = require("../services/table-schemas.service");
+const table_names_1 = require("../services/table-names");
 const error_service_1 = require("../services/error.service");
+const bcrypt_1 = require("bcrypt");
+exports.maxPasswordLength = 72 - 29;
 var DroneStatus;
 (function (DroneStatus) {
     DroneStatus[DroneStatus["UNAUTHORIZED"] = 0] = "UNAUTHORIZED";
@@ -19,7 +21,7 @@ let DroneModel = class DroneModel {
         this._knex = this._connection.knex;
     }
     get table() {
-        return this._knex(table_schemas_service_1.TableName.Drones);
+        return this._knex(table_names_1.TableName.Drones);
     }
     select(columns, where) {
         const query = where ? this.table.where(where) : this.table;
@@ -43,6 +45,32 @@ let DroneModel = class DroneModel {
     }
     delete(whereClause) {
         return this.table.where(whereClause).delete();
+    }
+    async authorize(whereClause, password) {
+        if (password.length > exports.maxPasswordLength) {
+            throw new Error('Password is too long');
+        }
+        const passwordHash = await bcrypt_1.hash(password, 13);
+        return await this.update({
+            passwordHash,
+            status: DroneStatus.OFFLINE,
+        }, whereClause);
+    }
+    async authenticateDrone(deviceId, password, columns) {
+        const hadPassword = !columns || columns.length === 0 || columns.includes('passwordHash');
+        const select = !columns || columns.length === 0 ? [] : columns.slice();
+        if (!hadPassword) {
+            select.push('passwordHash');
+        }
+        const drones = await this.select(select, { deviceId });
+        if (drones.length === 0 || !await bcrypt_1.compare(password, drones[0].passwordHash)) {
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_BAD);
+        }
+        if (!hadPassword) {
+            select.pop();
+            delete drones[0].passwordHash;
+        }
+        return drones[0];
     }
 };
 DroneModel = tslib_1.__decorate([

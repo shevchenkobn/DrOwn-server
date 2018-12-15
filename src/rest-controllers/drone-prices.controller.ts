@@ -13,7 +13,7 @@ import { DroneModel } from '../models/drones.model';
 import { IUser, UserRoles } from '../models/users.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { DbConnection } from '../services/db-connection.class';
-import { TableName } from '../services/table-schemas.service';
+import { TableName } from '../services/table-names';
 
 @injectable()
 export class DronePricesController {

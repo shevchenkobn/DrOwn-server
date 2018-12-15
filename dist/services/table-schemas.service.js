@@ -4,22 +4,23 @@ const config = require("config");
 const types_1 = require("../di/types");
 const container_1 = require("../di/container");
 const users_model_1 = require("../models/users.model");
-var TableName;
-(function (TableName) {
-    TableName["Users"] = "users";
-    TableName["Drones"] = "drones";
-    TableName["DroneOrders"] = "droneOrders";
-    TableName["DroneMeasurementsModel"] = "droneMeasurements";
-    TableName["Transactions"] = "transactions";
-    TableName["Notifications"] = "notifications";
-})(TableName = exports.TableName || (exports.TableName = {}));
-exports.tableNames = Object.values(TableName);
+const table_names_1 = require("./table-names");
+// export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
+//   Users = 'users',
+//   Drones = 'drones',
+//   DronePrices = 'dronePrices',
+//   Transactions = 'transactions',
+//   DroneOrders = 'droneOrders',
+//   DroneMeasurements = 'droneMeasurements',
+//   // Notifications = 'notifications',
+// }
+exports.tableNames = Object.values(table_names_1.TableName);
 const tablesToCreate = new Map([
-    [TableName.Users, knex => {
-            return knex.schema.createTable(TableName.Users, table => {
+    [table_names_1.TableName.Users, knex => {
+            return knex.schema.createTable(table_names_1.TableName.Users, table => {
                 table.bigIncrements('userId')
-                    .primary(`pk_${TableName.Users}`);
-                table.string('email', 120).notNullable().unique(`unique_email_${TableName.Users}`);
+                    .primary(`pk_${table_names_1.TableName.Users}`);
+                table.string('email', 120).notNullable().unique(`unique_email_${table_names_1.TableName.Users}`);
                 table.string('passwordHash', 60).notNullable();
                 table.integer('role').unsigned().notNullable().defaultTo(0);
                 table.integer('status').unsigned().notNullable().defaultTo(0);
@@ -29,19 +30,19 @@ const tablesToCreate = new Map([
                 table.decimal('longitude', 9, 6).nullable();
                 table.decimal('latitude', 9, 6).nullable();
                 table.decimal('cash', 9, 2).notNullable().defaultTo(0);
-                table.string('refreshToken').nullable().unique(`unique_refreshToken_${TableName.Users}`);
+                table.string('refreshToken').nullable().unique(`unique_refreshToken_${table_names_1.TableName.Users}`);
                 table.dateTime('refreshTokenExpiration').nullable();
             });
         }],
-    [TableName.Drones, knex => {
-            return knex.schema.createTable(TableName.Drones, table => {
+    [table_names_1.TableName.Drones, knex => {
+            return knex.schema.createTable(table_names_1.TableName.Drones, table => {
                 table.bigIncrements('droneId').unsigned()
-                    .primary(`pk_${TableName.Drones}`);
+                    .primary(`pk_${table_names_1.TableName.Drones}`);
                 table.bigInteger('producerId').unsigned()
-                    .references(`${TableName.Users}.userId`).onDelete('SET NULL');
+                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('SET NULL');
                 table.bigInteger('ownerId').unsigned()
-                    .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
-                table.string('deviceId').notNullable();
+                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('RESTRICT');
+                table.string('deviceId').notNullable().unique();
                 table.string('passwordHash', 60).notNullable().defaultTo('');
                 table.integer('status').unsigned().notNullable().defaultTo(0);
                 table.decimal('baseLongitude', 9, 6).notNullable();
@@ -50,59 +51,58 @@ const tablesToCreate = new Map([
                 table.integer('enginePower').unsigned().notNullable();
                 table.integer('loadCapacity').unsigned().notNullable();
                 table.boolean('canCarryLiquids').notNullable();
-                table.boolean('isWritingTelemetry').notNullable().defaultTo(true);
-                table.unique(['deviceId', 'passwordHash'], `unique_${TableName.Drones}_auth`);
             });
         }],
-    [TableName.DroneOrders, knex => {
-            return knex.schema.createTable(TableName.DroneOrders, table => {
-                table.bigInteger('droneId').unsigned()
-                    .primary(`pk_${TableName.Drones}`);
+    [table_names_1.TableName.DroneOrders, knex => {
+            return knex.schema.createTable(table_names_1.TableName.DroneOrders, table => {
+                table.string('deviceId').notNullable().unique()
+                    .primary(`pk_${table_names_1.TableName.DroneOrders}`)
+                    .references(`${table_names_1.TableName.Drones}.deviceId`).onDelete('CASCADE');
                 table.bigInteger('userId').unsigned()
-                    .references(`${TableName.Users}.userId`).onDelete('SET NULL');
+                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('SET NULL');
+                table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
                 table.integer('action').unsigned().notNullable();
                 table.decimal('longitude', 9, 6).nullable();
                 table.decimal('latitude', 9, 6).nullable();
             });
         }],
-    [TableName.DroneMeasurements, knex => {
-            return knex.schema.createTable(TableName.DroneMeasurements, table => {
-                table.bigInteger('droneId').unsigned()
-                    .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
+    [table_names_1.TableName.DroneMeasurements, knex => {
+            return knex.schema.createTable(table_names_1.TableName.DroneMeasurements, table => {
+                table.string('deviceId').notNullable().unique()
+                    .references(`${table_names_1.TableName.Drones}.deviceId`).onDelete('CASCADE');
                 table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
                 table.integer('status').unsigned().notNullable();
                 table.integer('batteryPower').unsigned().notNullable();
                 table.decimal('longitude', 9, 6).notNullable();
                 table.decimal('latitude', 9, 6).notNullable();
                 table.integer('batteryCharge').unsigned().notNullable();
-                table.integer('problemCodes').unsigned().notNullable().defaultTo(0);
             });
         }],
-    [TableName.Transactions, knex => {
-            return knex.schema.createTable(TableName.Transactions, table => {
-                table.bigIncrements('transactionId')
-                    .primary(`pk_${TableName.Transactions}`);
-                table.bigInteger('droneId').unsigned()
-                    .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
+    [table_names_1.TableName.DronePrices, knex => {
+            return knex.schema.createTable(table_names_1.TableName.DronePrices, table => {
+                table.bigIncrements('priceId')
+                    .primary(`pk_${table_names_1.TableName.DronePrices}`);
                 table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
+                table.bigInteger('droneId').unsigned()
+                    .references(`${table_names_1.TableName.Drones}.droneId`).onDelete('CASCADE');
                 table.integer('actionType').unsigned().notNullable();
-                table.bigInteger('user1Id').unsigned()
-                    .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-                table.bigInteger('user2Id').unsigned().nullable()
-                    .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-                table.integer('status').unsigned().notNullable();
-                table.decimal('sum', 8, 2).nullable();
-                table.integer('period').unsigned().notNullable().defaultTo(0);
+                table.decimal('price', 8, 2).nullable();
+                table.boolean('isActive').notNullable().defaultTo(false);
                 // knex.text('additionalInfo').nullable();
             });
         }],
-    [TableName.Notifications, knex => {
-            return knex.schema.createTable(TableName.Notifications, table => {
-                table.bigInteger('userId').unsigned()
-                    .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-                table.integer('type').unsigned().notNullable();
+    [table_names_1.TableName.Transactions, knex => {
+            return knex.schema.createTable(table_names_1.TableName.Transactions, table => {
+                table.bigIncrements('transactionId')
+                    .primary(`pk_${table_names_1.TableName.Transactions}`);
                 table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
-                table.bigInteger('entityId').unsigned().nullable();
+                table.bigInteger('priceId').unsigned().notNullable()
+                    .references(`${table_names_1.TableName.DronePrices}.priceId`).onDelete('CASCADE');
+                table.bigInteger('userId').unsigned().notNullable()
+                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('CASCADE');
+                table.integer('status').unsigned().notNullable().defaultTo(0);
+                table.integer('period').unsigned().notNullable().defaultTo(0);
+                // knex.text('additionalInfo').nullable();
             });
         }],
 ]);

@@ -4,6 +4,7 @@ const app_root_path_1 = require("app-root-path");
 const json_refs_1 = require("json-refs");
 const YAML = require("js-yaml");
 const randomatic = require("randomatic");
+const error_service_1 = require("./error.service");
 function bindCallbackOnExit(callback) {
     const events = ['SIGTERM', 'SIGINT', 'SIGQUIT'];
     const handlers = events.map(signal => [
@@ -70,4 +71,35 @@ function getRandomString(length) {
     return randomatic('aA0!', length);
 }
 exports.getRandomString = getRandomString;
+function getSortFields(columns, tableName) {
+    if (!columns || columns.length === 0) {
+        return undefined;
+    }
+    const columnSet = new Set();
+    for (const sortColumn of columns) {
+        const column = sortColumn.slice(1);
+        if (columnSet.has(column)) {
+            throw new error_service_1.LogicError(error_service_1.ErrorCode.SORT_BAD);
+        }
+    }
+    return tableName
+        ? columns.map(column => [`${tableName}.${column} as ${column}`, column[0] === '-' ? 'asc' : 'desc'])
+        : columns.map(column => [column, column[0] === '-' ? 'asc' : 'desc']);
+}
+exports.getSortFields = getSortFields;
+function getSelectAsColumns(columns, tableName) {
+    if (!columns || columns.length === 0) {
+        return [];
+    }
+    return columns.map(col => `${tableName}.${col} as ${col}`);
+}
+exports.getSelectAsColumns = getSelectAsColumns;
+function mapObject(entity, tableName, columns) {
+    const obj = {};
+    for (const col of columns) {
+        obj[col] = entity[`${tableName}.${col} as ${col}`];
+    }
+    return obj;
+}
+exports.mapObject = mapObject;
 //# sourceMappingURL=util.service.js.map

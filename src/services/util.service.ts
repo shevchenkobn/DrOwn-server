@@ -5,7 +5,7 @@ import { Maybe } from '../@types';
 import { Request } from 'express';
 import * as randomatic from 'randomatic';
 import { ErrorCode, LogicError } from './error.service';
-import { TableName } from './table-schemas.service';
+import { TableName } from './table-names';
 
 export function bindCallbackOnExit(callback: (...args: any[]) => any) {
   const events = ['SIGTERM', 'SIGINT', 'SIGQUIT'] as NodeJS.Signals[];

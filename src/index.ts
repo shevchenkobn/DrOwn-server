@@ -9,6 +9,7 @@ import { resolve } from 'path';
 import { errorHandler, notFoundHandler } from './services/error.service';
 import { Server } from 'http';
 import { SocketIoController } from './controllers/socket-io.controller';
+import { restoreRentingQueue } from './rest-controllers/transactions.controller';
 
 export interface ServerConfig {
   host: string;
@@ -23,6 +24,7 @@ const app = express();
 Promise.all([
   loadSwaggerSchema(),
   initAsync(),
+  restoreRentingQueue(),
 ]).then(([schemaResults, initResults]) => {
   const notProduction = process.env.NODE_ENV !== 'production';
 
