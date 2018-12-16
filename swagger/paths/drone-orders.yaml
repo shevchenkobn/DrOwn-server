@@ -1,16 +1,15 @@
-x-swagger-router-controller: transactions
+x-swagger-router-controller: drone-orders
 
 get:
   tags:
-  - transactions
-  summary: List transactions
-  operationId: getTransactions
+  - drone-orders
+  summary: List drone orders
+  operationId: getDroneOrders
   security:
   - Bearer: []
   x-security-scopes:
   - customer
   - owner
-  - landlord
   parameters:
   - in: query
     name: select
@@ -21,34 +20,34 @@ get:
     items:
       type: string
       enum:
-      - transactionId
+      - droneOrderId
+      - deviceId
       - createdAt
-      - priceId
       - userId
-      - period
+      - action
       - status
+      - longitude
+      - latitude
   - in: query
-    name: price-ids
+    name: drone-order-ids
+    type: array
+    minItems: 1
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      # NOTE: it is Decimal type, but I am not able to reference it
+      type: string
+      pattern: ^\d{1,19}$
+  - in: query
+    name: device-ids
     required: false
     type: array
     collectionFormat: csv
     uniqueItems: true
     minItems: 1
     items:
-      # NOTE: it is BigInt type, but I am not able to reference it
       type: string
-      pattern: ^\d{1,19}$
-  - in: query
-    name: transaction-ids
-    required: false
-    type: array
-    collectionFormat: csv
-    uniqueItems: true
-    minItems: 1
-    items:
-      # NOTE: it is BigInt type, but I am not able to reference it
-      type: string
-      pattern: ^\d{1,19}$
+      pattern: ^[\da-fA-F]{12}$
   - in: query
     name: user-ids
     required: false
@@ -60,6 +59,29 @@ get:
       # NOTE: it is BigInt type, but I am not able to reference it
       type: string
       pattern: ^\d{1,19}$
+  - in: query
+    name: actions
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    minItems: 1
+    maxItems: 5
+    items:
+      type: integer
+      minimum: 0
+      maximum: 4
+  - in: query
+    name: statuses
+    required: false
+    type: array
+    maxItems: 4
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: integer
+      minimum: 0
+      maximum: 3
   - in: query
     name: created-at-limits
     required: false
@@ -73,7 +95,7 @@ get:
       type: string
       pattern: ^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$
   - in: query
-    name: period-limits
+    name: longitude-limits
     required: false
     type: array
     minItems: 2
@@ -81,58 +103,65 @@ get:
     collectionFormat: csv
     uniqueItems: true
     items:
-      # NOTE: it is Decimal type, but I am not able to reference it
-      type: integer
-      minimum: 1
+      # NOTE: it is Longitude type, but I am not able to reference it
+      type: number
+      minimum: -180
+      maximum: 180
   - in: query
-    name: statuses
+    name: latitude-limits
     required: false
     type: array
-    maxItems: 3
+    minItems: 2
+    maxItems: 2
     collectionFormat: csv
     uniqueItems: true
     items:
-      type: integer
-      minimum: 0
-      maximum: 2
+      # NOTE: it is Latitude type, but I am not able to reference it
+      type: number
+      minimum: -90
+      maximum: 90
   - in: query
     name: sort
     type: array
     required: false
     minItems: 1
-    maxItems: 6
+    maxItems: 7
     collectionFormat: csv
     uniqueItems: true
     items:
       type: string
       enum:
-      - +transactionId
-      - +createdAt
-      - +priceId
-      - +userId
-      - +period
-      - +status
-      - -transactionId
+      - -droneOrderId
+      - -deviceId
       - -createdAt
-      - -priceId
       - -userId
-      - -period
+      - -action
       - -status
+      - -longitude
+      - -latitude
+      - +droneOrderId
+      - +deviceId
+      - +createdAt
+      - +userId
+      - +action
+      - +status
+      - +longitude
+      - +latitude
   responses:
     200:
       description: OK
       schema:
         type: array
         items:
-          $ref: '#/definitions/Transaction'
+          $ref: '#/definitions/DroneOrder'
     400:
       $ref: '#/responses/ClientError'
 
 post:
   tags:
-  - transactions
-  summary: Initiate transaction
-  operationId: initiateTransaction
+  - drone-orders
+  summary: Send order
+  operationId: sendOrder
   security:
   - Bearer: []
   x-security-scopes:
@@ -148,21 +177,20 @@ post:
     items:
       type: string
       enum:
-      - transactionId
-      - createdAt
-      - priceId
+      - deviceId
       - userId
-      - period
-      - status
+      - action
+      - longitude
+      - latitude
   - in: body
-    name: transaction
+    name: droneOrder
     required: true
     schema:
-      $ref: '#/definitions/TransactionCreate'
+      $ref: '#/definitions/DroneOrderCreate'
   responses:
     200:
       description: OK
       schema:
-        $ref: '#/definitions/Transaction'
+        $ref: '#/definitions/DroneOrder'
     400:
       $ref: '#/responses/ClientError'

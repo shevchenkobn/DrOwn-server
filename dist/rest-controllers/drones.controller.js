@@ -58,13 +58,9 @@ let DronesController = class DronesController {
                     if (statuses) {
                         query.whereIn('status', statuses);
                     }
-                    if (sortings) {
-                        for (const [column, direction] of sortings) {
-                            query.orderBy(column, direction);
-                        }
-                    }
+                    util_service_1.appendOrderBy(query, sortings);
                     console.debug(query.toSQL());
-                    res.json(await query);
+                    res.status(201).json(await query);
                 }
                 catch (err) {
                     next(err);

@@ -7,8 +7,10 @@ const users_model_1 = require("../models/users.model");
 const error_service_1 = require("../services/error.service");
 const util_service_1 = require("../services/util.service");
 const table_schemas_service_1 = require("../services/table-schemas.service");
+const table_names_1 = require("../services/table-names");
+const db_connection_class_1 = require("../services/db-connection.class");
 let UsersController = class UsersController {
-    constructor(userModel) {
+    constructor(userModel, dbConnection) {
         return {
             async getUsers(req, res, next) {
                 try {
@@ -19,8 +21,67 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
                     }
-                    // TODO: add filters and sorting
-                    res.json(await userModel.select(columns));
+                    const cashLimits = util_service_1.getSafeSwaggerParam(req, 'cash-limits');
+                    if (cashLimits && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_FILTER_BAD));
+                        return;
+                    }
+                    const phoneQuery = util_service_1.getSafeSwaggerParam(req, 'phone-query');
+                    if (phoneQuery && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_FILTER_BAD));
+                        return;
+                    }
+                    const longitudeLimits = util_service_1.getSafeSwaggerParam(req, 'longitude-limits');
+                    if (longitudeLimits && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_FILTER_BAD));
+                        return;
+                    }
+                    const latitudeLimits = util_service_1.getSafeSwaggerParam(req, 'latitude-limits');
+                    if (latitudeLimits && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_FILTER_BAD));
+                        return;
+                    }
+                    const userIds = util_service_1.getSafeSwaggerParam(req, 'user-ids');
+                    const emailQuery = util_service_1.getSafeSwaggerParam(req, 'email-query');
+                    const roles = util_service_1.getSafeSwaggerParam(req, 'roles');
+                    const statuses = util_service_1.getSafeSwaggerParam(req, 'statuses');
+                    const nameQuery = util_service_1.getSafeSwaggerParam(req, 'name-query');
+                    const addressQuery = util_service_1.getSafeSwaggerParam(req, 'address-query');
+                    const sortings = util_service_1.getSortFields(util_service_1.getSafeSwaggerParam(req, 'sort'), table_names_1.TableName.Users, adminFields);
+                    const query = userModel.table.columns(columns);
+                    if (userIds) {
+                        query.whereIn('userId', userIds);
+                    }
+                    if (roles) {
+                        query.whereIn('role', roles);
+                    }
+                    if (statuses) {
+                        query.whereIn('status', statuses);
+                    }
+                    if (nameQuery) {
+                        util_service_1.appendLikeQuery(dbConnection.knex, query, 'name', nameQuery);
+                    }
+                    if (emailQuery) {
+                        util_service_1.appendLikeQuery(dbConnection.knex, query, 'email', emailQuery);
+                    }
+                    if (addressQuery) {
+                        util_service_1.appendLikeQuery(dbConnection.knex, query, 'address', addressQuery);
+                    }
+                    if (phoneQuery) {
+                        util_service_1.appendLikeQuery(dbConnection.knex, query, 'phoneNumber', phoneQuery);
+                    }
+                    if (cashLimits) {
+                        query.andWhereBetween('cash', cashLimits);
+                    }
+                    if (latitudeLimits) {
+                        query.andWhereBetween('latitude', latitudeLimits);
+                    }
+                    if (longitudeLimits) {
+                        query.andWhereBetween('longitude', longitudeLimits);
+                    }
+                    util_service_1.appendOrderBy(query, sortings);
+                    console.debug(query.toQuery());
+                    res.json(await query);
                 }
                 catch (err) {
                     next(err);
@@ -33,11 +94,7 @@ let UsersController = class UsersController {
                     res.json(user);
                 }
                 else {
-                    const returnUser = {};
-                    for (const column of select) {
-                        returnUser[column] = user[column];
-                    }
-                    res.json(returnUser);
+                    res.json(util_service_1.mapObject(user, select));
                 }
             },
             async createUser(req, res, next) {
@@ -55,7 +112,7 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
                     }
-                    checkLocation(inputUser);
+                    util_service_1.checkLocation(inputUser);
                     if (!inputUser.password) {
                         inputUser.password = util_service_1.getRandomString(users_model_1.maxPasswordLength);
                     }
@@ -95,7 +152,7 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
                     }
-                    checkLocation(inputUser);
+                    util_service_1.checkLocation(inputUser);
                     const affectedRows = await userModel.update(inputUser, whereClause);
                     if (affectedRows === 0) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
@@ -159,12 +216,7 @@ let UsersController = class UsersController {
                                 next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                                 return;
                             }
-                            oldUser = Object.keys(user).reduce((mapped, c) => {
-                                if (columns.includes(c)) {
-                                    mapped[c] = user[c];
-                                }
-                                return mapped;
-                            }, {});
+                            oldUser = util_service_1.mapObject(user, columns);
                         }
                     }
                     else if (hasEmailInWhere && user.role & users_model_1.UserRoles.ADMIN) {
@@ -206,7 +258,9 @@ let UsersController = class UsersController {
 UsersController = tslib_1.__decorate([
     inversify_1.injectable(),
     tslib_1.__param(0, inversify_1.inject(types_1.TYPES.UserModel)),
-    tslib_1.__metadata("design:paramtypes", [users_model_1.UserModel])
+    tslib_1.__param(1, inversify_1.inject(types_1.TYPES.DbConnection)),
+    tslib_1.__metadata("design:paramtypes", [users_model_1.UserModel,
+        db_connection_class_1.DbConnection])
 ], UsersController);
 exports.UsersController = UsersController;
 const safeColumns = [
@@ -215,11 +269,11 @@ const safeColumns = [
     'role',
     'name',
     'status',
+    'address',
 ];
 const adminFields = [
     'phoneNumber',
     'cash',
-    'address',
     'longitude',
     'latitude',
 ];
@@ -258,10 +312,5 @@ function getUserWhereClause(userId, email, user) {
         throw new error_service_1.LogicError(error_service_1.ErrorCode.USER_ID_EMAIL);
     }
     return [whereClause, foreignUser];
-}
-function checkLocation(user) {
-    if ((typeof user.latitude !== 'number') !== (typeof user.longitude !== 'number')) {
-        throw new error_service_1.LogicError(error_service_1.ErrorCode.LOCATION_BAD);
-    }
 }
 //# sourceMappingURL=users.controller.js.map

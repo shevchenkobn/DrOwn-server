@@ -9,20 +9,30 @@ export enum DroneOrderAction {
   MOVE_TO_LOCATION = 1,
   TAKE_CARGO = 2,
   RELEASE_CARGO = 3,
-
-  DELIVER = 4,
 }
 
-export interface IDroneOrder {
+export enum DroneOrderStatus {
+  STARTED = 0,
+  ERROR = 1,
+  ENQUEUED = 2,
+  DONE = 3,
+}
+
+export interface IDroneOrderInput {
   deviceId: string;
-  userId: string;
   action: DroneOrderAction;
   longitude?: number;
   latitude?: number;
 }
 
+export interface IDroneOrder extends IDroneOrderInput {
+  droneOrderId: string;
+  userId: string;
+  status?: DroneOrderStatus;
+}
+
 @injectable()
-export class DroneMeasurementsModel {
+export class DroneOrdersModel {
   private readonly _connection: DbConnection;
   private readonly _knex: Knex;
 
@@ -36,4 +46,13 @@ export class DroneMeasurementsModel {
     this._connection = connection;
     this._knex = this._connection.knex;
   }
+
+  select(columns?: ReadonlyArray<keyof IDroneOrder>, where?: any)  {
+    const query = where ? this.table.where(where) : this.table;
+    return query.select(columns as any);
+  }
+}
+
+export function isOrderStatus(value: any): value is DroneOrderStatus {
+  return typeof value === 'number' && !!DroneOrderStatus[value];
 }

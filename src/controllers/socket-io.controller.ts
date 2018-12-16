@@ -8,22 +8,21 @@ import { ErrorCode, LogicError } from '../services/error.service';
 import { bindCallbackOnExit } from '../services/util.service';
 import {
   DroneMeasurementsModel,
-  IDroneMeasurement,
   isDroneMeasurementInput,
 } from '../models/drone-measurements.model';
-import { IDroneOrder } from '../models/drone-orders.model';
-
-export enum OrderAcceptance {
-  STARTED = 0,
-  ERROR = 1,
-  ENQUEUED = 2,
-}
+import {
+  DroneOrdersModel,
+  DroneOrderStatus,
+  IDroneOrder,
+  isOrderStatus,
+} from '../models/drone-orders.model';
 
 @injectable()
 export class SocketIoController {
   protected _httpServer: http.Server;
   protected _droneModel: DroneModel;
   protected _droneMeasurementModel: DroneMeasurementsModel;
+  protected _droneOrderModel: DroneOrdersModel;
   protected _server: SocketIO.Server;
   // TODO: add sync between nodes
   protected _socketIdToDeviceId: Map<string, string>;
@@ -34,9 +33,11 @@ export class SocketIoController {
     @inject(TYPES.HttpServer) httpServer: http.Server,
     @inject(TYPES.DroneModel) droneModel: DroneModel,
     @inject(TYPES.DroneMeasurementModel) droneMeasurementModel: DroneMeasurementsModel,
+    @inject(TYPES.DroneOrderModel) droneOrderModel: DroneOrdersModel,
   ) {
     this._httpServer = httpServer;
     this._droneModel = droneModel;
+    this._droneOrderModel = droneOrderModel;
     this._droneMeasurementModel = droneMeasurementModel;
 
     this._socketIdToDeviceId = new Map<string, string>();
@@ -101,19 +102,30 @@ export class SocketIoController {
   }
 
   public sendOrder(order: IDroneOrder) {
-    return new Promise<OrderAcceptance>((resolve, reject) => {
+    return new Promise<DroneOrderStatus>((resolve, reject) => {
       const socketId = this._deviceIdToSocketId.get(order.deviceId);
       if (!socketId) {
         reject(new Error(`No connected device for ${order.deviceId}`));
         return;
       }
+
+      if (!order.droneOrderId) {
+        reject(new Error('No droneOrderId'));
+        return;
+      }
       const { userId, deviceId, ...orderInfo } = order;
       this._server.sockets.connected[socketId].emit('order', orderInfo, (status: unknown) => {
-        if (!isOrderAcceptance(status)) {
-          console.error(`Not a valid order acceptance status ${status}`);
+        if (!isOrderStatus(status)) {
+          reject(new Error(`Not a valid order acceptance status ${status}`));
           return;
         }
-        resolve(status);
+        this.saveOrderStatus(deviceId, status).then((affected) => {
+          if (affected === 0) {
+            console.error(new Error(`No order in the database with id ${orderInfo.droneOrderId} and status ${DroneOrderStatus[status]}`));
+            return;
+          }
+          resolve(status);
+        }).catch(reject);
       });
     });
   }
@@ -131,7 +143,24 @@ export class SocketIoController {
         try {
           await this._droneMeasurementModel.save(deviceId, data);
         } catch (err) {
-          console.log(err);
+          console.error(err);
+        }
+      });
+
+      socket.on('order-change', async (droneOrderId: string, status: unknown) => {
+        const deviceId = this._socketIdToDeviceId.get(socket.id)!;
+        if (!isOrderStatus(status)) {
+          console.error(new Error(`Not a valid order acceptance status ${status}`));
+          return;
+        }
+        try {
+          const affected = await this.saveOrderStatus(droneOrderId, status)
+            .andWhere('deviceId', deviceId);
+          if (affected === 0) {
+            console.error(new Error(`No order in the database with id ${droneOrderId} and status ${DroneOrderStatus[status]}`));
+          }
+        } catch (err) {
+          console.error(err);
         }
       });
 
@@ -145,8 +174,10 @@ export class SocketIoController {
       });
     });
   }
-}
 
-export function isOrderAcceptance(value: any): value is OrderAcceptance {
-  return typeof value === 'number' && !!OrderAcceptance[value];
+  private saveOrderStatus(droneOrderId: string, status: DroneOrderStatus) {
+    return this._droneOrderModel.table
+      .where({ droneOrderId })
+      .update({ status });
+  }
 }

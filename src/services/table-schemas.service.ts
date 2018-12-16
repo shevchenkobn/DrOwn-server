@@ -63,14 +63,16 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
   }],
   [TableName.DroneOrders, knex => {
     return knex.schema.createTable(TableName.DroneOrders, table => {
+      table.bigIncrements('droneOrderId').unsigned()
+        .primary(`pk_${TableName.DroneOrders}`);
       table.string('deviceId').notNullable().unique()
-        .primary(`pk_${TableName.DroneOrders}`)
         .references(`${TableName.Drones}.deviceId`).onDelete('CASCADE');
       table.bigInteger('userId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
 
       table.integer('action').unsigned().notNullable();
+      table.integer('status').unsigned().notNullable();
       table.decimal('longitude', 9, 6).nullable();
       table.decimal('latitude', 9, 6).nullable();
     });

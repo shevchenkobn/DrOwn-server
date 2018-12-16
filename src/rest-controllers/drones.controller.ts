@@ -12,7 +12,12 @@ import { ErrorCode, LogicError } from '../services/error.service';
 import { NextFunction, Request, Response } from 'express';
 import { IUser, UserModel, UserRoles, UserStatus } from '../models/users.model';
 import { Maybe } from '../@types';
-import { getRandomString, getSafeSwaggerParam, getSortFields } from '../services/util.service';
+import {
+  appendOrderBy,
+  getRandomString,
+  getSafeSwaggerParam,
+  getSortFields,
+} from '../services/util.service';
 import { AuthService } from '../services/authentication.class';
 import { randomBytes } from 'crypto';
 import { promisify } from 'util';
@@ -93,14 +98,10 @@ export class DronesController {
           if (statuses) {
             query.whereIn('status', statuses);
           }
-          if (sortings) {
-            for (const [column, direction] of sortings) {
-              query.orderBy(column, direction);
-            }
-          }
+          appendOrderBy(query, sortings);
 
           console.debug(query.toSQL());
-          res.json(await query);
+          res.status(201).json(await query);
         } catch (err) {
           next(err);
         }

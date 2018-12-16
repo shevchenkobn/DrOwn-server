@@ -51,3 +51,6 @@
 
 /drone-orders:
   $ref: ./drone-orders.yaml
+
+/drone-measurements:
+  $ref: ./drone-measurements.yaml

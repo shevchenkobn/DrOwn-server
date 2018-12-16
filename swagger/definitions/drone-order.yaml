@@ -1,20 +1,31 @@
 type: object
 required:
+- droneOrderId
 - deviceId
+- createdAt
 - userId
 - action
+- status
 - longitude
 - latitude
 properties:
+  droneOrderId:
+    $ref: '#/definitions/BigInt'
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
+  createdAt:
+    $ref: '#/definitions/Date'
   userId:
     $ref: '#/definitions/BigInt'
   action:
     type: integer
     minimum: 0
     maximum: 4
+  status:
+    type: integer
+    minimum: 0
+    maximum: 3
   longitude:
     $ref: '#/definitions/Longitude'
   latitude:

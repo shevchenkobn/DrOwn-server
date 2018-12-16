@@ -71,20 +71,20 @@ function getRandomString(length) {
     return randomatic('aA0!', length);
 }
 exports.getRandomString = getRandomString;
-function getSortFields(columns, tableName) {
+function getSortFields(columns, tableName, excludeColumns) {
     if (!columns || columns.length === 0) {
         return undefined;
     }
     const columnSet = new Set();
     for (const sortColumn of columns) {
         const column = sortColumn.slice(1);
-        if (columnSet.has(column)) {
+        if (columnSet.has(column) || excludeColumns && excludeColumns.includes(column)) {
             throw new error_service_1.LogicError(error_service_1.ErrorCode.SORT_BAD);
         }
     }
-    return tableName
+    return (tableName
         ? columns.map(column => [`${tableName}.${column} as ${column}`, column[0] === '-' ? 'asc' : 'desc'])
-        : columns.map(column => [column, column[0] === '-' ? 'asc' : 'desc']);
+        : columns.map(column => [column, column[0] === '-' ? 'asc' : 'desc']));
 }
 exports.getSortFields = getSortFields;
 function getSelectAsColumns(columns, tableName) {
@@ -94,12 +94,45 @@ function getSelectAsColumns(columns, tableName) {
     return columns.map(col => `${tableName}.${col} as ${col}`);
 }
 exports.getSelectAsColumns = getSelectAsColumns;
-function mapObject(entity, tableName, columns) {
+function mapObject(entity, columns, tableName) {
     const obj = {};
-    for (const col of columns) {
-        obj[col] = entity[`${tableName}.${col} as ${col}`];
+    if (tableName) {
+        for (const col of columns) {
+            obj[col] = entity[`${tableName}.${col} as ${col}`];
+        }
+    }
+    else {
+        for (const col of columns) {
+            obj[col] = entity[col];
+        }
     }
     return obj;
 }
 exports.mapObject = mapObject;
+function appendLikeQuery(knex, query, column, value) {
+    const pieces = knex.raw(value).toQuery()
+        .replace(/\\\\/g, String.raw `\\\\`)
+        .replace(/[%_]/g, ch => '\\${ch}')
+        .split(/\s+/);
+    for (const piece of pieces) {
+        query.andWhere(column, 'like', `%${piece}%`);
+    }
+    return query;
+}
+exports.appendLikeQuery = appendLikeQuery;
+function appendOrderBy(query, sortings) {
+    if (sortings) {
+        for (const [column, direction] of sortings) {
+            query.orderBy(column, direction);
+        }
+    }
+    return query;
+}
+exports.appendOrderBy = appendOrderBy;
+function checkLocation(user) {
+    if ((typeof user.latitude !== 'number') !== (typeof user.longitude !== 'number')) {
+        throw new error_service_1.LogicError(error_service_1.ErrorCode.LOCATION_BAD);
+    }
+}
+exports.checkLocation = checkLocation;
 //# sourceMappingURL=util.service.js.map

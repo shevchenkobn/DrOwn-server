@@ -7,7 +7,7 @@ get:
   operationId: getUsers
   security:
   - Bearer: []
-  parameters: # TODO: filters and sort
+  parameters:
   - in: query
     name: select
     required: false
@@ -26,6 +26,122 @@ get:
       - longitude
       - latitude
       - cash
+  - in: query
+    name: user-ids
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    minItems: 1
+    items:
+      # NOTE: it is BigInt type, but I am not able to reference it
+      type: string
+      pattern: ^\d{1,19}$
+  - in: query
+    name: email-query
+    required: false
+    type: string
+  - in: query
+    name: roles
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    minItems: 1
+    items:
+      type: integer
+      minimum: 1
+      maximum: 31
+  - in: query
+    name: statuses
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    minItems: 1
+    maxItems: 2
+    items:
+      type: integer
+      minimum: 1
+      maximum: 2
+  - in: query
+    name: name-query
+    required: false
+    type: string
+  - in: query
+    name: address-query
+    required: false
+    type: string
+  - in: query
+    name: phone-query
+    required: false
+    type: string
+    format: ^\\d{1,15}$
+  - in: query
+    name: longitude-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      # NOTE: it is Longitude type, but I am not able to reference it
+      type: number
+      minimum: -180
+      maximum: 180
+  - in: query
+    name: latitude-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      # NOTE: it is Latitude type, but I am not able to reference it
+      type: number
+      minimum: -90
+      maximum: 90
+  - in: query
+    name: cash-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 0
+  - in: query
+    name: sort
+    type: array
+    minItems: 1
+    maxItems: 9
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - +userId
+      - +role
+      - +name
+      - +companyId
+      - +address
+      - +phoneNumber
+      - +longitude
+      - +latitude
+      - +cash
+      - -userId
+      - -role
+      - -name
+      - -companyId
+      - -address
+      - -phoneNumber
+      - -longitude
+      - -latitude
+      - -cash
   responses:
     200:
       description: OK

@@ -32,7 +32,7 @@ let DronePricesController = class DronePricesController {
                     if (droneIds) {
                         query.whereIn('droneId', droneIds);
                     }
-                    if (createdAtLimits) {
+                    if (createdAtLimits.length > 0) {
                         query.andWhereBetween('createdAt', createdAtLimits);
                     }
                     if (actionTypes) {
@@ -41,11 +41,7 @@ let DronePricesController = class DronePricesController {
                     if (priceLimits) {
                         query.andWhereBetween('price', priceLimits);
                     }
-                    if (sortings) {
-                        for (const [column, direction] of sortings) {
-                            query.orderBy(column, direction);
-                        }
-                    }
+                    util_service_1.appendOrderBy(query, sortings);
                     console.debug(query.toSQL());
                     res.json(await query);
                 }
@@ -58,6 +54,10 @@ let DronePricesController = class DronePricesController {
                     const select = req.swagger.params.select.value;
                     const dronePrice = req.swagger.params.dronePrice.value;
                     const user = req.user;
+                    if (user.status === users_model_1.UserStatus.BLOCKED) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_BLOCKED));
+                        return;
+                    }
                     const drones = await droneModel.select(['ownerId'], {
                         droneId: dronePrice.droneId,
                         ownerId: user.userId,
@@ -76,7 +76,7 @@ let DronePricesController = class DronePricesController {
                         try {
                             await dronePricesModel.update({ droneId: dronePrice.droneId, actionType: dronePrice.actionType }, { isActive: false }, trx);
                             await dronePricesModel.table.insert(dronePrice).transacting(trx);
-                            res.json((await dronePricesModel.select(select, { isActive: true, droneId: dronePrice.droneId }))[0]);
+                            res.status(201).json((await dronePricesModel.select(select, { isActive: true, droneId: dronePrice.droneId }))[0]);
                             trx.commit();
                         }
                         catch (err) {

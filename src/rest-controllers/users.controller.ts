@@ -3,21 +3,31 @@ import { inject, injectable } from 'inversify';
 import {
   IUser,
   IUserBase,
-  IUserSeed, maxPasswordLength,
+  IUserSeed,
+  maxPasswordLength,
   UserModel,
   UserRoles,
+  UserStatus,
   WhereClause,
 } from '../models/users.model';
 import { NextFunction, Request, Response } from 'express';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { Maybe } from '../@types';
-import { getRandomString, getSafeSwaggerParam } from '../services/util.service';
+import {
+  appendLikeQuery, appendOrderBy, checkLocation,
+  getRandomString,
+  getSafeSwaggerParam,
+  getSortFields, ILocation, mapObject,
+} from '../services/util.service';
 import { superAdminUserId } from '../services/table-schemas.service';
+import { TableName } from '../services/table-names';
+import { DbConnection } from '../services/db-connection.class';
 
 @injectable()
 export class UsersController {
   constructor(
     @inject(TYPES.UserModel) userModel: UserModel,
+    @inject(TYPES.DbConnection) dbConnection: DbConnection,
   ) {
     return {
       async getUsers(req: Request, res: Response, next: NextFunction) {
@@ -33,8 +43,77 @@ export class UsersController {
             next(new LogicError(ErrorCode.SELECT_BAD));
             return;
           }
-          // TODO: add filters and sorting
-          res.json(await userModel.select(columns));
+
+          const cashLimits = getSafeSwaggerParam<[number, number]>(req, 'cash-limits');
+          if (cashLimits && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.USER_FILTER_BAD));
+            return;
+          }
+          const phoneQuery = getSafeSwaggerParam<string>(req, 'phone-query');
+          if (phoneQuery && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.USER_FILTER_BAD));
+            return;
+          }
+          const longitudeLimits = getSafeSwaggerParam<[number, number]>(req, 'longitude-limits');
+          if (longitudeLimits && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.USER_FILTER_BAD));
+            return;
+          }
+          const latitudeLimits = getSafeSwaggerParam<[number, number]>(req, 'latitude-limits');
+          if (latitudeLimits && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.USER_FILTER_BAD));
+            return;
+          }
+
+          const userIds = getSafeSwaggerParam<string[]>(req, 'user-ids');
+          const emailQuery = getSafeSwaggerParam<string>(req, 'email-query');
+          const roles = getSafeSwaggerParam<UserRoles[]>(req, 'roles');
+          const statuses = getSafeSwaggerParam<UserStatus[]>(req, 'statuses');
+          const nameQuery = getSafeSwaggerParam<string>(req, 'name-query');
+          const addressQuery = getSafeSwaggerParam<string>(req, 'address-query');
+
+          const sortings = getSortFields(
+            getSafeSwaggerParam<(keyof IUser)[]>(req, 'sort'),
+            TableName.Users,
+            adminFields,
+          );
+
+          const query = userModel.table.columns(columns);
+
+          if (userIds) {
+            query.whereIn('userId', userIds);
+          }
+          if (roles) {
+            query.whereIn('role', roles);
+          }
+          if (statuses) {
+            query.whereIn('status', statuses);
+          }
+          if (nameQuery) {
+            appendLikeQuery(dbConnection.knex, query, 'name', nameQuery);
+          }
+          if (emailQuery) {
+            appendLikeQuery(dbConnection.knex, query, 'email', emailQuery);
+          }
+          if (addressQuery) {
+            appendLikeQuery(dbConnection.knex, query, 'address', addressQuery);
+          }
+          if (phoneQuery) {
+            appendLikeQuery(dbConnection.knex, query, 'phoneNumber', phoneQuery);
+          }
+          if (cashLimits) {
+            query.andWhereBetween('cash', cashLimits);
+          }
+          if (latitudeLimits) {
+            query.andWhereBetween('latitude', latitudeLimits);
+          }
+          if (longitudeLimits) {
+            query.andWhereBetween('longitude', longitudeLimits);
+          }
+          appendOrderBy(query, sortings);
+
+          console.debug(query.toQuery());
+          res.json(await query);
         } catch (err) {
           next(err);
         }
@@ -47,11 +126,7 @@ export class UsersController {
         if (!select || select.length === 0) {
           res.json(user);
         } else {
-          const returnUser = {} as {[field: string]: any};
-          for (const column of select) {
-            returnUser[column] = user[column];
-          }
-          res.json(returnUser);
+          res.json(mapObject(user, select));
         }
       },
 
@@ -72,7 +147,7 @@ export class UsersController {
             next(new LogicError(ErrorCode.SELECT_BAD));
             return;
           }
-          checkLocation(inputUser);
+          checkLocation(inputUser as ILocation);
 
           if (!inputUser.password) {
             inputUser.password = getRandomString(maxPasswordLength);
@@ -121,7 +196,7 @@ export class UsersController {
             return;
           }
 
-          checkLocation(inputUser);
+          checkLocation(inputUser as ILocation);
 
           const affectedRows = await userModel.update(inputUser, whereClause);
           if (affectedRows === 0) {
@@ -196,12 +271,7 @@ export class UsersController {
                 next(new LogicError(ErrorCode.AUTH_ROLE));
                 return;
               }
-              oldUser = Object.keys(user).reduce((mapped, c) => {
-                if (columns.includes(c as any)) {
-                  mapped[c] = (user as any)[c];
-                }
-                return mapped;
-              }, {} as { [field: string]: any }) as IUser;
+              oldUser = mapObject(user, columns) as IUser;
             }
           } else if (hasEmailInWhere && user.role & UserRoles.ADMIN) {
             if (foreignUser) {
@@ -245,11 +315,11 @@ const safeColumns: ReadonlyArray<keyof IUser> = [
   'role',
   'name',
   'status',
+  'address',
 ];
 const adminFields: ReadonlyArray<keyof IUser> = [
   'phoneNumber',
   'cash',
-  'address',
   'longitude',
   'latitude',
 ];
@@ -291,10 +361,4 @@ function getUserWhereClause(userId: Maybe<string>, email: Maybe<string>, user: I
     throw new LogicError(ErrorCode.USER_ID_EMAIL);
   }
   return [whereClause, foreignUser] as [WhereClause, boolean];
-}
-
-function checkLocation(user: IUserBase) {
-  if ((typeof user.latitude !== 'number') !== (typeof user.longitude !== 'number')) {
-    throw new LogicError(ErrorCode.LOCATION_BAD);
-  }
 }

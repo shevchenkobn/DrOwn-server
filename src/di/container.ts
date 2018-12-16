@@ -15,6 +15,9 @@ import { DronePricesModel } from '../models/drone-prices.model';
 import { TransactionsModel } from '../models/transactions.model';
 import { TransactionsController } from '../rest-controllers/transactions.controller';
 import { DronePricesController } from '../rest-controllers/drone-prices.controller';
+import { DroneOrdersController } from '../rest-controllers/drone-orders.controller';
+import { DroneOrdersModel } from '../models/drone-orders.model';
+import { DroneMeasurementsController } from '../rest-controllers/drone-measurements.controller';
 
 export const container = new Container({
   defaultScope: 'Singleton',
@@ -29,14 +32,17 @@ const typeMap = new Map<symbol, any>([
   [TYPES.DroneModel, DroneModel],
   [TYPES.DroneMeasurementModel, DroneMeasurementsModel],
   [TYPES.DronePriceModel, DronePricesModel],
+  [TYPES.DroneOrderModel, DroneOrdersModel],
   [TYPES.TransactionModel, TransactionsModel],
 
   [TYPES.UserHelpersController, UserHelpersController],
   [TYPES.AuthController, AuthController],
   [TYPES.UsersController, UsersController],
   [TYPES.DronesController, DronesController],
+  [TYPES.DronesMeasurementsController, DroneMeasurementsController],
   [TYPES.DroneHelpersController, DroneHelpersController],
   [TYPES.DronePriceController, DronePricesController],
+  [TYPES.DroneOrderController, DroneOrdersController],
   [TYPES.TransactionController, TransactionsController],
 
   [TYPES.SocketIoController, SocketIoController],

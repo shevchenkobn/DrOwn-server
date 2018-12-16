@@ -18,6 +18,7 @@ export class DbConnection {
         ...knexConfig,
         supportBigNumbers: true,
         bigNumberStrings: true,
+        charset: 'utf8mb4',
       },
     };
     this.knex = Knex(this.config);

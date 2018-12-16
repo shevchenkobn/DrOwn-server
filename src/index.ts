@@ -2,6 +2,7 @@ import { TYPES } from './di/types'; // Import first to initialize all dependenci
 import { container, initAsync } from './di/container';
 
 import * as express from 'express';
+import * as config from 'config';
 import { bindCallbackOnExit, loadSwaggerSchema } from './services/util.service';
 import { initializeMiddleware } from 'swagger-tools';
 import { authenticateBearer } from './services/handler.service';
@@ -9,7 +10,8 @@ import { resolve } from 'path';
 import { errorHandler, notFoundHandler } from './services/error.service';
 import { Server } from 'http';
 import { SocketIoController } from './controllers/socket-io.controller';
-import { restoreRentingQueue } from './rest-controllers/transactions.controller';
+import { restoreRentingSchedule } from './rest-controllers/transactions.controller';
+import { createServer } from 'http';
 
 export interface ServerConfig {
   host: string;
@@ -17,18 +19,21 @@ export interface ServerConfig {
   swaggerDocsPrefix: string;
 }
 
-const { host, port, swaggerDocsPrefix } = container.get<ServerConfig>(TYPES.HttpServer);
+const { host, port, swaggerDocsPrefix } = config.get<ServerConfig>('server');
 
 const app = express();
 
 Promise.all([
   loadSwaggerSchema(),
   initAsync(),
-  restoreRentingQueue(),
+  restoreRentingSchedule(),
 ]).then(([schemaResults, initResults]) => {
   const notProduction = process.env.NODE_ENV !== 'production';
 
   initializeMiddleware(schemaResults.resolved, middleware => {
+    const server = createServer(app);
+    container.bind<Server>(TYPES.HttpServer).toConstantValue(server);
+
     app.use(middleware.swaggerMetadata());
 
     app.use(middleware.swaggerSecurity({
@@ -57,16 +62,14 @@ Promise.all([
 
     app.use(notFoundHandler);
 
-    const server = app.listen(port, host);
-    container.bind<Server>(TYPES.HttpServer).toConstantValue(server);
-
     const ioApp = container.get<SocketIoController>(TYPES.SocketIoController);
-    ioApp.listen(port);
 
     bindCallbackOnExit(() => {
       server.close();
       ioApp.close();
     });
+
+    server.listen(host, port);
 
     console.log(`Listening at ${host}:${port}`);
     if (global.gc) {

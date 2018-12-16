@@ -7,7 +7,8 @@ import { TableName } from '../services/table-names';
 export enum DroneRealtimeStatus {
   WAITING = 0,
   TAKING_CARGO = 1,
-  MOVING = 2,
+  RELEASING_CARGO = 2,
+  MOVING = 3,
 }
 
 export interface IDroneMeasurementInput {

@@ -54,7 +54,7 @@ DroneStatuses:
   $ref: ./drone-statuses.yaml
 
 DroneSecret:
-  $ref: ./drone-passwordHash.yaml
+  $ref: ./drone-secret.yaml
 
 # Drone prices
 
@@ -82,6 +82,11 @@ DroneOrder:
 
 DroneOrderCreate:
   $ref: ./drone-order-create.yaml
+
+# Measurements
+
+DroneMeasurement:
+  $ref: ./drone-measurement.yaml
 
 # Auth types
 Tokens:

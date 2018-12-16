@@ -12,3 +12,7 @@
   description: Path for setting prices
 - name: transactions
   description: Everything that is used to create and confirm transactions
+- name: drone-orders
+  description: Endpoints for drone orders management
+- name: drone-measurements
+  description: Drone measurements API

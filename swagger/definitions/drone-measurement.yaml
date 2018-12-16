@@ -1,20 +1,28 @@
 type: object
 required:
 - deviceId
-- userId
-- action
+- createdAt
+- status
+- batteryPower
+- batteryCharge
 - longitude
 - latitude
 properties:
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
-  userId:
-    $ref: '#/definitions/BigInt'
-  action:
+  createdAt:
+    $ref: '#/definitions/Date'
+  status:
     type: integer
     minimum: 0
-    maximum: 4
+    maximum: 3
+  batteryPower:
+    type: number
+    minimum: 0
+  batteryCharge:
+    type: number
+    minimum: 0
   longitude:
     $ref: '#/definitions/Longitude'
   latitude:

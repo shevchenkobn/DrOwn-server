@@ -1,0 +1,182 @@
+x-swagger-router-controller: drone-orders
+
+get:
+  tags:
+  - drone-measurements
+  summary: List measurements
+  operationId: getMeasurements
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - customer
+  - owner
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - deviceId
+      - createdAt
+      - status
+      - batteryPower
+      - batteryCharge
+      - longitude
+      - latitude
+  - in: query
+    name: device-ids
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    minItems: 1
+    items:
+      type: string
+      pattern: ^[\da-fA-F]{12}$
+  - in: query
+    name: statuses
+    type: array
+    required: false
+    maxItems: 4
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: integer
+      minimum: 0
+      maximum: 3
+  - in: query
+    name: created-at-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      # NOTE: it is Date type, but I am not able to reference it
+      type: string
+      pattern: ^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$
+  - in: query
+    name: battery-power-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 0
+  - in: query
+    name: battery-charge-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: number
+      minimum: 0
+  - in: query
+    name: longitude-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      # NOTE: it is Longitude type, but I am not able to reference it
+      type: number
+      minimum: -180
+      maximum: 180
+  - in: query
+    name: latitude-limits
+    required: false
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      # NOTE: it is Latitude type, but I am not able to reference it
+      type: number
+      minimum: -90
+      maximum: 90
+  - in: query
+    name: sort
+    type: array
+    required: false
+    minItems: 1
+    maxItems: 7
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - -deviceId
+      - -createdAt
+      - -status
+      - -batteryPower
+      - -batteryCharge
+      - -longitude
+      - -latitude
+      - +deviceId
+      - +createdAt
+      - +status
+      - +batteryPower
+      - +batteryCharge
+      - +longitude
+      - +latitude
+  responses:
+    200:
+      description: OK
+      schema:
+        type: array
+        items:
+          $ref: '#/definitions/DroneMeasurement'
+    400:
+      $ref: '#/responses/ClientError'
+
+delete:
+  tags:
+  - drone-measurements
+  summary: Delete measurements
+  operationId: deleteMeasurements
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - owner
+  parameters:
+  - in: query
+    name: device-ids
+    required: true
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    minItems: 1
+    items:
+      type: string
+      pattern: ^[\da-fA-F]{12}$
+  - in: query
+    name: created-at-limits
+    required: true
+    type: array
+    minItems: 2
+    maxItems: 2
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      # NOTE: it is Date type, but I am not able to reference it
+      type: string
+      pattern: ^([\+-]?\d{4}(?!\d{2}\b))((-?)((0[1-9]|1[0-2])(\3([12]\d|0[1-9]|3[01]))?|W([0-4]\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\d|[12]\d{2}|3([0-5]\d|6[1-6])))([T\s]((([01]\d|2[0-3])((:?)[0-5]\d)?|24\:?00)([\.,]\d+(?!:))?)?(\17[0-5]\d([\.,]\d+)?)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)?)?)?$
+  responses:
+    200:
+      description: OK
+    400:
+      $ref: '#/responses/ClientError'

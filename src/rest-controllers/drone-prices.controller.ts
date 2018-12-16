@@ -7,10 +7,10 @@ import {
   IDronePriceInput,
 } from '../models/drone-prices.model';
 import { NextFunction, Request, Response } from 'express';
-import { getSafeSwaggerParam, getSortFields } from '../services/util.service';
+import { appendOrderBy, getSafeSwaggerParam, getSortFields } from '../services/util.service';
 import { Maybe } from '../@types';
 import { DroneModel } from '../models/drones.model';
-import { IUser, UserRoles } from '../models/users.model';
+import { IUser, UserRoles, UserStatus } from '../models/users.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { DbConnection } from '../services/db-connection.class';
 import { TableName } from '../services/table-names';
@@ -33,7 +33,7 @@ export class DronePricesController {
           const createdAtLimits = (getSafeSwaggerParam<string[]>(
             req,
             'created-at-limits',
-          ) || []).map(dateStr => new Date(dateStr)).sort() as any as Maybe<[string, string]>;
+          ) || []).map(dateStr => new Date(dateStr)).sort() as any as ([Date, Date] | []);
           const actionTypes = getSafeSwaggerParam<DronePriceActionType[]>(req, 'action-types');
           const priceLimits = getSafeSwaggerParam<[number, number]>(req, 'price-limits');
           if (priceLimits) {
@@ -48,8 +48,8 @@ export class DronePricesController {
           if (droneIds) {
             query.whereIn('droneId', droneIds);
           }
-          if (createdAtLimits) {
-            query.andWhereBetween('createdAt', createdAtLimits);
+          if (createdAtLimits.length > 0) {
+            query.andWhereBetween('createdAt', createdAtLimits as any);
           }
           if (actionTypes) {
             query.whereIn('actionType', actionTypes);
@@ -57,11 +57,7 @@ export class DronePricesController {
           if (priceLimits) {
             query.andWhereBetween('price', priceLimits);
           }
-          if (sortings) {
-            for (const [column, direction] of sortings) {
-              query.orderBy(column, direction);
-            }
-          }
+          appendOrderBy(query, sortings);
 
           console.debug(query.toSQL());
           res.json(await query);
@@ -79,6 +75,10 @@ export class DronePricesController {
             req as any
           ).swagger.params.dronePrice.value as IDronePriceInput;
           const user = (req as any).user as IUser;
+          if (user.status === UserStatus.BLOCKED) {
+            next(new LogicError(ErrorCode.USER_BLOCKED));
+            return;
+          }
 
           const drones = await droneModel.select(['ownerId'], {
             droneId: dronePrice.droneId,
@@ -107,7 +107,7 @@ export class DronePricesController {
                 trx,
               );
               await dronePricesModel.table.insert(dronePrice).transacting(trx);
-              res.json(
+              res.status(201).json(
                 (await dronePricesModel.select(
                   select,
                   { isActive: true, droneId: dronePrice.droneId },

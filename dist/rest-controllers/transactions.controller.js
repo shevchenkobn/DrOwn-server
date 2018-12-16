@@ -36,23 +36,6 @@ let TransactionsController = class TransactionsController {
                     let query;
                     if (isCustomer) {
                         query = transactionModel.table.where('userId', user.userId).columns(select);
-                        if (transactionIds) {
-                            query.whereIn('transactionId', transactionIds);
-                        }
-                        if (priceIds) {
-                            query.whereIn('priceId', priceIds);
-                        }
-                        if (createdAtLimits) {
-                            query.andWhereBetween('createdAt', createdAtLimits);
-                        }
-                        if (periodLimits) {
-                            query.andWhereBetween('period', periodLimits);
-                        }
-                        if (statuses) {
-                            query.whereIn('status', statuses);
-                        }
-                        console.debug(query.toSQL());
-                        res.json(await query);
                     }
                     else {
                         query = transactionModel.table
@@ -66,27 +49,24 @@ let TransactionsController = class TransactionsController {
                         else {
                             query.andWhere(`${table_names_1.TableName.Drones}.ownerId`, user.userId);
                         }
-                        if (transactionIds) {
-                            query.whereIn(`${table_names_1.TableName.Transactions}.transactionId`, transactionIds);
-                        }
-                        if (priceIds) {
-                            query.whereIn(`${table_names_1.TableName.Transactions}.priceId`, priceIds);
-                        }
-                        if (createdAtLimits) {
-                            query.andWhereBetween(`${table_names_1.TableName.Transactions}.createdAt`, createdAtLimits);
-                        }
-                        if (periodLimits) {
-                            query.andWhereBetween(`${table_names_1.TableName.Transactions}.period`, periodLimits);
-                        }
-                        if (statuses) {
-                            query.whereIn(`${table_names_1.TableName.Transactions}.status`, statuses);
-                        }
                     }
-                    if (sortings) {
-                        for (const [column, direction] of sortings) {
-                            query.orderBy(column, direction);
-                        }
+                    if (transactionIds) {
+                        query.whereIn(`${table_names_1.TableName.Transactions}.transactionId`, transactionIds);
                     }
+                    if (priceIds) {
+                        query.whereIn(`${table_names_1.TableName.Transactions}.priceId`, priceIds);
+                    }
+                    if (createdAtLimits.length > 0) {
+                        query.andWhereBetween(`${table_names_1.TableName.Transactions}.createdAt`, createdAtLimits);
+                    }
+                    if (periodLimits) {
+                        query.andWhereBetween(`${table_names_1.TableName.Transactions}.period`, periodLimits);
+                    }
+                    if (statuses) {
+                        query.whereIn(`${table_names_1.TableName.Transactions}.status`, statuses);
+                    }
+                    util_service_1.appendOrderBy(query, sortings);
+                    console.debug(query.toQuery());
                     res.json(await query);
                 }
                 catch (err) {
@@ -96,6 +76,10 @@ let TransactionsController = class TransactionsController {
             async initiateTransaction(req, res, next) {
                 try {
                     const user = req.user;
+                    if (user.status === users_model_1.UserStatus.BLOCKED) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_BLOCKED));
+                        return;
+                    }
                     const select = req.swagger.params.select.value;
                     const transaction = req.swagger.params.transaction.value;
                     const dronePriceData = await dronePriceModel.table.columns([
@@ -155,14 +139,14 @@ let TransactionsController = class TransactionsController {
                         userId: user.userId,
                     });
                     if (select && select.length > 0) {
-                        res.json((await transactionModel.table.columns(select)
+                        res.status(201).json((await transactionModel.table.columns(select)
                             .where({
                             userId: user.userId,
                             priceId: transaction.priceId,
                         }).whereIn('transactionId', transactionModel.table.max('transactionId')))[0]);
                     }
                     else {
-                        res.json({});
+                        res.status(201).json({});
                     }
                 }
                 catch (err) {
@@ -197,10 +181,10 @@ let TransactionsController = class TransactionsController {
                         return;
                     }
                     if (!select || select.length === 0 || !hadUserId && select.length === 1) {
-                        res.json(util_service_1.mapObject(droneInfo, table_names_1.TableName.Transactions, select));
+                        res.json(util_service_1.mapObject(droneInfo, select, table_names_1.TableName.Transactions));
                     }
                     else {
-                        res.json(util_service_1.mapObject(droneInfo, table_names_1.TableName.Transactions, hadUserId ? select : select.slice(0, -1)));
+                        res.json(util_service_1.mapObject(droneInfo, hadUserId ? select : select.slice(0, -1), table_names_1.TableName.Transactions));
                     }
                 }
                 catch (err) {
@@ -210,6 +194,10 @@ let TransactionsController = class TransactionsController {
             async confirmTransaction(req, res, next) {
                 try {
                     const user = req.user;
+                    if (user.status === users_model_1.UserStatus.BLOCKED) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_BLOCKED));
+                        return;
+                    }
                     const transactionId = req.swagger.params.transactionId.value;
                     const select = req.swagger.params.select.value;
                     const dronePriceData = await dronePriceModel.table.columns([
@@ -335,6 +323,10 @@ let TransactionsController = class TransactionsController {
             async rejectTransaction(req, res, next) {
                 try {
                     const user = req.user;
+                    if (user.status === users_model_1.UserStatus.BLOCKED) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_BLOCKED));
+                        return;
+                    }
                     const transactionId = req.swagger.params.transactionId.value;
                     const select = req.swagger.params.select.value;
                     const dronePriceData = await dronePriceModel.table.columns([
@@ -387,52 +379,50 @@ TransactionsController = tslib_1.__decorate([
         db_connection_class_1.DbConnection])
 ], TransactionsController);
 exports.TransactionsController = TransactionsController;
-function restoreRentingQueue() {
-    return new Promise((resolve, reject) => {
-        const db = container_1.container.get(types_1.TYPES.DbConnection);
-        const droneModel = container_1.container.get(types_1.TYPES.DroneModel);
-        if (container_1.container.get(types_1.TYPES.DbConnection).config.client !== 'mysql') {
-            throw new TypeError('Restoring renting queue is not supported for this DB driver');
-        }
-        const knex = db.knex;
-        const update = (async () => {
-            const dronesAlias = table_names_1.TableName.Drones.split('').reverse().join('');
-            await knex.schema.raw(`CREATE TEMPORARY TABLE ${knex.raw('??', [dronesAlias])} ${knex(table_names_1.TableName.Drones)
-                .columns([
-                `${table_names_1.TableName.Drones}.droneId as droneId`,
-            ])
-                .join(table_names_1.TableName.DronePrices, `${table_names_1.TableName.Drones}.droneId`, `${table_names_1.TableName.DronePrices}.droneId`)
-                .join(table_names_1.TableName.Transactions, `${table_names_1.TableName.DronePrices}.priceId`, `${table_names_1.TableName.Transactions}.priceId`)
-                .where(`${table_names_1.TableName.Transactions}.status`, transactions_model_1.TransactionStatus.CONFIRMED)
-                .andWhere(`${table_names_1.TableName.Drones}.status`, drones_model_1.DroneStatus.RENTED)
-                .whereRaw(`${knex.raw('??.??', [table_names_1.TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [table_names_1.TableName.Transactions, 'period'])} * 60 * 60) < now()`)}`);
-            await knex(table_names_1.TableName.Drones)
-                .whereIn('droneId', function () {
-                this.column('droneId').from(dronesAlias);
-            })
-                .update({
-                status: drones_model_1.DroneStatus.IDLE,
-            });
-            // knex.schema.raw(knex.raw('DROP VIEW ?? IF EXISTS', [dronesAlias]).toQuery()),
-            await knex.schema.dropTable(dronesAlias);
-        })();
-        const select = knex(table_names_1.TableName.Transactions)
+function restoreRentingSchedule() {
+    const db = container_1.container.get(types_1.TYPES.DbConnection);
+    const droneModel = container_1.container.get(types_1.TYPES.DroneModel);
+    if (container_1.container.get(types_1.TYPES.DbConnection).config.client !== 'mysql') {
+        throw new TypeError('Restoring renting queue is not supported for this DB driver');
+    }
+    const knex = db.knex;
+    const update = (async () => {
+        const dronesAlias = table_names_1.TableName.Drones.split('').reverse().join('');
+        await knex.schema.raw(`CREATE TEMPORARY TABLE ${knex.raw('??', [dronesAlias])} ${knex(table_names_1.TableName.Drones)
             .columns([
-            `${table_names_1.TableName.DronePrices}.droneId as droneId`,
-            knex.raw(`${knex.raw('??.??', [table_names_1.TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [table_names_1.TableName.Transactions, 'period'])} * 60 * 60) as ${knex.raw('??', ['timeout'])}`),
+            `${table_names_1.TableName.Drones}.droneId as droneId`,
         ])
-            .join(table_names_1.TableName.DronePrices, `${table_names_1.TableName.Transactions}.priceId`, `${table_names_1.TableName.DronePrices}.priceId`)
-            .havingRaw(`${knex.raw('??', ['timeout'])} > NOW()`)
-            .andWhere(`${table_names_1.TableName.Transactions}.status`, transactions_model_1.TransactionStatus.CONFIRMED)
-            .then((transactions) => {
-            for (const { droneId, timeout } of transactions) {
-                scheduleDroneUpdate(droneModel, droneId, timeout.getTime() - Date.now());
-            }
+            .join(table_names_1.TableName.DronePrices, `${table_names_1.TableName.Drones}.droneId`, `${table_names_1.TableName.DronePrices}.droneId`)
+            .join(table_names_1.TableName.Transactions, `${table_names_1.TableName.DronePrices}.priceId`, `${table_names_1.TableName.Transactions}.priceId`)
+            .where(`${table_names_1.TableName.Transactions}.status`, transactions_model_1.TransactionStatus.CONFIRMED)
+            .andWhere(`${table_names_1.TableName.Drones}.status`, drones_model_1.DroneStatus.RENTED)
+            .whereRaw(`${knex.raw('??.??', [table_names_1.TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [table_names_1.TableName.Transactions, 'period'])} * 60 * 60) < now()`)}`);
+        await knex(table_names_1.TableName.Drones)
+            .whereIn('droneId', function () {
+            this.column('droneId').from(dronesAlias);
+        })
+            .update({
+            status: drones_model_1.DroneStatus.IDLE,
         });
-        Promise.all([update, select]).then(() => resolve());
+        // knex.schema.raw(knex.raw('DROP VIEW ?? IF EXISTS', [dronesAlias]).toQuery()),
+        await knex.schema.dropTable(dronesAlias);
+    })();
+    const select = knex(table_names_1.TableName.Transactions)
+        .columns([
+        `${table_names_1.TableName.DronePrices}.droneId as droneId`,
+        knex.raw(`${knex.raw('??.??', [table_names_1.TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [table_names_1.TableName.Transactions, 'period'])} * 60 * 60) as ${knex.raw('??', ['timeout'])}`),
+    ])
+        .join(table_names_1.TableName.DronePrices, `${table_names_1.TableName.Transactions}.priceId`, `${table_names_1.TableName.DronePrices}.priceId`)
+        .havingRaw(`${knex.raw('??', ['timeout'])} > NOW()`)
+        .andWhere(`${table_names_1.TableName.Transactions}.status`, transactions_model_1.TransactionStatus.CONFIRMED)
+        .then((transactions) => {
+        for (const { droneId, timeout } of transactions) {
+            scheduleDroneUpdate(droneModel, droneId, timeout.getTime() - Date.now());
+        }
     });
+    return Promise.all([update, select]);
 }
-exports.restoreRentingQueue = restoreRentingQueue;
+exports.restoreRentingSchedule = restoreRentingSchedule;
 function isCustomerOnly(user) {
     return user.role & users_model_1.UserRoles.CUSTOMER
         && !!(user.role & users_model_1.UserRoles.OWNER)

@@ -5,6 +5,7 @@ import * as Knex from 'knex';
 import { TableName } from '../services/table-names';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { compare, hash } from 'bcrypt';
+import { IUser } from './users.model';
 
 export const maxPasswordLength = 72 - 29;
 
@@ -109,6 +110,34 @@ export class DroneModel {
       delete drones[0].passwordHash;
     }
     return drones[0];
+  }
+
+  getOwnershipLimiterClause(user: IUser) {
+    const knex = this._connection.knex;
+    return this.table
+      .column(`${TableName.Drones}.deviceId as deviceId`)
+      .join(
+        TableName.DronePrices,
+        `${TableName.Drones}.droneId`,
+        `${TableName.DronePrices}.droneId`,
+      )
+      .join(
+        TableName.Transactions,
+        `${TableName.DronePrices}.priceId`,
+        `${TableName.Transactions}.priceId`,
+      )
+      .andWhere(function () {
+        this
+          .andWhere(`${TableName.Drones}.ownerId`, user.userId)
+          .orWhere(function () {
+            this
+              .where(`${TableName.Drones}.status`, DroneStatus.RENTED)
+              .andWhere(`${TableName.Transactions}.userId`, user.userId)
+              .andWhereRaw(
+                `${knex.raw('??.??', [TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [TableName.Transactions, 'period'])} * 60 * 60) >= now()`,
+              );
+          });
+      });
   }
 }
 

@@ -9,7 +9,8 @@ var DroneRealtimeStatus;
 (function (DroneRealtimeStatus) {
     DroneRealtimeStatus[DroneRealtimeStatus["WAITING"] = 0] = "WAITING";
     DroneRealtimeStatus[DroneRealtimeStatus["TAKING_CARGO"] = 1] = "TAKING_CARGO";
-    DroneRealtimeStatus[DroneRealtimeStatus["MOVING"] = 2] = "MOVING";
+    DroneRealtimeStatus[DroneRealtimeStatus["RELEASING_CARGO"] = 2] = "RELEASING_CARGO";
+    DroneRealtimeStatus[DroneRealtimeStatus["MOVING"] = 3] = "MOVING";
 })(DroneRealtimeStatus = exports.DroneRealtimeStatus || (exports.DroneRealtimeStatus = {}));
 let DroneMeasurementsModel = class DroneMeasurementsModel {
     constructor(connection) {
