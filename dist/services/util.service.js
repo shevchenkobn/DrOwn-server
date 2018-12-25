@@ -135,4 +135,16 @@ function checkLocation(user) {
     }
 }
 exports.checkLocation = checkLocation;
+function normalizeOrigins(origins) {
+    const newOrigins = [];
+    for (const origin of origins) {
+        if (origin === '*' || origin.startsWith('http://') || origin.startsWith('https://')) {
+            newOrigins.push(origin);
+            continue;
+        }
+        newOrigins.push('http://' + origin, 'https://' + origin);
+    }
+    return newOrigins;
+}
+exports.normalizeOrigins = normalizeOrigins;
 //# sourceMappingURL=util.service.js.map

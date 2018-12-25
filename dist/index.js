@@ -4,6 +4,7 @@ const types_1 = require("./di/types"); // Import first to initialize all depende
 const container_1 = require("./di/container");
 const express = require("express");
 const config = require("config");
+const cors = require("cors");
 const util_service_1 = require("./services/util.service");
 const swagger_tools_1 = require("swagger-tools");
 const handler_service_1 = require("./services/handler.service");
@@ -12,6 +13,7 @@ const error_service_1 = require("./services/error.service");
 const transactions_controller_1 = require("./rest-controllers/transactions.controller");
 const http_1 = require("http");
 const { host, port, swaggerDocsPrefix } = config.get('server');
+const { whitelist: whitelistOrigin, methods: corsMethods } = config.get('cors');
 const app = express();
 Promise.all([
     util_service_1.loadSwaggerSchema(),
@@ -22,6 +24,12 @@ Promise.all([
     swagger_tools_1.initializeMiddleware(schemaResults.resolved, middleware => {
         const server = http_1.createServer(app);
         container_1.container.bind(types_1.TYPES.HttpServer).toConstantValue(server);
+        app.use(cors({
+            methods: corsMethods,
+            origin: util_service_1.normalizeOrigins(typeof whitelistOrigin === 'string' ? [whitelistOrigin] : whitelistOrigin),
+            preflightContinue: false,
+            optionsSuccessStatus: 204
+        }));
         app.use(middleware.swaggerMetadata());
         app.use(middleware.swaggerSecurity({
             Bearer: handler_service_1.authenticateBearer,
@@ -47,11 +55,16 @@ Promise.all([
             server.close();
             ioApp.close();
         });
-        server.listen(host, port);
-        console.log(`Listening at ${host}:${port}`);
-        if (global.gc) {
-            global.gc();
-        }
+        server.on('error', (...args) => {
+            console.error(args);
+            process.emit('SIGINT', 'SIGINT');
+        });
+        server.listen(port, host, () => {
+            console.log(`Listening at ${host}:${port}`);
+            if (global.gc) {
+                global.gc();
+            }
+        });
     });
 }).catch(err => {
     console.error(err);

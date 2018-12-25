@@ -21,12 +21,15 @@ jwt:
     refresh: 15811200000 # half of year: 1000 * 60 * 60 * 24 * (366 / 2)
   issuer: SuperAdmin
   refreshLength: 128
-autobahn:
-  route: /ws
-  defaultRealm: drown
-  appPrefix: com.drown
-  authRPC:
-    name: auth
-    authId: server
-    droneRole: drone
 
+cors:
+  whitelist:
+  - localhost:5000
+  - localhost:3000
+  - localhost:4200
+  methods:
+  - GET
+  - POST
+  - DELETE
+  - PUT
+  - PATCH

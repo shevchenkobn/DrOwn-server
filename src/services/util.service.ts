@@ -160,3 +160,15 @@ export function checkLocation(user: ILocation) {
     throw new LogicError(ErrorCode.LOCATION_BAD);
   }
 }
+
+export function normalizeOrigins(origins: string[]) {
+  const newOrigins = [];
+  for (const origin of origins) {
+    if (origin === '*' || origin.startsWith('http://') || origin.startsWith('https://')) {
+      newOrigins.push(origin);
+      continue;
+    } 
+    newOrigins.push('http://' + origin, 'https://' + origin);
+  }
+  return newOrigins;
+}

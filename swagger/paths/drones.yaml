@@ -3,6 +3,7 @@ x-swagger-router-controller: drones
 get:
   tags:
   - drones
+  - no-auth
   summary: List all drones
   operationId: getDrones
   parameters:

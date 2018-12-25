@@ -3,7 +3,8 @@ import { container, initAsync } from './di/container';
 
 import * as express from 'express';
 import * as config from 'config';
-import { bindCallbackOnExit, loadSwaggerSchema } from './services/util.service';
+import * as cors from 'cors';
+import { bindCallbackOnExit, loadSwaggerSchema, normalizeOrigins } from './services/util.service';
 import { initializeMiddleware } from 'swagger-tools';
 import { authenticateBearer } from './services/handler.service';
 import { resolve } from 'path';
@@ -19,7 +20,13 @@ export interface ServerConfig {
   swaggerDocsPrefix: string;
 }
 
+export interface CorsConfig {
+  whitelist: string | string[],
+  methods: string[]
+}
+
 const { host, port, swaggerDocsPrefix } = config.get<ServerConfig>('server');
+const { whitelist: whitelistOrigin, methods: corsMethods } = config.get<CorsConfig>('cors');
 
 const app = express();
 
@@ -33,6 +40,13 @@ Promise.all([
   initializeMiddleware(schemaResults.resolved, middleware => {
     const server = createServer(app);
     container.bind<Server>(TYPES.HttpServer).toConstantValue(server);
+
+    app.use(cors({
+      methods: corsMethods,
+      origin: normalizeOrigins(typeof whitelistOrigin === 'string' ? [whitelistOrigin] : whitelistOrigin),
+      preflightContinue: false,
+      optionsSuccessStatus: 204
+    }));
 
     app.use(middleware.swaggerMetadata());
 
@@ -69,12 +83,17 @@ Promise.all([
       ioApp.close();
     });
 
-    server.listen(host, port);
+    server.on('error', (...args) => {
+      console.error(args);
+      process.emit('SIGINT', 'SIGINT');
+    });
 
-    console.log(`Listening at ${host}:${port}`);
-    if (global.gc) {
-      global.gc();
-    }
+    server.listen(port, host, () => {
+      console.log(`Listening at ${host}:${port}`);
+      if (global.gc) {
+        global.gc();
+      }
+    });
   });
 }).catch(err => {
   console.error(err);
