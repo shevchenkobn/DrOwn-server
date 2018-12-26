@@ -90,12 +90,7 @@ let UsersController = class UsersController {
             async getProfile(req, res) {
                 const select = req.swagger.params.select.value;
                 const user = req.user;
-                if (!select || select.length === 0) {
-                    res.json(user);
-                }
-                else {
-                    res.json(util_service_1.mapObject(user, select));
-                }
+                res.json(util_service_1.mapObject(user, getColumns(select, true)));
             },
             async createUser(req, res, next) {
                 try {

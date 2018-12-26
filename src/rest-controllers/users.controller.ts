@@ -123,11 +123,7 @@ export class UsersController {
         const select = (req as any).swagger.params.select.value as (keyof IUser)[];
         const user = (req as any).user as IUser;
 
-        if (!select || select.length === 0) {
-          res.json(user);
-        } else {
-          res.json(mapObject(user, select));
-        }
+        res.json(mapObject(user, getColumns(select, true)));
       },
 
       async createUser(req: Request, res: Response, next: NextFunction) {
