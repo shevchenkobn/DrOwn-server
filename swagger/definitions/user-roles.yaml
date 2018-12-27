@@ -10,5 +10,5 @@ properties:
     maximum: 0x2
   admin:
     type: integer
-    minimum: 0x10
-    maximum: 0x10
+    minimum: 0x4
+    maximum: 0x4

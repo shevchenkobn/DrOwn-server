@@ -12,7 +12,7 @@ var UserRoles;
 (function (UserRoles) {
     UserRoles[UserRoles["CUSTOMER"] = 1] = "CUSTOMER";
     UserRoles[UserRoles["OWNER"] = 2] = "OWNER";
-    UserRoles[UserRoles["ADMIN"] = 16] = "ADMIN";
+    UserRoles[UserRoles["ADMIN"] = 4] = "ADMIN";
 })(UserRoles = exports.UserRoles || (exports.UserRoles = {}));
 function isValidRole(role) {
     return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;

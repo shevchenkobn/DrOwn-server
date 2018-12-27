@@ -9,6 +9,7 @@ get:
   - Bearer: []
   x-security-scopes:
   - owner
+  - customer
   parameters:
   - in: query
     name: select

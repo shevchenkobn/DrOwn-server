@@ -52,13 +52,18 @@ export class TransactionsController {
             TableName.Transactions,
           );
 
-          const query = transactionModel.table
-            .join(
-              TableName.Drones,
-              `${TableName.Transactions}.droneId`,
-              `${TableName.Drones}.droneId`,
-            )
-            .where(`${TableName.Drones}.ownerId`, user.userId);
+          let query;
+          if (user.role & UserRoles.OWNER) {
+            query = transactionModel.table
+              .join(
+                TableName.Drones,
+                `${TableName.Transactions}.droneId`,
+                `${TableName.Drones}.droneId`,
+              )
+              .where(`${TableName.Drones}.ownerId`, user.userId);
+          } else {
+            query = transactionModel.table.where('userId', user.userId);
+          }
 
           if (userIds) {
             query.whereIn(`${TableName.Transactions}.userId`, userIds);
@@ -183,16 +188,23 @@ export class TransactionsController {
           }
           const columns = getSelectAsColumns(select, TableName.Transactions);
 
-          const dronePriceData = await droneModel.table.columns([
+          let query;
+          if (user.role & UserRoles.OWNER) {
+            query = transactionModel.table
+              .join(
+                TableName.Drones,
+                `${TableName.Transactions}.droneId`,
+                `${TableName.Drones}.droneId`,
+              )
+              .where(`${TableName.Drones}.ownerId`, user.userId);
+          } else {
+            query = transactionModel.table.where('userId', user.userId);
+          }
+
+          const dronePriceData = await query.columns([
             ...columns,
-            // `${TableName.DronePrices}.isActive as isActive`,
             `${TableName.Drones}.ownerId as ownerId`,
           ])
-            .join(
-              TableName.Drones,
-              `${TableName.Transactions}.droneId`,
-              `${TableName.Drones}.droneId`,
-            )
             .where({ transactionId });
           if (dronePriceData.length === 0) {
             next(new LogicError(ErrorCode.NOT_FOUND));
@@ -200,10 +212,6 @@ export class TransactionsController {
           }
 
           const droneInfo = dronePriceData[0];
-          if (droneInfo.ownerId !== user.userId) {
-            next(new LogicError(ErrorCode.AUTH_ROLE));
-            return;
-          }
           if (!select || select.length === 0 || !hadUserId && select.length === 1) {
             res.json(mapObject(droneInfo, select, TableName.Transactions));
           } else {

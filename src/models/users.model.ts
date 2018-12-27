@@ -11,7 +11,7 @@ export const maxPasswordLength = 72 - 29;
 export enum UserRoles {
   CUSTOMER = 0x1,
   OWNER = 0x2,
-  ADMIN = 0x10,
+  ADMIN = 0x4,
 }
 
 export function isValidRole(role: any): role is UserRoles {

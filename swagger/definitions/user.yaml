@@ -13,7 +13,7 @@ properties:
   role:
     type: integer
     minimum: 1
-    maximum: 31
+    maximum: 7
   status:
     type: integer
     minimum: 0
