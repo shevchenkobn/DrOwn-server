@@ -7,7 +7,7 @@ import {
   IDroneOrder,
 } from '../models/drone-orders.model';
 import { NextFunction, Request, Response } from 'express';
-import { IUser, UserStatus } from '../models/users.model';
+import { IUser } from '../models/users.model';
 import { appendOrderBy, getSafeSwaggerParam, getSortFields } from '../services/util.service';
 import { DroneModel, DroneStatus } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
@@ -79,10 +79,6 @@ export class DroneOrdersController {
       async sendOrder(req: Request, res: Response, next: NextFunction) {
         try {
           const user = (req as any).user as IUser;
-          if (user.status === UserStatus.BLOCKED) {
-            next(new LogicError(ErrorCode.USER_BLOCKED));
-            return;
-          }
 
           const select = (req as any).swagger.params.select.value as (keyof IDroneOrder)[];
           const droneOrder = (req as any).swagger.params.select.value as IDroneOrder;

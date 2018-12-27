@@ -5,12 +5,6 @@ const types_1 = require("../di/types");
 const inversify_1 = require("inversify");
 const db_connection_class_1 = require("../services/db-connection.class");
 const table_names_1 = require("../services/table-names");
-var TransactionStatus;
-(function (TransactionStatus) {
-    TransactionStatus[TransactionStatus["PENDING"] = 0] = "PENDING";
-    TransactionStatus[TransactionStatus["CONFIRMED"] = 1] = "CONFIRMED";
-    TransactionStatus[TransactionStatus["REJECTED"] = 2] = "REJECTED";
-})(TransactionStatus = exports.TransactionStatus || (exports.TransactionStatus = {}));
 let TransactionsModel = class TransactionsModel {
     constructor(connection) {
         this._connection = connection;

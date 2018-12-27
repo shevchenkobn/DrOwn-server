@@ -16,6 +16,7 @@ export enum DroneOrderStatus {
   ERROR = 1,
   ENQUEUED = 2,
   DONE = 3,
+  TOO_FAR_GEO = 4,
 }
 
 export interface IDroneOrderInput {

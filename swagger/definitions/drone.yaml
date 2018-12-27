@@ -1,10 +1,10 @@
 type: object
 required:
   - droneId
-  - producerId
   - ownerId
   - deviceId
   - status
+  - price
   - baseLongitude
   - baseLatitude
   - batteryPower
@@ -14,13 +14,13 @@ required:
 properties:
   droneId:
     $ref: '#/definitions/BigInt'
-  producerId:
-    $ref: '#/definitions/BigInt'
   ownerId:
     $ref: '#/definitions/BigInt'
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
+  price:
+    $ref: '#/definitions/Decimal'
   status:
     type: integer
   baseLongitude:

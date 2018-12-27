@@ -13,10 +13,8 @@ const drones_controller_1 = require("../rest-controllers/drones.controller");
 const drone_helpers_controller_1 = require("../rest-controllers/drone-helpers.controller");
 const socket_io_controller_1 = require("../controllers/socket-io.controller");
 const drone_measurements_model_1 = require("../models/drone-measurements.model");
-const drone_prices_model_1 = require("../models/drone-prices.model");
 const transactions_model_1 = require("../models/transactions.model");
 const transactions_controller_1 = require("../rest-controllers/transactions.controller");
-const drone_prices_controller_1 = require("../rest-controllers/drone-prices.controller");
 const drone_orders_controller_1 = require("../rest-controllers/drone-orders.controller");
 const drone_orders_model_1 = require("../models/drone-orders.model");
 const drone_measurements_controller_1 = require("../rest-controllers/drone-measurements.controller");
@@ -29,7 +27,6 @@ const typeMap = new Map([
     [types_1.TYPES.UserModel, users_model_1.UserModel],
     [types_1.TYPES.DroneModel, drones_model_1.DroneModel],
     [types_1.TYPES.DroneMeasurementModel, drone_measurements_model_1.DroneMeasurementsModel],
-    [types_1.TYPES.DronePriceModel, drone_prices_model_1.DronePricesModel],
     [types_1.TYPES.DroneOrderModel, drone_orders_model_1.DroneOrdersModel],
     [types_1.TYPES.TransactionModel, transactions_model_1.TransactionsModel],
     [types_1.TYPES.UserHelpersController, user_helpers_controller_1.UserHelpersController],
@@ -38,7 +35,6 @@ const typeMap = new Map([
     [types_1.TYPES.DronesController, drones_controller_1.DronesController],
     [types_1.TYPES.DronesMeasurementsController, drone_measurements_controller_1.DroneMeasurementsController],
     [types_1.TYPES.DroneHelpersController, drone_helpers_controller_1.DroneHelpersController],
-    [types_1.TYPES.DronePriceController, drone_prices_controller_1.DronePricesController],
     [types_1.TYPES.DroneOrderController, drone_orders_controller_1.DroneOrdersController],
     [types_1.TYPES.TransactionController, transactions_controller_1.TransactionsController],
     [types_1.TYPES.SocketIoController, socket_io_controller_1.SocketIoController],

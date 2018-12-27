@@ -3,9 +3,10 @@ x-swagger-router-controller: drones
 get:
   tags:
   - drones
-  - no-auth
   summary: List all drones
   operationId: getDrones
+  security:
+  - Bearer: []
   parameters:
   - in: query
     name: select
@@ -16,7 +17,6 @@ get:
     items:
       type: string
       enum:
-      - producerId
       - ownerId
       - deviceId
       - status
@@ -26,17 +26,6 @@ get:
       - enginePower
       - loadCapacity
       - canCarryLiquids
-  - in: query
-    name: producer-ids
-    required: false
-    type: array
-    collectionFormat: csv
-    uniqueItems: true
-    minItems: 1
-    items:
-      # NOTE: it is BigInt type, but I am not able to reference it
-      type: string
-      pattern: ^\d{1,19}$
   - in: query
     name: owner-ids
     required: false
@@ -145,8 +134,7 @@ post:
   security:
   - Bearer: []
   x-security-scopes:
-  - admin
-  - producer
+  - owner
   parameters:
   - in: query
     name: select
@@ -191,7 +179,6 @@ patch:
   security:
   - Bearer: []
   x-security-scopes:
-  - admin
   - owner
   parameters:
   - in: query

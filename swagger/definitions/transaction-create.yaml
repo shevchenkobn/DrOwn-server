@@ -1,8 +1,9 @@
 type: object
 required:
-- priceId
+- droneId
+- period
 properties:
-  priceId:
+  droneId:
     $ref: '#/definitions/BigInt'
   period:
     type: integer

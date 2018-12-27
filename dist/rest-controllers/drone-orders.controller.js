@@ -4,7 +4,6 @@ const tslib_1 = require("tslib");
 const types_1 = require("../di/types");
 const inversify_1 = require("inversify");
 const drone_orders_model_1 = require("../models/drone-orders.model");
-const users_model_1 = require("../models/users.model");
 const util_service_1 = require("../services/util.service");
 const drones_model_1 = require("../models/drones.model");
 const error_service_1 = require("../services/error.service");
@@ -63,10 +62,6 @@ let DroneOrdersController = class DroneOrdersController {
             async sendOrder(req, res, next) {
                 try {
                     const user = req.user;
-                    if (user.status === users_model_1.UserStatus.BLOCKED) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_BLOCKED));
-                        return;
-                    }
                     const select = req.swagger.params.select.value;
                     const droneOrder = req.swagger.params.select.value;
                     if (droneOrder.action !== drone_orders_model_1.DroneOrderAction.MOVE_TO_LOCATION

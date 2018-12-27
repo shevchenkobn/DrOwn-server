@@ -18,9 +18,6 @@ Date:
 UserRoles:
   $ref: ./user-roles.yaml
 
-UserStatuses:
-  $ref: ./user-statuses.yaml
-
 UserCreate:
   $ref: ./user-create.yaml
 
@@ -55,17 +52,6 @@ DroneStatuses:
 
 DroneSecret:
   $ref: ./drone-secret.yaml
-
-# Drone prices
-
-DronePriceCreate:
-  $ref: ./drone-price-create.yaml
-
-DronePrice:
-  $ref: ./drone-price.yaml
-
-DronePriceActionTypes:
-  $ref: ./drone-price-action-types.yaml
 
 # Transactions
 

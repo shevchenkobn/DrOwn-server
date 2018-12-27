@@ -20,11 +20,6 @@ properties:
     maximum: 1
   name:
     type: string
-  address:
-    type: string
-  phoneNumber:
-    type: string
-    format: ^\\d{1,15}$
   longitude:
     $ref: '#/definitions/Longitude'
   latitude:

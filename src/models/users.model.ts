@@ -9,16 +9,9 @@ import { ErrorCode, LogicError } from '../services/error.service';
 export const maxPasswordLength = 72 - 29;
 
 export enum UserRoles {
-  CUSTOMER = 0x1, // Can rent drones and order them
-  OWNER = 0x2, // Can own, buy, order fixes and sell drones within the app
-  LANDLORD = 0x4, // Can lease drones
-  PRODUCER = 0x8, // Can add new drones and edit produced
-  ADMIN = 0x10, // Can CRUD all tables + moderate
-}
-
-export enum UserStatus {
-  ACTIVE = 1,
-  BLOCKED = 2,
+  CUSTOMER = 0x1,
+  OWNER = 0x2,
+  ADMIN = 0x10,
 }
 
 export function isValidRole(role: any): role is UserRoles {
@@ -29,7 +22,6 @@ export interface IUserBase {
   email: string;
   role: UserRoles;
   name: string;
-  status?: UserStatus | null;
   address?: string | null;
   phoneNumber?: string | null;
   longitude?: number | null;

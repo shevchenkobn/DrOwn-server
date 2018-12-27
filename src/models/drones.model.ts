@@ -17,21 +17,21 @@ export enum DroneStatus {
 }
 
 export interface IDroneInput {
-  producerId: string;
-  ownerId: string;
   deviceId: string;
-  status: number;
+  status?: number;
   baseLongitude?: number | null;
   baseLatitude?: number | null;
   batteryPower: number;
   enginePower: number;
   loadCapacity: number;
   canCarryLiquids: boolean;
-  passwordHash: string;
+  price: string;
 }
 
 export interface IDrone extends IDroneInput{
+  ownerId: string;
   droneId: string;
+  status: number;
   passwordHash: string;
   baseLatitude: number;
   baseLongitude: number;
@@ -117,14 +117,9 @@ export class DroneModel {
     return this.table
       .column(`${TableName.Drones}.deviceId as deviceId`)
       .join(
-        TableName.DronePrices,
-        `${TableName.Drones}.droneId`,
-        `${TableName.DronePrices}.droneId`,
-      )
-      .join(
         TableName.Transactions,
-        `${TableName.DronePrices}.priceId`,
-        `${TableName.Transactions}.priceId`,
+        `${TableName.Drones}.droneId`,
+        `${TableName.Transactions}.droneId`,
       )
       .andWhere(function () {
         this

@@ -5,11 +5,6 @@ Bearer:
   x-security-scopes:
     customer: Can rent drones and order them
     owner: Can own, buy, order fixes and sell drones within the app
-    landlord: Can lease drones
-    producer: Can add new drones and edit produced
-    maintainer: Can fix drones
-    company: Can CRUD users-employees and promote them to companies
-    moderator: Can CRUD reviews and reports, fine other users, create users (not moderators)
     admin: Can CRUD all tables without triggering business logic
 #  type: oauth2
 #  flow: accessCode

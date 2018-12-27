@@ -8,9 +8,7 @@ get:
   security:
   - Bearer: []
   x-security-scopes:
-  - customer
   - owner
-  - landlord
   parameters:
   - in: query
     name: select
@@ -137,7 +135,6 @@ post:
   - Bearer: []
   x-security-scopes:
   - customer
-  - owner
   parameters:
   - in: query
     name: select

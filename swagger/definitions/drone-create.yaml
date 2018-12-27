@@ -6,13 +6,11 @@ required:
 - loadCapacity
 - canCarryLiquids
 properties:
-  producerId:
-    $ref: '#/definitions/BigInt'
-  ownerId:
-    $ref: '#/definitions/BigInt'
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
+  price:
+    $ref: '#/definitions/Decimal'
   baseLongitude:
     $ref: '#/definitions/Longitude'
   baseLatitude:

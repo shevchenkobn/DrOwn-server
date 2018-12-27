@@ -16,7 +16,7 @@ let UsersController = class UsersController {
                 try {
                     const select = req.swagger.params.select.value;
                     const user = req.user;
-                    const columns = getColumns(select, !!(user.role & users_model_1.UserRoles.ADMIN));
+                    const columns = getColumns(select, true);
                     if (select && columns.length < select.length) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
@@ -44,7 +44,6 @@ let UsersController = class UsersController {
                     const userIds = util_service_1.getSafeSwaggerParam(req, 'user-ids');
                     const emailQuery = util_service_1.getSafeSwaggerParam(req, 'email-query');
                     const roles = util_service_1.getSafeSwaggerParam(req, 'roles');
-                    const statuses = util_service_1.getSafeSwaggerParam(req, 'statuses');
                     const nameQuery = util_service_1.getSafeSwaggerParam(req, 'name-query');
                     const addressQuery = util_service_1.getSafeSwaggerParam(req, 'address-query');
                     const sortings = util_service_1.getSortFields(util_service_1.getSafeSwaggerParam(req, 'sort'), table_names_1.TableName.Users, adminFields);
@@ -54,9 +53,6 @@ let UsersController = class UsersController {
                     }
                     if (roles) {
                         query.whereIn('role', roles);
-                    }
-                    if (statuses) {
-                        query.whereIn('status', statuses);
                     }
                     if (nameQuery) {
                         util_service_1.appendLikeQuery(dbConnection.knex, query, 'name', nameQuery);
@@ -263,11 +259,8 @@ const safeColumns = [
     'email',
     'role',
     'name',
-    'status',
-    'address',
 ];
 const adminFields = [
-    'phoneNumber',
     'cash',
     'longitude',
     'latitude',

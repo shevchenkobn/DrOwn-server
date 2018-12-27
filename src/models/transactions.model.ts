@@ -4,22 +4,15 @@ import { DbConnection } from '../services/db-connection.class';
 import * as Knex from 'knex';
 import { TableName } from '../services/table-names';
 
-export enum TransactionStatus {
-  PENDING = 0,
-  CONFIRMED = 1,
-  REJECTED = 2,
-}
-
 export interface ITransactionCreate {
-  priceId: string;
-  period?: number;
+  droneId: string;
+  period: number;
 }
 
 export interface ITransaction extends ITransactionCreate {
   transactionId: string;
   createdAt: Date;
   userId: string;
-  status: TransactionStatus;
 }
 
 @injectable()

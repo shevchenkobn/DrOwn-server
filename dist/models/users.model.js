@@ -12,15 +12,8 @@ var UserRoles;
 (function (UserRoles) {
     UserRoles[UserRoles["CUSTOMER"] = 1] = "CUSTOMER";
     UserRoles[UserRoles["OWNER"] = 2] = "OWNER";
-    UserRoles[UserRoles["LANDLORD"] = 4] = "LANDLORD";
-    UserRoles[UserRoles["PRODUCER"] = 8] = "PRODUCER";
     UserRoles[UserRoles["ADMIN"] = 16] = "ADMIN";
 })(UserRoles = exports.UserRoles || (exports.UserRoles = {}));
-var UserStatus;
-(function (UserStatus) {
-    UserStatus[UserStatus["ACTIVE"] = 1] = "ACTIVE";
-    UserStatus[UserStatus["BLOCKED"] = 2] = "BLOCKED";
-})(UserStatus = exports.UserStatus || (exports.UserStatus = {}));
 function isValidRole(role) {
     return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
 }

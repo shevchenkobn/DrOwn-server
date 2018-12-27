@@ -18,6 +18,7 @@ var DroneOrderStatus;
     DroneOrderStatus[DroneOrderStatus["ERROR"] = 1] = "ERROR";
     DroneOrderStatus[DroneOrderStatus["ENQUEUED"] = 2] = "ENQUEUED";
     DroneOrderStatus[DroneOrderStatus["DONE"] = 3] = "DONE";
+    DroneOrderStatus[DroneOrderStatus["TOO_FAR_GEO"] = 4] = "TOO_FAR_GEO";
 })(DroneOrderStatus = exports.DroneOrderStatus || (exports.DroneOrderStatus = {}));
 let DroneOrdersModel = class DroneOrdersModel {
     constructor(connection) {

@@ -36,7 +36,7 @@ let DronesController = class DronesController {
                     }
                     const canCarryLiquids = util_service_1.getSafeSwaggerParam(req, 'can-carry-liquids');
                     const sortings = util_service_1.getSortFields(util_service_1.getSafeSwaggerParam(req, 'sort'));
-                    const query = droneModel.table.columns(getColumns(select, !!user && (!!(user.role & users_model_1.UserRoles.ADMIN) || !!(ownerIds && ownerIds.length && ownerIds[0] === user.userId))));
+                    const query = droneModel.table.columns(getColumns(select, true));
                     if (producerIds) { // TODO: Ensure it works properly
                         query.whereIn('producerId', producerIds);
                     }
@@ -71,56 +71,11 @@ let DronesController = class DronesController {
                     const user = req.user;
                     const select = req.swagger.params.select.value;
                     const drone = req.swagger.params.drone.value;
-                    let ownerUser;
-                    if (!drone.ownerId) {
-                        if (!(user.role & users_model_1.UserRoles.OWNER)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_NO));
-                            return;
-                        }
-                        drone.ownerId = user.userId;
-                        ownerUser = user;
-                    }
-                    else if (drone.ownerId !== user.userId) {
-                        if (!(user.role & users_model_1.UserRoles.ADMIN)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                            return;
-                        }
-                        const columns = ['role'];
-                        if (typeof drone.baseLongitude !== 'number' || typeof drone.baseLatitude !== 'number') {
-                            columns.push('longitude', 'latitude');
-                        }
-                        const users = await userModel.select(columns, { userId: drone.ownerId });
-                        if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.OWNER)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_BAD));
-                            return;
-                        }
-                        ownerUser = users[0];
-                    }
-                    else {
-                        ownerUser = user;
-                    }
-                    if (!drone.producerId) {
-                        if (!(user.role & users_model_1.UserRoles.PRODUCER)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_PRODUCER_NO));
-                            return;
-                        }
-                        drone.producerId = user.userId;
-                    }
-                    else if (drone.producerId !== user.userId) {
-                        if (!(user.role & users_model_1.UserRoles.ADMIN)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                            return;
-                        }
-                        const users = await userModel.select(['role'], { userId: drone.producerId });
-                        if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.PRODUCER)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_BAD));
-                            return;
-                        }
-                    }
                     checkLocation(drone);
+                    drone.ownerId = user.userId;
                     if (typeof drone.baseLongitude !== 'number') {
-                        drone.baseLongitude = ownerUser.longitude;
-                        drone.baseLatitude = ownerUser.latitude;
+                        drone.baseLongitude = user.longitude;
+                        drone.baseLatitude = user.latitude;
                     }
                     if (typeof drone.baseLongitude !== 'number') {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.LOCATION_BAD));
@@ -139,21 +94,6 @@ let DronesController = class DronesController {
                     const select = req.swagger.params.select.value;
                     const droneUpdate = req.swagger.params.drone.value;
                     const whereClause = getDroneWhereClause(req);
-                    if (droneUpdate.ownerId) {
-                        if (!(user.role & users_model_1.UserRoles.ADMIN)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                            return;
-                        }
-                        const users = await userModel.select(['role'], { userId: droneUpdate.ownerId });
-                        if (users.length === 0 || !(users[0].role & users_model_1.UserRoles.OWNER)) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_OWNER_BAD));
-                            return;
-                        }
-                    }
-                    if (user.status === users_model_1.UserStatus.BLOCKED && !(user.role & users_model_1.UserRoles.ADMIN)) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_BLOCKED));
-                        return;
-                    }
                     const returnDrone = select && select.length > 0;
                     const columns = returnDrone ? getColumns(select, true) : [];
                     const hadStatus = columns.includes('status');
@@ -170,7 +110,7 @@ let DronesController = class DronesController {
                         return;
                     }
                     const droneFromDB = drones[0];
-                    if (!(user.role & users_model_1.UserRoles.ADMIN) && droneFromDB.ownerId !== user.userId) {
+                    if (droneFromDB.ownerId !== user.userId) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
                     }
@@ -184,17 +124,11 @@ let DronesController = class DronesController {
                     }
                     checkLocation(droneUpdate);
                     if (typeof droneUpdate.status === 'number') {
-                        if (droneFromDB.status === drones_model_1.DroneStatus.RENTED) {
-                            next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_RENTED));
-                            return;
-                        }
-                        if (droneUpdate.status === drones_model_1.DroneStatus.RENTED) {
+                        if (droneUpdate.status !== drones_model_1.DroneStatus.UNAUTHORIZED) {
                             next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_STATUS_BAD));
                             return;
                         }
-                        if (droneUpdate.status === drones_model_1.DroneStatus.UNAUTHORIZED) {
-                            droneUpdate.passwordHash = null;
-                        }
+                        droneUpdate.passwordHash = null;
                     }
                     await droneModel.update(droneUpdate, whereClause);
                     if (returnDrone) {
@@ -223,32 +157,22 @@ let DronesController = class DronesController {
                     let hadOwnerId = false;
                     if (select && select.length > 0) {
                         const columns = getColumns(select, true);
-                        if (!(user.role & users_model_1.UserRoles.ADMIN)) {
-                            hadOwnerId = columns.includes('ownerId');
-                            if (!hadOwnerId) {
-                                columns.push('ownerId');
-                            }
-                            const drones = await droneModel.select(columns, whereClause);
-                            if (drones.length === 0) {
-                                next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
-                                return;
-                            }
-                            drone = drones[0];
-                            if (drone.ownerId !== user.userId) {
-                                next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                                return;
-                            }
+                        hadOwnerId = columns.includes('ownerId');
+                        if (!hadOwnerId) {
+                            columns.push('ownerId');
                         }
-                        else {
-                            const drones = await droneModel.select(columns, whereClause);
-                            if (drones.length === 0) {
-                                next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
-                                return;
-                            }
-                            drone = drones[0];
+                        const drones = await droneModel.select(columns, whereClause);
+                        if (drones.length === 0) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                            return;
+                        }
+                        drone = drones[0];
+                        if (drone.ownerId !== user.userId) {
+                            next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                            return;
                         }
                     }
-                    else if (!(user.role & users_model_1.UserRoles.ADMIN)) {
+                    else {
                         const drones = await droneModel.select(['ownerId'], whereClause);
                         if (drones.length === 0) {
                             next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
@@ -313,7 +237,6 @@ DronesController = tslib_1.__decorate([
 exports.DronesController = DronesController;
 const safeColumns = [
     'droneId',
-    'producerId',
     'ownerId',
     'status',
     'batteryPower',

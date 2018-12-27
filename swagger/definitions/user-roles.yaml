@@ -8,14 +8,6 @@ properties:
     type: integer
     minimum: 0x2
     maximum: 0x2
-  landlord:
-    type: integer
-    minimum: 0x4
-    maximum: 0x4
-  producer:
-    type: integer
-    minimum: 0x8
-    maximum: 0x8
   admin:
     type: integer
     minimum: 0x10

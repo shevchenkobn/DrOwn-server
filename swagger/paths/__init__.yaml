@@ -1,9 +1,6 @@
 /user-roles:
   $ref: ./user-roles.yaml
 
-/user-statuses:
-  $ref: ./user-statuses.yaml
-
 /auth:
   $ref: ./auth.yaml
 
@@ -33,15 +30,6 @@
 
 /drone-statuses:
   $ref: ./drone-statuses.yaml
-
-/drone-prices:
-  $ref: ./drone-prices.yaml
-
-/drone-prices/{priceId}:
-  $ref: ./drone-prices-price-id.yaml
-
-/drone-price-action-types:
-  $ref: ./drone-price-action-types.yaml
 
 /transactions:
   $ref: ./transactions.yaml

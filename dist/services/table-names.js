@@ -4,7 +4,6 @@ var TableName;
 (function (TableName) {
     TableName["Users"] = "users";
     TableName["Drones"] = "drones";
-    TableName["DronePrices"] = "dronePrices";
     TableName["DroneOrders"] = "droneOrders";
     TableName["DroneMeasurements"] = "droneMeasurements";
     TableName["Transactions"] = "transactions";

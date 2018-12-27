@@ -1,14 +1,11 @@
 type: object
 properties:
-  ownerId:
-    $ref: '#/definitions/BigInt'
   baseLongitude:
     $ref: '#/definitions/Longitude'
   baseLatitude:
     $ref: '#/definitions/Latitude'
-  status:
-    type: number
-    minimum: 0
+  price:
+    $ref: '#/definitions/Decimal'
   batteryPower:
     type: number
     minimum: 0

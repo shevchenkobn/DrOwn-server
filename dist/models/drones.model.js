@@ -76,8 +76,7 @@ let DroneModel = class DroneModel {
         const knex = this._connection.knex;
         return this.table
             .column(`${table_names_1.TableName.Drones}.deviceId as deviceId`)
-            .join(table_names_1.TableName.DronePrices, `${table_names_1.TableName.Drones}.droneId`, `${table_names_1.TableName.DronePrices}.droneId`)
-            .join(table_names_1.TableName.Transactions, `${table_names_1.TableName.DronePrices}.priceId`, `${table_names_1.TableName.Transactions}.priceId`)
+            .join(table_names_1.TableName.Transactions, `${table_names_1.TableName.Drones}.droneId`, `${table_names_1.TableName.Transactions}.droneId`)
             .andWhere(function () {
             this
                 .andWhere(`${table_names_1.TableName.Drones}.ownerId`, user.userId)

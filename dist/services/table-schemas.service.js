@@ -5,15 +5,6 @@ const types_1 = require("../di/types");
 const container_1 = require("../di/container");
 const users_model_1 = require("../models/users.model");
 const table_names_1 = require("./table-names");
-// export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
-//   Users = 'users',
-//   Drones = 'drones',
-//   DronePrices = 'dronePrices',
-//   Transactions = 'transactions',
-//   DroneOrders = 'droneOrders',
-//   DroneMeasurements = 'droneMeasurements',
-//   // Notifications = 'notifications',
-// }
 exports.tableNames = Object.values(table_names_1.TableName);
 const tablesToCreate = new Map([
     [table_names_1.TableName.Users, knex => {
@@ -23,10 +14,7 @@ const tablesToCreate = new Map([
                 table.string('email', 120).notNullable().unique(`unique_email_${table_names_1.TableName.Users}`);
                 table.string('passwordHash', 60).notNullable();
                 table.integer('role').unsigned().notNullable().defaultTo(0);
-                table.integer('status').unsigned().notNullable().defaultTo(0);
                 table.string('name', 120).notNullable();
-                table.string('address', 150).nullable();
-                table.string('phoneNumber', 15).nullable();
                 table.decimal('longitude', 9, 6).nullable();
                 table.decimal('latitude', 9, 6).nullable();
                 table.decimal('cash', 9, 2).notNullable().defaultTo(0);
@@ -41,7 +29,8 @@ const tablesToCreate = new Map([
                 table.bigInteger('producerId').unsigned()
                     .references(`${table_names_1.TableName.Users}.userId`).onDelete('SET NULL');
                 table.bigInteger('ownerId').unsigned()
-                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('RESTRICT');
+                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('CASCADE');
+                table.decimal('price', 8, 2).nullable();
                 table.string('deviceId').notNullable().unique();
                 table.string('passwordHash', 60).notNullable().defaultTo('');
                 table.integer('status').unsigned().notNullable().defaultTo(0);
@@ -80,29 +69,15 @@ const tablesToCreate = new Map([
                 table.integer('batteryCharge').unsigned().notNullable();
             });
         }],
-    [table_names_1.TableName.DronePrices, knex => {
-            return knex.schema.createTable(table_names_1.TableName.DronePrices, table => {
-                table.bigIncrements('priceId')
-                    .primary(`pk_${table_names_1.TableName.DronePrices}`);
-                table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
-                table.bigInteger('droneId').unsigned()
-                    .references(`${table_names_1.TableName.Drones}.droneId`).onDelete('CASCADE');
-                table.integer('actionType').unsigned().notNullable();
-                table.decimal('price', 8, 2).nullable();
-                table.boolean('isActive').notNullable().defaultTo(false);
-                // knex.text('additionalInfo').nullable();
-            });
-        }],
     [table_names_1.TableName.Transactions, knex => {
             return knex.schema.createTable(table_names_1.TableName.Transactions, table => {
                 table.bigIncrements('transactionId')
                     .primary(`pk_${table_names_1.TableName.Transactions}`);
+                table.bigInteger('droneId').unsigned().notNullable()
+                    .references(`${table_names_1.TableName.Drones}.droneId`).onDelete('CASCADE');
                 table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
-                table.bigInteger('priceId').unsigned().notNullable()
-                    .references(`${table_names_1.TableName.DronePrices}.priceId`).onDelete('CASCADE');
                 table.bigInteger('userId').unsigned().notNullable()
                     .references(`${table_names_1.TableName.Users}.userId`).onDelete('CASCADE');
-                table.integer('status').unsigned().notNullable().defaultTo(0);
                 table.integer('period').unsigned().notNullable().defaultTo(0);
                 // knex.text('additionalInfo').nullable();
             });
@@ -140,8 +115,6 @@ async function seedDatabase(knex) {
         ...adminData,
         role: users_model_1.UserRoles.CUSTOMER
             | users_model_1.UserRoles.OWNER
-            | users_model_1.UserRoles.LANDLORD
-            | users_model_1.UserRoles.PRODUCER
             | users_model_1.UserRoles.ADMIN,
         userId: exports.superAdminUserId,
     };

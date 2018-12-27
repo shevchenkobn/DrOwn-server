@@ -7,7 +7,6 @@ import {
   maxPasswordLength,
   UserModel,
   UserRoles,
-  UserStatus,
   WhereClause,
 } from '../models/users.model';
 import { NextFunction, Request, Response } from 'express';
@@ -37,7 +36,7 @@ export class UsersController {
 
           const columns = getColumns(
             select,
-            !!(user.role & UserRoles.ADMIN),
+            true,
           );
           if (select && columns.length < select.length) {
             next(new LogicError(ErrorCode.SELECT_BAD));
@@ -68,7 +67,6 @@ export class UsersController {
           const userIds = getSafeSwaggerParam<string[]>(req, 'user-ids');
           const emailQuery = getSafeSwaggerParam<string>(req, 'email-query');
           const roles = getSafeSwaggerParam<UserRoles[]>(req, 'roles');
-          const statuses = getSafeSwaggerParam<UserStatus[]>(req, 'statuses');
           const nameQuery = getSafeSwaggerParam<string>(req, 'name-query');
           const addressQuery = getSafeSwaggerParam<string>(req, 'address-query');
 
@@ -85,9 +83,6 @@ export class UsersController {
           }
           if (roles) {
             query.whereIn('role', roles);
-          }
-          if (statuses) {
-            query.whereIn('status', statuses);
           }
           if (nameQuery) {
             appendLikeQuery(dbConnection.knex, query, 'name', nameQuery);
@@ -310,11 +305,8 @@ const safeColumns: ReadonlyArray<keyof IUser> = [
   'email',
   'role',
   'name',
-  'status',
-  'address',
 ];
 const adminFields: ReadonlyArray<keyof IUser> = [
-  'phoneNumber',
   'cash',
   'longitude',
   'latitude',

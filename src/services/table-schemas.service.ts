@@ -5,16 +5,6 @@ import { container } from '../di/container';
 import { IUser, IUserSeed, UserModel, UserRoles } from '../models/users.model';
 import { TableName } from './table-names';
 
-// export enum TableName { // NOTE: the order is important otherwise errors with foreign keys
-//   Users = 'users',
-//   Drones = 'drones',
-//   DronePrices = 'dronePrices',
-//   Transactions = 'transactions',
-//   DroneOrders = 'droneOrders',
-//   DroneMeasurements = 'droneMeasurements',
-//   // Notifications = 'notifications',
-// }
-
 export const tableNames: ReadonlyArray<TableName> = Object.values(TableName);
 
 const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
@@ -26,11 +16,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.string('email', 120).notNullable().unique(`unique_email_${TableName.Users}`);
       table.string('passwordHash', 60).notNullable();
       table.integer('role').unsigned().notNullable().defaultTo(0);
-      table.integer('status').unsigned().notNullable().defaultTo(0);
 
       table.string('name', 120).notNullable();
-      table.string('address', 150).nullable();
-      table.string('phoneNumber', 15).nullable();
       table.decimal('longitude', 9, 6).nullable();
       table.decimal('latitude', 9, 6).nullable();
       table.decimal('cash', 9, 2).notNullable().defaultTo(0);
@@ -46,7 +33,8 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
       table.bigInteger('producerId').unsigned()
         .references(`${TableName.Users}.userId`).onDelete('SET NULL');
       table.bigInteger('ownerId').unsigned()
-        .references(`${TableName.Users}.userId`).onDelete('RESTRICT');
+        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
+      table.decimal('price', 8, 2).nullable();
 
       table.string('deviceId').notNullable().unique();
       table.string('passwordHash', 60).notNullable().defaultTo('');
@@ -91,29 +79,15 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
 
     });
   }],
-  [TableName.DronePrices, knex => {
-    return knex.schema.createTable(TableName.DronePrices, table => {
-      table.bigIncrements('priceId')
-        .primary(`pk_${TableName.DronePrices}`);
-      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.bigInteger('droneId').unsigned()
-        .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
-      table.integer('actionType').unsigned().notNullable();
-      table.decimal('price', 8, 2).nullable();
-      table.boolean('isActive').notNullable().defaultTo(false);
-      // knex.text('additionalInfo').nullable();
-    });
-  }],
   [TableName.Transactions, knex => {
     return knex.schema.createTable(TableName.Transactions, table => {
       table.bigIncrements('transactionId')
         .primary(`pk_${TableName.Transactions}`);
+      table.bigInteger('droneId').unsigned().notNullable()
+        .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
       table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.bigInteger('priceId').unsigned().notNullable()
-        .references(`${TableName.DronePrices}.priceId`).onDelete('CASCADE');
       table.bigInteger('userId').unsigned().notNullable()
         .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.integer('status').unsigned().notNullable().defaultTo(0);
       table.integer('period').unsigned().notNullable().defaultTo(0);
       // knex.text('additionalInfo').nullable();
     });
@@ -176,8 +150,6 @@ export async function seedDatabase(knex: Knex) {
     ...adminData,
     role: UserRoles.CUSTOMER
       | UserRoles.OWNER
-      | UserRoles.LANDLORD
-      | UserRoles.PRODUCER
       | UserRoles.ADMIN,
     userId: superAdminUserId,
   };

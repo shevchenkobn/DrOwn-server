@@ -10,9 +10,6 @@ let UserHelpersController = class UserHelpersController {
             getUserRoles(req, res) {
                 res.json(util_service_1.enumToObject(users_model_1.UserRoles));
             },
-            getUserStatuses(req, res) {
-                res.json(util_service_1.enumToObject(users_model_1.UserStatus));
-            },
         };
     }
 };
