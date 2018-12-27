@@ -26,9 +26,15 @@ let TransactionsController = class TransactionsController {
                     const createdAtLimits = (util_service_1.getSafeSwaggerParam(req, 'created-at-limits') || []).map(dateStr => new Date(dateStr)).sort();
                     const periodLimits = util_service_1.getSafeSwaggerParam(req, 'period-limits');
                     const sortings = util_service_1.getSortFields(util_service_1.getSafeSwaggerParam(req, 'sort'), table_names_1.TableName.Transactions);
-                    const query = transactionModel.table
-                        .join(table_names_1.TableName.Drones, `${table_names_1.TableName.Transactions}.droneId`, `${table_names_1.TableName.Drones}.droneId`)
-                        .where(`${table_names_1.TableName.Drones}.ownerId`, user.userId);
+                    let query;
+                    if (user.role & users_model_1.UserRoles.OWNER) {
+                        query = transactionModel.table
+                            .join(table_names_1.TableName.Drones, `${table_names_1.TableName.Transactions}.droneId`, `${table_names_1.TableName.Drones}.droneId`)
+                            .where(`${table_names_1.TableName.Drones}.ownerId`, user.userId);
+                    }
+                    else {
+                        query = transactionModel.table.where('userId', user.userId);
+                    }
                     if (userIds) {
                         query.whereIn(`${table_names_1.TableName.Transactions}.userId`, userIds);
                     }
@@ -133,22 +139,25 @@ let TransactionsController = class TransactionsController {
                         select.push('userId');
                     }
                     const columns = util_service_1.getSelectAsColumns(select, table_names_1.TableName.Transactions);
-                    const dronePriceData = await droneModel.table.columns([
+                    let query;
+                    if (user.role & users_model_1.UserRoles.OWNER) {
+                        query = transactionModel.table
+                            .join(table_names_1.TableName.Drones, `${table_names_1.TableName.Transactions}.droneId`, `${table_names_1.TableName.Drones}.droneId`)
+                            .where(`${table_names_1.TableName.Drones}.ownerId`, user.userId);
+                    }
+                    else {
+                        query = transactionModel.table.where('userId', user.userId);
+                    }
+                    const dronePriceData = await query.columns([
                         ...columns,
-                        // `${TableName.DronePrices}.isActive as isActive`,
                         `${table_names_1.TableName.Drones}.ownerId as ownerId`,
                     ])
-                        .join(table_names_1.TableName.Drones, `${table_names_1.TableName.Transactions}.droneId`, `${table_names_1.TableName.Drones}.droneId`)
                         .where({ transactionId });
                     if (dronePriceData.length === 0) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
                         return;
                     }
                     const droneInfo = dronePriceData[0];
-                    if (droneInfo.ownerId !== user.userId) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                        return;
-                    }
                     if (!select || select.length === 0 || !hadUserId && select.length === 1) {
                         res.json(util_service_1.mapObject(droneInfo, select, table_names_1.TableName.Transactions));
                     }
