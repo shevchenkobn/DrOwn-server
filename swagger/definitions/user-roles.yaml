@@ -1,14 +1,10 @@
 type: object
 properties:
-  customer:
+  owner:
     type: integer
     minimum: 0x1
     maximum: 0x1
-  owner:
+  admin:
     type: integer
     minimum: 0x2
     maximum: 0x2
-  admin:
-    type: integer
-    minimum: 0x4
-    maximum: 0x4

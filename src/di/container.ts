@@ -11,8 +11,6 @@ import { DronesController } from '../rest-controllers/drones.controller';
 import { DroneHelpersController } from '../rest-controllers/drone-helpers.controller';
 import { SocketIoController } from '../controllers/socket-io.controller';
 import { DroneMeasurementsModel } from '../models/drone-measurements.model';
-import { TransactionsModel } from '../models/transactions.model';
-import { TransactionsController } from '../rest-controllers/transactions.controller';
 import { DroneOrdersController } from '../rest-controllers/drone-orders.controller';
 import { DroneOrdersModel } from '../models/drone-orders.model';
 import { DroneMeasurementsController } from '../rest-controllers/drone-measurements.controller';
@@ -30,7 +28,6 @@ const typeMap = new Map<symbol, any>([
   [TYPES.DroneModel, DroneModel],
   [TYPES.DroneMeasurementModel, DroneMeasurementsModel],
   [TYPES.DroneOrderModel, DroneOrdersModel],
-  [TYPES.TransactionModel, TransactionsModel],
 
   [TYPES.UserHelpersController, UserHelpersController],
   [TYPES.AuthController, AuthController],
@@ -39,7 +36,6 @@ const typeMap = new Map<symbol, any>([
   [TYPES.DronesMeasurementsController, DroneMeasurementsController],
   [TYPES.DroneHelpersController, DroneHelpersController],
   [TYPES.DroneOrderController, DroneOrdersController],
-  [TYPES.TransactionController, TransactionsController],
 
   [TYPES.SocketIoController, SocketIoController],
 ]);

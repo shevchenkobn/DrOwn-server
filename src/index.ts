@@ -11,7 +11,6 @@ import { resolve } from 'path';
 import { errorHandler, notFoundHandler } from './services/error.service';
 import { Server } from 'http';
 import { SocketIoController } from './controllers/socket-io.controller';
-import { restoreRentingSchedule } from './rest-controllers/transactions.controller';
 import { createServer } from 'http';
 
 export interface ServerConfig {
@@ -21,8 +20,8 @@ export interface ServerConfig {
 }
 
 export interface CorsConfig {
-  whitelist: string | string[],
-  methods: string[]
+  whitelist: string | string[];
+  methods: string[];
 }
 
 const { host, port, swaggerDocsPrefix } = config.get<ServerConfig>('server');
@@ -33,7 +32,6 @@ const app = express();
 Promise.all([
   loadSwaggerSchema(),
   initAsync(),
-  restoreRentingSchedule(),
 ]).then(([schemaResults, initResults]) => {
   const notProduction = process.env.NODE_ENV !== 'production';
 

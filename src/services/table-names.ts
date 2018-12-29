@@ -3,6 +3,5 @@ export enum TableName { // NOTE: the order is important otherwise errors with fo
   Drones = 'drones',
   DroneOrders = 'droneOrders',
   DroneMeasurements = 'droneMeasurements',
-  Transactions = 'transactions',
   // Notifications = 'notifications',
 }

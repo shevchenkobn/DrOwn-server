@@ -31,12 +31,6 @@
 /drone-statuses:
   $ref: ./drone-statuses.yaml
 
-/transactions:
-  $ref: ./transactions.yaml
-
-/transactions/{transactionId}:
-  $ref: ./transactions-transaction-id.yaml
-
 /drone-orders:
   $ref: ./drone-orders.yaml
 

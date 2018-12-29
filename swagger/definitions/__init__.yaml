@@ -53,14 +53,6 @@ DroneStatuses:
 DroneSecret:
   $ref: ./drone-secret.yaml
 
-# Transactions
-
-Transaction:
-  $ref: ./transaction.yaml
-
-TransactionCreate:
-  $ref: ./transaction-create.yaml
-
 # Drone orders
 
 DroneOrder:

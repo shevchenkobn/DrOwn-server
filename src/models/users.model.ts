@@ -9,13 +9,12 @@ import { ErrorCode, LogicError } from '../services/error.service';
 export const maxPasswordLength = 72 - 29;
 
 export enum UserRoles {
-  CUSTOMER = 0x1,
-  OWNER = 0x2,
-  ADMIN = 0x4,
+  OWNER = 0x1,
+  ADMIN = 0x2,
 }
 
 export function isValidRole(role: any): role is UserRoles {
-  return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
+  return typeof role === 'number' && role >= UserRoles.OWNER && role <= UserRoles.ADMIN;
 }
 
 export interface IUserBase {

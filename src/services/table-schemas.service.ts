@@ -79,19 +79,6 @@ const tablesToCreate = new Map<TableName, (knex: Knex) => Knex.SchemaBuilder>([
 
     });
   }],
-  [TableName.Transactions, knex => {
-    return knex.schema.createTable(TableName.Transactions, table => {
-      table.bigIncrements('transactionId')
-        .primary(`pk_${TableName.Transactions}`);
-      table.bigInteger('droneId').unsigned().notNullable()
-        .references(`${TableName.Drones}.droneId`).onDelete('CASCADE');
-      table.timestamp('createdAt', 6 as any).defaultTo((knex.fn.now as any)(6));
-      table.bigInteger('userId').unsigned().notNullable()
-        .references(`${TableName.Users}.userId`).onDelete('CASCADE');
-      table.integer('period').unsigned().notNullable().defaultTo(0);
-      // knex.text('additionalInfo').nullable();
-    });
-  }],
   // [TableName.Notifications, knex => {
   //   return knex.schema.createTable(TableName.Notifications, table => {
   //     table.bigInteger('userId').unsigned()
@@ -148,8 +135,7 @@ export async function seedDatabase(knex: Knex) {
   const adminData = config.get<{ name: string, password: string, email: string }>('server.admin');
   const adminUser: IUserSeed & { userId: string } = {
     ...adminData,
-    role: UserRoles.CUSTOMER
-      | UserRoles.OWNER
+    role: UserRoles.OWNER
       | UserRoles.ADMIN,
     userId: superAdminUserId,
   };
