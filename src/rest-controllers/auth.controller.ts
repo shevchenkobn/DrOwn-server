@@ -29,7 +29,13 @@ export class AuthController {
 
           const user = users[0];
           let updateData: {[column: string]: any} = {};
-          if (!user.refreshToken) {
+          if (
+            !user.refreshToken
+            || (
+              user.refreshTokenExpiration
+              && user.refreshTokenExpiration.getTime() <= Date.now()
+            )
+          ) {
             updateData = {
               refreshTokenExpiration: jwt.getRefreshTokenExpiration(),
               refreshToken: await jwt.getRefreshToken(user),

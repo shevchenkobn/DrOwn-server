@@ -14,11 +14,6 @@ properties:
     maximum: 7
   name:
     type: string
-  address:
-    type: string
-  phoneNumber:
-    type: string
-    format: ^\\d{1,15}$
   longitude:
     type: number
   latitude:
