@@ -10,7 +10,6 @@ const swagger_tools_1 = require("swagger-tools");
 const handler_service_1 = require("./services/handler.service");
 const path_1 = require("path");
 const error_service_1 = require("./services/error.service");
-const transactions_controller_1 = require("./rest-controllers/transactions.controller");
 const http_1 = require("http");
 const { host, port, swaggerDocsPrefix } = config.get('server');
 const { whitelist: whitelistOrigin, methods: corsMethods } = config.get('cors');
@@ -18,7 +17,6 @@ const app = express();
 Promise.all([
     util_service_1.loadSwaggerSchema(),
     container_1.initAsync(),
-    transactions_controller_1.restoreRentingSchedule(),
 ]).then(([schemaResults, initResults]) => {
     const notProduction = process.env.NODE_ENV !== 'production';
     swagger_tools_1.initializeMiddleware(schemaResults.resolved, middleware => {

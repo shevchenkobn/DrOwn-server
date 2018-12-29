@@ -6,7 +6,6 @@ var TableName;
     TableName["Drones"] = "drones";
     TableName["DroneOrders"] = "droneOrders";
     TableName["DroneMeasurements"] = "droneMeasurements";
-    TableName["Transactions"] = "transactions";
     // Notifications = 'notifications',
 })(TableName = exports.TableName || (exports.TableName = {}));
 //# sourceMappingURL=table-names.js.map

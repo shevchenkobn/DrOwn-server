@@ -69,19 +69,6 @@ const tablesToCreate = new Map([
                 table.integer('batteryCharge').unsigned().notNullable();
             });
         }],
-    [table_names_1.TableName.Transactions, knex => {
-            return knex.schema.createTable(table_names_1.TableName.Transactions, table => {
-                table.bigIncrements('transactionId')
-                    .primary(`pk_${table_names_1.TableName.Transactions}`);
-                table.bigInteger('droneId').unsigned().notNullable()
-                    .references(`${table_names_1.TableName.Drones}.droneId`).onDelete('CASCADE');
-                table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
-                table.bigInteger('userId').unsigned().notNullable()
-                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('CASCADE');
-                table.integer('period').unsigned().notNullable().defaultTo(0);
-                // knex.text('additionalInfo').nullable();
-            });
-        }],
 ]);
 async function dropTables(knex, safe = true, tables = exports.tableNames, forEachCb) {
     const orderedTables = exports.tableNames.slice().filter(t => tables.includes(t)).reverse();
@@ -113,8 +100,7 @@ async function seedDatabase(knex) {
     const adminData = config.get('server.admin');
     const adminUser = {
         ...adminData,
-        role: users_model_1.UserRoles.CUSTOMER
-            | users_model_1.UserRoles.OWNER
+        role: users_model_1.UserRoles.OWNER
             | users_model_1.UserRoles.ADMIN,
         userId: exports.superAdminUserId,
     };

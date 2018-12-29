@@ -73,20 +73,9 @@ let DroneModel = class DroneModel {
         return drones[0];
     }
     getOwnershipLimiterClause(user) {
-        const knex = this._connection.knex;
         return this.table
             .column(`${table_names_1.TableName.Drones}.deviceId as deviceId`)
-            .join(table_names_1.TableName.Transactions, `${table_names_1.TableName.Drones}.droneId`, `${table_names_1.TableName.Transactions}.droneId`)
-            .andWhere(function () {
-            this
-                .andWhere(`${table_names_1.TableName.Drones}.ownerId`, user.userId)
-                .orWhere(function () {
-                this
-                    .where(`${table_names_1.TableName.Drones}.status`, DroneStatus.RENTED)
-                    .andWhere(`${table_names_1.TableName.Transactions}.userId`, user.userId)
-                    .andWhereRaw(`${knex.raw('??.??', [table_names_1.TableName.Transactions, 'createdAt'])} + SEC_TO_TIME(${knex.raw('??.??', [table_names_1.TableName.Transactions, 'period'])} * 60 * 60) >= now()`);
-            });
-        });
+            .where('ownerId', user.userId);
     }
 };
 DroneModel = tslib_1.__decorate([

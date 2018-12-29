@@ -25,7 +25,6 @@ export interface IUserBase {
   phoneNumber?: string | null;
   longitude?: number | null;
   latitude?: number | null;
-  cash?: string | null;
 }
 
 export interface IUserSeed extends IUserBase {

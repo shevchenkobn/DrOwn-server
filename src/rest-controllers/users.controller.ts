@@ -43,11 +43,6 @@ export class UsersController {
             return;
           }
 
-          const cashLimits = getSafeSwaggerParam<[number, number]>(req, 'cash-limits');
-          if (cashLimits && !(user.role & UserRoles.ADMIN)) {
-            next(new LogicError(ErrorCode.USER_FILTER_BAD));
-            return;
-          }
           const phoneQuery = getSafeSwaggerParam<string>(req, 'phone-query');
           if (phoneQuery && !(user.role & UserRoles.ADMIN)) {
             next(new LogicError(ErrorCode.USER_FILTER_BAD));
@@ -95,9 +90,6 @@ export class UsersController {
           }
           if (phoneQuery) {
             appendLikeQuery(dbConnection.knex, query, 'phoneNumber', phoneQuery);
-          }
-          if (cashLimits) {
-            query.andWhereBetween('cash', cashLimits);
           }
           if (latitudeLimits) {
             query.andWhereBetween('latitude', latitudeLimits);
@@ -307,7 +299,6 @@ const safeColumns: ReadonlyArray<keyof IUser> = [
   'name',
 ];
 const adminFields: ReadonlyArray<keyof IUser> = [
-  'cash',
   'longitude',
   'latitude',
 ];

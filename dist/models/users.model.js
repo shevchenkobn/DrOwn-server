@@ -10,12 +10,11 @@ const error_service_1 = require("../services/error.service");
 exports.maxPasswordLength = 72 - 29;
 var UserRoles;
 (function (UserRoles) {
-    UserRoles[UserRoles["CUSTOMER"] = 1] = "CUSTOMER";
-    UserRoles[UserRoles["OWNER"] = 2] = "OWNER";
-    UserRoles[UserRoles["ADMIN"] = 4] = "ADMIN";
+    UserRoles[UserRoles["OWNER"] = 1] = "OWNER";
+    UserRoles[UserRoles["ADMIN"] = 2] = "ADMIN";
 })(UserRoles = exports.UserRoles || (exports.UserRoles = {}));
 function isValidRole(role) {
-    return typeof role === 'number' && role >= UserRoles.CUSTOMER && role <= UserRoles.ADMIN;
+    return typeof role === 'number' && role >= UserRoles.OWNER && role <= UserRoles.ADMIN;
 }
 exports.isValidRole = isValidRole;
 let UserModel = class UserModel {

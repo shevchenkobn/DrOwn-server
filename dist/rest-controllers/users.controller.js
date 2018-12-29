@@ -21,11 +21,6 @@ let UsersController = class UsersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
                         return;
                     }
-                    const cashLimits = util_service_1.getSafeSwaggerParam(req, 'cash-limits');
-                    if (cashLimits && !(user.role & users_model_1.UserRoles.ADMIN)) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_FILTER_BAD));
-                        return;
-                    }
                     const phoneQuery = util_service_1.getSafeSwaggerParam(req, 'phone-query');
                     if (phoneQuery && !(user.role & users_model_1.UserRoles.ADMIN)) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_FILTER_BAD));
@@ -65,9 +60,6 @@ let UsersController = class UsersController {
                     }
                     if (phoneQuery) {
                         util_service_1.appendLikeQuery(dbConnection.knex, query, 'phoneNumber', phoneQuery);
-                    }
-                    if (cashLimits) {
-                        query.andWhereBetween('cash', cashLimits);
                     }
                     if (latitudeLimits) {
                         query.andWhereBetween('latitude', latitudeLimits);
@@ -261,7 +253,6 @@ const safeColumns = [
     'name',
 ];
 const adminFields = [
-    'cash',
     'longitude',
     'latitude',
 ];
