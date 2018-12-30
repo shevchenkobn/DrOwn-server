@@ -75,6 +75,26 @@ let UsersController = class UsersController {
                     next(err);
                 }
             },
+            async getUser(req, res, next) {
+                try {
+                    const user = req.user;
+                    const select = req.swagger.params.select.value;
+                    const userId = util_service_1.getSafeSwaggerParam(req, 'userId');
+                    if (!(user.role & users_model_1.UserRoles.ADMIN) && user.userId !== userId) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                        return;
+                    }
+                    const users = await userModel.select(getColumns(select, true), { userId });
+                    if (users.length === 0) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                        return;
+                    }
+                    res.json(users[0]);
+                }
+                catch (err) {
+                    next(err);
+                }
+            },
             async getProfile(req, res) {
                 const select = req.swagger.params.select.value;
                 const user = req.user;

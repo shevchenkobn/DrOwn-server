@@ -9,6 +9,42 @@ parameters:
   description: A BitInt value in string format showing user id to alter
   pattern: ^\d{1,19}$
 
+get:
+  tags:
+  - users
+  summary: Get user by email
+  operationId: getUser
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - admin
+  parameters:
+  - in: query
+    name: select
+    required: false
+    type: array
+    collectionFormat: csv
+    uniqueItems: true
+    items:
+      type: string
+      enum:
+      - userId
+      - email
+      - role
+      - name
+      - companyId
+      - longitude
+      - latitude
+  responses:
+    200:
+      description: OK
+      schema:
+        type: array
+        items:
+          $ref: '#/definitions/User'
+    400:
+      $ref: '#/responses/ClientError'
+
 patch:
   tags:
   - users

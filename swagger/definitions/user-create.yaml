@@ -22,5 +22,5 @@ properties:
   password:
     type: string
     format: password
-    pattern: ^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,}$
+    pattern: ^((?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{6,})?$
 additionalProperties: false

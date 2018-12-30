@@ -106,6 +106,27 @@ export class UsersController {
         }
       },
 
+      async getUser(req: Request, res: Response, next: NextFunction) {
+        try {
+          const user = (req as any).user as IUser;
+          const select = (req as any).swagger.params.select.value as (keyof IUser)[];
+          const userId = getSafeSwaggerParam<string>(req, 'userId')!;
+          if (!(user.role & UserRoles.ADMIN) && user.userId !== userId) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+
+          const users = await userModel.select(getColumns(select, true), { userId });
+          if (users.length === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+          res.json(users[0]);
+        } catch (err) {
+          next(err);
+        }
+      },
+
       async getProfile(req: Request, res: Response) {
         const select = (req as any).swagger.params.select.value as (keyof IUser)[];
         const user = (req as any).user as IUser;

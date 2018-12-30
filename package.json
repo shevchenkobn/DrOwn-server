@@ -14,7 +14,7 @@
     "start:b:brk": "npm run build && node --inspect-brk ./dist",
     "start:dev": "node --inspect=9229 ./dist",
     "start:b:dev": "npm run build && node --inspect=9229 ./dist",
-    "watch": "nodemon -w src/**/*.* -x \"npm run start:dev\"",
+    "watch": "nodemon -w src/ -w swagger/ -e ts,yaml -x \"npm run start:b:dev\"",
     "db:drop": "node dist/console/drop-sql-tables",
     "db:add": "node dist/console/add-sql-tables",
     "genKeys": "node dist/console/generate-key-pair"
