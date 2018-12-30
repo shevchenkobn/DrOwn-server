@@ -93,6 +93,10 @@ export class AuthController {
         try {
           const inputUser = (req as any).swagger.params.user.value as IUserSeed;
           const select = (req as any).swagger.params.select.value as (keyof IUser)[];
+          if (!inputUser.password) {
+            next(new LogicError(ErrorCode.USER_PASSWORD_NO));
+            return;
+          }
 
           // if (typeof inputUser.companyId === 'string') {
           //   next(new LogicError(ErrorCode.USER_COMPANY_BAD));

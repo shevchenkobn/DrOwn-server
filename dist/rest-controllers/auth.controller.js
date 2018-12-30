@@ -78,6 +78,10 @@ let AuthController = class AuthController {
                 try {
                     const inputUser = req.swagger.params.user.value;
                     const select = req.swagger.params.select.value;
+                    if (!inputUser.password) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.USER_PASSWORD_NO));
+                        return;
+                    }
                     // if (typeof inputUser.companyId === 'string') {
                     //   next(new LogicError(ErrorCode.USER_COMPANY_BAD));
                     //   return;
