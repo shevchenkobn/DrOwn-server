@@ -21,6 +21,7 @@ import {
 import { superAdminUserId } from '../services/table-schemas.service';
 import { TableName } from '../services/table-names';
 import { DbConnection } from '../services/db-connection.class';
+import { __await } from 'tslib';
 
 @injectable()
 export class UsersController {
@@ -187,18 +188,24 @@ export class UsersController {
 
           const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
 
-          if (foreignUser && !(user.role & UserRoles.ADMIN)) {
-            next(new LogicError(ErrorCode.AUTH_ROLE));
-            return;
-          }
-          const whereHasEmail = 'email' in whereClause;
-          if (
-            !(inputUser.role & UserRoles.ADMIN)
-            && !whereHasEmail
-            && userId === superAdminUserId
-          ) {
-            next(new LogicError(ErrorCode.AUTH_ROLE));
-            return;
+          const hasEmailInWhere = 'email' in whereClause;
+          if (inputUser.role && !(inputUser.role & UserRoles.ADMIN)) {
+            if (!hasEmailInWhere) {
+              if (userId === superAdminUserId) {
+                next(new LogicError(ErrorCode.AUTH_ROLE));
+                return;
+              }
+            } else {
+              const [user] = await userModel.select(['userId'], whereClause);
+              if (!user) {
+                next(new LogicError(ErrorCode.NOT_FOUND));
+                return;
+              }
+              if (user.userId === superAdminUserId) {
+                next(new LogicError(ErrorCode.AUTH_ROLE));
+                return;
+              }
+            }
           }
 
           const passwordUpdated = inputUser.password === '';
@@ -253,7 +260,7 @@ export class UsersController {
           if (
             user.role & UserRoles.ADMIN
             && !hasEmailInWhere
-            && (whereClause as { userId: string }).userId === superAdminUserId
+            && userId === superAdminUserId
           ) {
             next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
