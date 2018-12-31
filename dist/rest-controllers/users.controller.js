@@ -137,7 +137,22 @@ let UsersController = class UsersController {
                     const userId = util_service_1.getSafeSwaggerParam(req, 'userId');
                     const email = util_service_1.getSafeSwaggerParam(req, 'email');
                     const user = req.user;
+                    if (inputUser.role & users_model_1.UserRoles.ADMIN && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                        return;
+                    }
                     const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
+                    if (foreignUser && !(user.role & users_model_1.UserRoles.ADMIN)) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                        return;
+                    }
+                    const whereHasEmail = 'email' in whereClause;
+                    if (!(inputUser.role & users_model_1.UserRoles.ADMIN)
+                        && !whereHasEmail
+                        && userId === table_schemas_service_1.superAdminUserId) {
+                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                        return;
+                    }
                     const passwordUpdated = inputUser.password === '';
                     const selectPassword = select && select.length > 0 && select.includes('password');
                     if (passwordUpdated) {
@@ -149,10 +164,6 @@ let UsersController = class UsersController {
                     }
                     else if (selectPassword) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.SELECT_BAD));
-                        return;
-                    }
-                    if (inputUser.role & users_model_1.UserRoles.ADMIN && !(user.role & users_model_1.UserRoles.ADMIN)) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
                     }
                     util_service_1.checkLocation(inputUser);

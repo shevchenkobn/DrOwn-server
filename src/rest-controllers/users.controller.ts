@@ -180,7 +180,26 @@ export class UsersController {
           const email = getSafeSwaggerParam<string>(req, 'email');
           const user = (req as any).user as IUser;
 
+          if (inputUser.role & UserRoles.ADMIN && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+
           const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
+
+          if (foreignUser && !(user.role & UserRoles.ADMIN)) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+          const whereHasEmail = 'email' in whereClause;
+          if (
+            !(inputUser.role & UserRoles.ADMIN)
+            && !whereHasEmail
+            && userId === superAdminUserId
+          ) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
 
           const passwordUpdated = inputUser.password === '';
           const selectPassword = select && select.length > 0 && select.includes('password' as any);
@@ -192,11 +211,6 @@ export class UsersController {
             }
           } else if (selectPassword) {
             next(new LogicError(ErrorCode.SELECT_BAD));
-            return;
-          }
-
-          if (inputUser.role & UserRoles.ADMIN && !(user.role & UserRoles.ADMIN)) {
-            next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
           }
 

@@ -10,14 +10,14 @@
 /auth/register:
   $ref: ./auth-register.yaml
 
+/auth/profile:
+  $ref: ./auth-profile.yaml
+
 /users:
   $ref: ./users.yaml
 
 /users/{userId}:
   $ref: ./users-user-id.yaml
-
-/profile:
-  $ref: ./profile.yaml
 
 /drones:
   $ref: ./drones.yaml
