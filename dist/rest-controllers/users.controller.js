@@ -142,16 +142,25 @@ let UsersController = class UsersController {
                         return;
                     }
                     const [whereClause, foreignUser] = getUserWhereClause(userId, email, user);
-                    if (foreignUser && !(user.role & users_model_1.UserRoles.ADMIN)) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                        return;
-                    }
-                    const whereHasEmail = 'email' in whereClause;
-                    if (!(inputUser.role & users_model_1.UserRoles.ADMIN)
-                        && !whereHasEmail
-                        && userId === table_schemas_service_1.superAdminUserId) {
-                        next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
-                        return;
+                    const hasEmailInWhere = 'email' in whereClause;
+                    if (inputUser.role && !(inputUser.role & users_model_1.UserRoles.ADMIN)) {
+                        if (!hasEmailInWhere) {
+                            if (userId === table_schemas_service_1.superAdminUserId) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                                return;
+                            }
+                        }
+                        else {
+                            const [user] = await userModel.select(['userId'], whereClause);
+                            if (!user) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.NOT_FOUND));
+                                return;
+                            }
+                            if (user.userId === table_schemas_service_1.superAdminUserId) {
+                                next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
+                                return;
+                            }
+                        }
                     }
                     const passwordUpdated = inputUser.password === '';
                     const selectPassword = select && select.length > 0 && select.includes('password');
@@ -197,7 +206,7 @@ let UsersController = class UsersController {
                     const hasEmailInWhere = 'email' in whereClause;
                     if (user.role & users_model_1.UserRoles.ADMIN
                         && !hasEmailInWhere
-                        && whereClause.userId === table_schemas_service_1.superAdminUserId) {
+                        && userId === table_schemas_service_1.superAdminUserId) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
                     }

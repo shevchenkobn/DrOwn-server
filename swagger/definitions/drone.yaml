@@ -4,7 +4,6 @@ required:
   - ownerId
   - deviceId
   - status
-  - price
   - baseLongitude
   - baseLatitude
   - batteryPower
@@ -19,8 +18,6 @@ properties:
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
-  price:
-    $ref: '#/definitions/Decimal'
   status:
     type: integer
   baseLongitude:

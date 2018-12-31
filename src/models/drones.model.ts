@@ -18,20 +18,18 @@ export enum DroneStatus {
 
 export interface IDroneInput {
   deviceId: string;
-  status?: number;
+  status?: DroneStatus;
   baseLongitude?: number | null;
   baseLatitude?: number | null;
   batteryPower: number;
   enginePower: number;
   loadCapacity: number;
   canCarryLiquids: boolean;
-  price: string;
 }
 
 export interface IDrone extends IDroneInput{
-  ownerId: string;
   droneId: string;
-  status: number;
+  ownerId: string;
   passwordHash: string;
   baseLatitude: number;
   baseLongitude: number;

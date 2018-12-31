@@ -9,8 +9,6 @@ properties:
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
-  price:
-    $ref: '#/definitions/Decimal'
   baseLongitude:
     $ref: '#/definitions/Longitude'
   baseLatitude:
