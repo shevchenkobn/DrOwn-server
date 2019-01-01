@@ -17,6 +17,7 @@ get:
     items:
       type: string
       enum:
+      - droneId
       - ownerId
       - deviceId
       - status

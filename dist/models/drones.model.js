@@ -11,9 +11,9 @@ exports.maxPasswordLength = 72 - 29;
 var DroneStatus;
 (function (DroneStatus) {
     DroneStatus[DroneStatus["UNAUTHORIZED"] = 0] = "UNAUTHORIZED";
-    DroneStatus[DroneStatus["IDLE"] = 1] = "IDLE";
-    DroneStatus[DroneStatus["RENTED"] = 2] = "RENTED";
-    DroneStatus[DroneStatus["OFFLINE"] = 3] = "OFFLINE";
+    DroneStatus[DroneStatus["OFFLINE"] = 1] = "OFFLINE";
+    DroneStatus[DroneStatus["IDLE"] = 2] = "IDLE";
+    DroneStatus[DroneStatus["WORKING"] = 3] = "WORKING";
 })(DroneStatus = exports.DroneStatus || (exports.DroneStatus = {}));
 let DroneModel = class DroneModel {
     constructor(connection) {

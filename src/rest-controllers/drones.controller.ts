@@ -21,6 +21,7 @@ import {
 import { AuthService } from '../services/authentication.class';
 import { randomBytes } from 'crypto';
 import { promisify } from 'util';
+import { SocketIoController } from '../controllers/socket-io.controller';
 
 @injectable()
 export class DronesController {
@@ -28,14 +29,12 @@ export class DronesController {
     @inject(TYPES.DroneModel) droneModel: DroneModel,
     @inject(TYPES.UserModel) userModel: UserModel,
     @inject(TYPES.AuthService) authService: AuthService,
+    @inject(TYPES.SocketIoController) socketIoController: SocketIoController,
   ) {
     return {
       async getDrones(req: Request, res: Response, next: NextFunction) {
         try {
-          let user: IUser | null = null;
-          try {
-            user = await authService.getUserFromRequest(req);
-          } catch {}
+          const user = (req as any).user as IUser;
           const producerIds = getSafeSwaggerParam<string[]>(req, 'producer-ids');
           const ownerIds = getSafeSwaggerParam<string[]>(req, 'owner-ids');
           const select = (
@@ -69,7 +68,7 @@ export class DronesController {
           const canCarryLiquids = getSafeSwaggerParam<boolean>(req, 'can-carry-liquids');
           const sortings = getSortFields(getSafeSwaggerParam<string[]>(req, 'sort'));
 
-          const query = droneModel.table.columns(getColumns(
+          const query = droneModel.getOwnershipLimiterClause(user).columns(getColumns(
             select,
             true,
           ));
@@ -168,18 +167,7 @@ export class DronesController {
           }
           const droneFromDB: IDrone = drones[0];
 
-          if (droneFromDB.ownerId !== user.userId) {
-            next(new LogicError(ErrorCode.AUTH_ROLE));
-            return;
-          }
-          if (droneFromDB.status === DroneStatus.UNAUTHORIZED) {
-            next(new LogicError(ErrorCode.DRONE_UNAUTHORIZED));
-            return;
-          }
-          if (droneFromDB.status === DroneStatus.RENTED) {
-            next(new LogicError(ErrorCode.DRONE_RENTED));
-            return;
-          }
+          ensureCanBeModified(droneFromDB, user);
 
           checkLocation(droneUpdate);
 
@@ -219,12 +207,18 @@ export class DronesController {
           const whereClause = getDroneWhereClause(req);
 
           let drone: IDrone | null = null;
+          let deviceId: string;
           let hadOwnerId = false;
+          let hadDeviceId = false;
           if (select && select.length > 0) {
             const columns = getColumns(select, true);
             hadOwnerId = columns.includes('ownerId');
             if (!hadOwnerId) {
               columns.push('ownerId');
+            }
+            hadDeviceId = columns.includes('deviceId');
+            if (!hadDeviceId) {
+              columns.push('deviceId');
             }
 
             const drones = await droneModel.select(columns, whereClause);
@@ -234,10 +228,8 @@ export class DronesController {
             }
             drone = drones[0];
 
-            if (drone!.ownerId !== user.userId) {
-              next(new LogicError(ErrorCode.AUTH_ROLE));
-              return;
-            }
+            ensureCanBeModified(drone!, user, false);
+            deviceId = drone!.deviceId;
           } else {
             const drones = await droneModel.select(['ownerId'], whereClause);
             if (drones.length === 0) {
@@ -245,21 +237,19 @@ export class DronesController {
               return;
             }
 
-            if (drones[0].ownerId !== user.userId) {
-              next(new LogicError(ErrorCode.AUTH_ROLE));
-              return;
-            }
+            ensureCanBeModified(drones[0], user, false);
+            deviceId = drones[0].deviceId;
           }
 
-          const affectedRows = await droneModel.delete(whereClause);
-          if (affectedRows === 0) {
-            next(new LogicError(ErrorCode.NOT_FOUND));
-            return;
-          }
+          await droneModel.delete(whereClause);
+          socketIoController.disconnect(deviceId, true);
 
           if (drone) {
             if (!hadOwnerId) {
               delete drone.ownerId;
+            }
+            if (!hadDeviceId) {
+              delete drone.deviceId;
             }
             res.json(drone);
           } else {
@@ -346,4 +336,18 @@ function getDroneWhereClause(req: Request): WhereClause {
     return { deviceId };
   }
   throw new LogicError(ErrorCode.DRONE_ID_DRONE_DEVICE);
+}
+
+function ensureCanBeModified(drone: IDrone, user: IUser, checkStatus = true) {
+  if (drone.ownerId !== user.userId) {
+    throw new LogicError(ErrorCode.AUTH_ROLE);
+  }
+  if (
+    checkStatus && (
+      drone.status !== DroneStatus.UNAUTHORIZED
+      || drone!.status !== DroneStatus.OFFLINE
+    )
+  ) {
+    throw new LogicError(ErrorCode.DRONE_STATUS_BAD);
+  }
 }

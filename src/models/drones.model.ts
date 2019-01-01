@@ -11,9 +11,9 @@ export const maxPasswordLength = 72 - 29;
 
 export enum DroneStatus {
   UNAUTHORIZED = 0,
-  IDLE = 1,
-  RENTED = 2,
-  OFFLINE = 3,
+  OFFLINE = 1,
+  IDLE = 2,
+  WORKING = 3
 }
 
 export interface IDroneInput {

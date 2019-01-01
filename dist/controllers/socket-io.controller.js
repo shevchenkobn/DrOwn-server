@@ -64,10 +64,13 @@ let SocketIoController = class SocketIoController {
     close(cb) {
         return this._server.close(cb);
     }
-    disconnect(deviceId) {
+    disconnect(deviceId, safe = false) {
         const socketId = this._deviceIdToSocketId.get(deviceId);
         if (!socketId) {
-            throw new Error(`No connected device for ${deviceId}`);
+            if (!safe) {
+                throw new Error(`No connected device for ${deviceId}`);
+            }
+            return;
         }
         this._server.sockets.connected[socketId].disconnect();
     }

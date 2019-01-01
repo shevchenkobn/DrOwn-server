@@ -93,10 +93,13 @@ export class SocketIoController {
     return this._server.close(cb);
   }
 
-  public disconnect(deviceId: string) {
+  public disconnect(deviceId: string, safe = false) {
     const socketId = this._deviceIdToSocketId.get(deviceId);
     if (!socketId) {
-      throw new Error(`No connected device for ${deviceId}`);
+      if (!safe) {
+        throw new Error(`No connected device for ${deviceId}`);
+      }
+      return;
     }
     this._server.sockets.connected[socketId].disconnect();
   }
