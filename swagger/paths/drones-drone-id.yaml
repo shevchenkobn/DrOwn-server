@@ -8,6 +8,46 @@ parameters:
   type: string
   description: A BitInt value in string format showing user id to alter
   pattern: ^\d{1,19}$
+- in: query
+  name: select
+  required: false
+  type: array
+  collectionFormat: csv
+  uniqueItems: true
+  items:
+    type: string
+    enum:
+    - droneId
+    - producerId
+    - ownerId
+    - deviceId
+    - status
+    - baseLongitude
+    - baseLatitude
+    - batteryPower
+    - enginePower
+    - loadCapacity
+    - canCarryLiquids
+
+get:
+  tags:
+  - drones
+  summary: Get Single Drone
+  operationId: getDrone
+  security:
+  - Bearer: []
+  x-security-scopes:
+  - owner
+  responses:
+    200:
+      description: OK
+      schema:
+        $ref: '#/definitions/Drone'
+    400:
+      $ref: '#/responses/ClientError'
+    403:
+      $ref: '#/responses/Forbidden'
+
 
 patch:
   tags:
@@ -19,29 +59,8 @@ patch:
   security:
   - Bearer: []
   x-security-scopes:
-  - admin
   - owner
   parameters:
-  - in: query
-    name: select
-    required: false
-    type: array
-    collectionFormat: csv
-    uniqueItems: true
-    items:
-      type: string
-      enum:
-      - droneId
-      - producerId
-      - ownerId
-      - deviceId
-      - status
-      - baseLongitude
-      - baseLatitude
-      - batteryPower
-      - enginePower
-      - loadCapacity
-      - canCarryLiquids
   - in: body
     name: drone
     required: true
@@ -68,28 +87,6 @@ delete:
   - Bearer: []
   x-security-scopes:
   - owner
-  - admin
-  parameters:
-  - in: query
-    name: select
-    required: false
-    type: array
-    collectionFormat: csv
-    uniqueItems: true
-    items:
-      type: string
-      enum:
-      - droneId
-      - producerId
-      - ownerId
-      - deviceId
-      - status
-      - baseLongitude
-      - baseLatitude
-      - batteryPower
-      - enginePower
-      - loadCapacity
-      - canCarryLiquids
   responses:
     200:
       description: OK

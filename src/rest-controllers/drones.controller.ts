@@ -102,6 +102,43 @@ export class DronesController {
         }
       },
 
+      async getDrone(req: Request, res: Response, next: NextFunction) {
+        try {
+          const user = (
+            req as any
+          ).user as IUser;
+          const select = (
+            req as any
+          ).swagger.params.select.value as (keyof IDrone)[];
+          const droneId = (
+            req as any
+          ).swagger.params.droneId.value as string;
+
+          const hadOwnerId = select.includes('ownerId');
+          if (!hadOwnerId) {
+            select.push('ownerId');
+          }
+
+          const drones = await droneModel.select(select, { droneId });
+          if (drones.length === 0) {
+            next(new LogicError(ErrorCode.NOT_FOUND));
+            return;
+          }
+
+          const drone = drones[0] as IDrone;
+          if (drone.ownerId !== user.userId) {
+            next(new LogicError(ErrorCode.AUTH_ROLE));
+            return;
+          }
+          if (!hadOwnerId) {
+            delete drone.ownerId;
+          }
+          res.json(drone);
+        } catch (err) {
+          next(err);
+        }
+      },
+
       async createDrone(req: Request, res: Response, next: NextFunction) {
         try {
           const user = (
@@ -116,13 +153,13 @@ export class DronesController {
 
           checkLocation(drone);
           (drone as IDrone).ownerId = user.userId;
+          if (typeof user.longitude !== 'number') {
+            next(new LogicError(ErrorCode.LOCATION_BAD));
+            return;
+          }
           if (typeof drone.baseLongitude !== 'number') {
             drone.baseLongitude = user.longitude;
             drone.baseLatitude = user.latitude;
-          }
-          if (typeof drone.baseLongitude !== 'number') {
-            next(new LogicError(ErrorCode.LOCATION_BAD));
-            return;
           }
 
           await droneModel.create(drone);
@@ -150,17 +187,8 @@ export class DronesController {
           const whereClause = getDroneWhereClause(req);
 
           const returnDrone = select && select.length > 0;
-          const columns = returnDrone ? getColumns(select, true) : [];
-          const hadStatus = columns.includes('status');
-          if (!hadStatus) {
-            columns.push('status');
-          }
-          const hadOwnerId = columns.includes('ownerId');
-          if (!hadOwnerId) {
-            columns.push('ownerId');
-          }
 
-          const drones = await droneModel.select(columns, whereClause);
+          const drones = await droneModel.select(['status', 'ownerId'], whereClause);
           if (drones.length === 0) {
             next(new LogicError(ErrorCode.NOT_FOUND));
             return;
@@ -181,13 +209,9 @@ export class DronesController {
 
           await droneModel.update(droneUpdate, whereClause);
           if (returnDrone) {
-            if (!hadOwnerId) {
-              delete droneFromDB.ownerId;
-            }
-            if (!hadStatus) {
-              delete droneFromDB.status;
-            }
-            res.json(droneFromDB);
+            res.json(
+              (await droneModel.select(select, whereClause))[0]
+            );
           } else {
             res.json({});
           }
@@ -345,7 +369,7 @@ function ensureCanBeModified(drone: IDrone, user: IUser, checkStatus = true) {
   if (
     checkStatus && (
       drone.status !== DroneStatus.UNAUTHORIZED
-      || drone!.status !== DroneStatus.OFFLINE
+      && drone!.status !== DroneStatus.OFFLINE
     )
   ) {
     throw new LogicError(ErrorCode.DRONE_STATUS_BAD);
