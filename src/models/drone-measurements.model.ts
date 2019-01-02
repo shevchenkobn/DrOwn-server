@@ -13,7 +13,6 @@ export enum DroneRealtimeStatus {
 
 export interface IDroneMeasurementInput {
   status: DroneRealtimeStatus;
-  batteryPower: number;
   longitude: number;
   latitude: number;
   batteryCharge: number;
@@ -49,7 +48,7 @@ export class DroneMeasurementsModel {
 
 export function isDroneMeasurementInput(obj: any): obj is IDroneMeasurementInput {
   const isObj = (
-    obj instanceof Object && typeof obj.status === 'number' && typeof obj.batteryPower === 'number'
+    obj instanceof Object && typeof obj.status === 'number'
     && typeof obj.longitude === 'number' && typeof obj.latitude === 'number'
     && typeof obj.batteryCharge === 'number'
   );

@@ -32,7 +32,6 @@ get:
     required: false
     type: array
     collectionFormat: csv
-    uniqueItems: true
     minItems: 1
     items:
       type: string
@@ -122,14 +121,12 @@ get:
       - -deviceId
       - -createdAt
       - -status
-      - -batteryPower
       - -batteryCharge
       - -longitude
       - -latitude
       - +deviceId
       - +createdAt
       - +status
-      - +batteryPower
       - +batteryCharge
       - +longitude
       - +latitude

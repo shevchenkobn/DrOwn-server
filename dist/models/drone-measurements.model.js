@@ -33,7 +33,7 @@ DroneMeasurementsModel = tslib_1.__decorate([
 ], DroneMeasurementsModel);
 exports.DroneMeasurementsModel = DroneMeasurementsModel;
 function isDroneMeasurementInput(obj) {
-    const isObj = (obj instanceof Object && typeof obj.status === 'number' && typeof obj.batteryPower === 'number'
+    const isObj = (obj instanceof Object && typeof obj.status === 'number'
         && typeof obj.longitude === 'number' && typeof obj.latitude === 'number'
         && typeof obj.batteryCharge === 'number');
     return (isObj && obj.longitude >= -180 && obj.longitude <= 180

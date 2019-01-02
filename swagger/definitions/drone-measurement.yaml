@@ -3,7 +3,6 @@ required:
 - deviceId
 - createdAt
 - status
-- batteryPower
 - batteryCharge
 - longitude
 - latitude
@@ -17,9 +16,6 @@ properties:
     type: integer
     minimum: 0
     maximum: 3
-  batteryPower:
-    type: number
-    minimum: 0
   batteryCharge:
     type: number
     minimum: 0
