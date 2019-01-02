@@ -1,4 +1,4 @@
-x-swagger-router-controller: drone-orders
+x-swagger-router-controller: drone-measurements
 
 get:
   tags:
@@ -155,7 +155,6 @@ delete:
     required: true
     type: array
     collectionFormat: csv
-    uniqueItems: true
     minItems: 1
     items:
       type: string

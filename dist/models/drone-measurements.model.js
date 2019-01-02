@@ -18,7 +18,7 @@ let DroneMeasurementsModel = class DroneMeasurementsModel {
         this._knex = this._connection.knex;
     }
     get table() {
-        return this._knex(table_names_1.TableName.Drones);
+        return this._knex(table_names_1.TableName.DroneMeasurements);
     }
     save(deviceId, measurementInput) {
         const measurement = measurementInput;

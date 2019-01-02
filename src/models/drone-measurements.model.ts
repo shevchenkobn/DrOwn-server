@@ -29,7 +29,7 @@ export class DroneMeasurementsModel {
   private readonly _knex: Knex;
 
   public get table() {
-    return this._knex(TableName.Drones);
+    return this._knex(TableName.DroneMeasurements);
   }
 
   constructor(
