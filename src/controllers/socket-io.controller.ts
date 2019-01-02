@@ -116,7 +116,7 @@ export class SocketIoController {
         reject(new Error('No droneOrderId'));
         return;
       }
-      const { userId, deviceId, ...orderInfo } = order;
+      const { deviceId, ...orderInfo } = order;
       this._server.sockets.connected[socketId].emit('order', orderInfo, (status: unknown) => {
         if (!isOrderStatus(status)) {
           reject(new Error(`Not a valid order acceptance status ${status}`));

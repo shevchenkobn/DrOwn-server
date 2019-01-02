@@ -153,7 +153,7 @@ export class DronesController {
 
           checkLocation(drone);
           (drone as IDrone).ownerId = user.userId;
-          if (typeof user.longitude !== 'number') {
+          if (typeof user.longitude !== 'number' && typeof drone.baseLongitude !== 'number') {
             next(new LogicError(ErrorCode.LOCATION_BAD));
             return;
           }

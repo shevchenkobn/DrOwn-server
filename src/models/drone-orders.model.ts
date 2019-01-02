@@ -15,8 +15,9 @@ export enum DroneOrderStatus {
   STARTED = 0,
   ERROR = 1,
   ENQUEUED = 2,
-  DONE = 3,
-  TOO_FAR_GEO = 4,
+  SKIPPED = 3,
+  DONE = 4,
+  TOO_FAR_GEO = 5,
 }
 
 export interface IDroneOrderInput {
@@ -28,7 +29,6 @@ export interface IDroneOrderInput {
 
 export interface IDroneOrder extends IDroneOrderInput {
   droneOrderId: string;
-  userId: string;
   status?: DroneOrderStatus;
 }
 

@@ -3,7 +3,6 @@ required:
 - droneOrderId
 - deviceId
 - createdAt
-- userId
 - action
 - status
 - longitude
@@ -16,8 +15,6 @@ properties:
     pattern: ^[\da-fA-F]{12}$
   createdAt:
     $ref: '#/definitions/Date'
-  userId:
-    $ref: '#/definitions/BigInt'
   action:
     type: integer
     minimum: 0

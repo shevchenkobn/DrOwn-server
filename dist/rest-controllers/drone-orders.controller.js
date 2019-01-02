@@ -91,7 +91,6 @@ let DroneOrdersController = class DroneOrdersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_STATUS_BAD));
                         return;
                     }
-                    droneOrder.userId = user.userId;
                     await droneOrderModel.table.insert(droneOrder);
                     socketIoController.sendOrder(droneOrder).catch(err => {
                         console.log('didn\'t send order:', droneOrder);
@@ -99,12 +98,10 @@ let DroneOrdersController = class DroneOrdersController {
                     if (select && select.length > 0) {
                         res.status(201).json((await droneOrderModel.table.columns(select)
                             .where('deviceId', droneOrder.deviceId)
-                            .andWhere('userId', droneOrder.userId)
                             .whereIn('createdAt', function () {
                             this
                                 .max('createdAt')
-                                .where('deviceId', droneOrder.deviceId)
-                                .andWhere('userId', droneOrder.userId);
+                                .where('deviceId', droneOrder.deviceId);
                         }))[0]);
                     }
                     else {

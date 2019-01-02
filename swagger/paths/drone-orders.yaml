@@ -43,7 +43,6 @@ get:
     required: false
     type: array
     collectionFormat: csv
-    uniqueItems: true
     minItems: 1
     items:
       type: string

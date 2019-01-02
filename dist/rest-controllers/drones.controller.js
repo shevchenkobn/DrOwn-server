@@ -98,7 +98,7 @@ let DronesController = class DronesController {
                     const drone = req.swagger.params.drone.value;
                     checkLocation(drone);
                     drone.ownerId = user.userId;
-                    if (typeof user.longitude !== 'number') {
+                    if (typeof user.longitude !== 'number' && typeof drone.baseLongitude !== 'number') {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.LOCATION_BAD));
                         return;
                     }

@@ -1,7 +1,6 @@
 type: object
 required:
 - deviceId
-- userId
 - action
 - longitude
 - latitude
@@ -9,8 +8,6 @@ properties:
   deviceId:
     type: string
     pattern: ^[\da-fA-F]{12}$
-  userId:
-    $ref: '#/definitions/BigInt'
   action:
     type: integer
     minimum: 0

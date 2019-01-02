@@ -120,7 +120,6 @@ export class DroneOrdersController {
             return;
           }
 
-          droneOrder.userId = user.userId;
           await droneOrderModel.table.insert(droneOrder);
           socketIoController.sendOrder(droneOrder).catch(err => {
             console.log('didn\'t send order:', droneOrder);
@@ -129,12 +128,10 @@ export class DroneOrdersController {
             res.status(201).json(
               (await droneOrderModel.table.columns(select)
                 .where('deviceId', droneOrder.deviceId)
-                .andWhere('userId', droneOrder.userId)
                 .whereIn('createdAt', function () {
                   this
                     .max('createdAt')
                     .where('deviceId', droneOrder.deviceId)
-                    .andWhere('userId', droneOrder.userId);
                 }))[0],
             );
           } else {
