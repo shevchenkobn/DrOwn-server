@@ -38,7 +38,7 @@ const argv = yargs
     catch (err) {
         console.error('Error occured: ');
         console.error(err.message);
-        util_service_1.bindCallbackOnExit(() => process.exit(1));
+        util_service_1.bindOnExitHandler(() => process.exit(1));
     }
     finally {
         process.emit('SIGINT', 'SIGINT');

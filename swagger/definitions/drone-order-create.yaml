@@ -2,8 +2,6 @@ type: object
 required:
 - deviceId
 - action
-- longitude
-- latitude
 properties:
   deviceId:
     type: string

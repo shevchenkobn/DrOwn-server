@@ -4,7 +4,7 @@ import { container, initAsync } from './di/container';
 import * as express from 'express';
 import * as config from 'config';
 import * as cors from 'cors';
-import { bindCallbackOnExit, loadSwaggerSchema, normalizeOrigins } from './services/util.service';
+import { bindOnExitHandler, loadSwaggerSchema, normalizeOrigins } from './services/util.service';
 import { initializeMiddleware } from 'swagger-tools';
 import { authenticateBearer } from './services/handler.service';
 import { resolve } from 'path';
@@ -44,10 +44,10 @@ Promise.all([
     app.use(cors({
       methods: corsMethods,
       origin: normalizeOrigins(
-        typeof whitelistOrigin === 'string' ? [whitelistOrigin] : whitelistOrigin
+        typeof whitelistOrigin === 'string' ? [whitelistOrigin] : whitelistOrigin,
       ),
       preflightContinue: false,
-      optionsSuccessStatus: 204
+      optionsSuccessStatus: 204,
     }));
 
     app.use(middleware.swaggerMetadata());
@@ -86,7 +86,7 @@ Promise.all([
 
     const ioApp = container.get<SocketIoController>(TYPES.SocketIoController);
 
-    bindCallbackOnExit(() => {
+    bindOnExitHandler(() => {
       server.close();
       ioApp.close();
     });

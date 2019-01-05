@@ -5,7 +5,7 @@ import * as SocketIOServer from 'socket.io';
 import { inject, injectable } from 'inversify';
 import { DroneModel, DroneStatus, IDrone } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
-import { bindCallbackOnExit } from '../services/util.service';
+import { bindOnExitHandler } from '../services/util.service';
 import {
   DroneMeasurementsModel,
   isDroneMeasurementInput,
@@ -23,7 +23,7 @@ export class SocketIoController {
   protected _droneModel: DroneModel;
   protected _droneMeasurementModel: DroneMeasurementsModel;
   protected _droneOrderModel: DroneOrdersModel;
-  protected _server: SocketIO.Server;
+  protected _nsp: SocketIO.Namespace;
   // TODO: add sync between nodes
   protected _socketIdToDeviceId: Map<string, string>;
   protected _deviceIdToSocketId: Map<string, string>;
@@ -44,13 +44,12 @@ export class SocketIoController {
     this._deviceIdToSocketId = new Map<string, string>();
     this._devices = new Map<string, IDrone>();
 
-    this._server = SocketIOServer(httpServer, {
+    this._nsp = SocketIOServer(httpServer, {
       path: '/socket.io',
       serveClient: true,
-      origins: '*',
-    });
+    }).of('/drones');
 
-    this._server.use(async (socket, fn) => {
+    this._nsp.use(async (socket, fn) => {
       try {
         const req = socket.request as http.IncomingMessage;
         const { password, 'device-id': deviceId } = url.parse(req.url || '', true).query;
@@ -71,26 +70,28 @@ export class SocketIoController {
         }
         await droneModel.update({ status: DroneStatus.IDLE } as any, { deviceId });
 
+        const socketId = getSocketId(socket);
         this._devices.set(deviceId, drone!);
-        this._socketIdToDeviceId.set(socket.id, deviceId);
-        this._deviceIdToSocketId.set(deviceId, socket.id);
+        this._socketIdToDeviceId.set(socketId, deviceId);
+        this._deviceIdToSocketId.set(deviceId, socketId);
+        fn();
       } catch (err) {
         console.error(err);
         fn(new LogicError(ErrorCode.SERVER)); // Send unknown error
       }
     });
 
-    bindCallbackOnExit(() => this._server.close());
+    bindOnExitHandler(() => this._nsp.server.close());
 
     this.initialize();
   }
 
   public listen(port: number) {
-    return this._server.listen(port);
+    return this._nsp.server.listen(port);
   }
 
   public close(cb?: () => void) {
-    return this._server.close(cb);
+    return this._nsp.server.close(cb);
   }
 
   public disconnect(deviceId: string, safe = false) {
@@ -101,7 +102,7 @@ export class SocketIoController {
       }
       return;
     }
-    this._server.sockets.connected[socketId].disconnect();
+    this._nsp.server.sockets.connected[socketId].disconnect();
   }
 
   public sendOrder(order: IDroneOrder) {
@@ -117,7 +118,7 @@ export class SocketIoController {
         return;
       }
       const { deviceId, status, ...orderInfo } = order;
-      this._server.sockets.connected[socketId].emit('order', orderInfo, (status: unknown) => {
+      this._nsp.server.sockets.connected[socketId].emit('order', orderInfo, (status: unknown) => {
         if (!isOrderStatus(status)) {
           reject(new Error(`Not a valid order acceptance status ${status}`));
           return;
@@ -134,7 +135,8 @@ export class SocketIoController {
   }
 
   protected initialize() {
-    this._server.on('connection', async socket => {
+    this._nsp.on('connection', async socket => {
+      console.log(socket.id);
       socket.on('telemetry', async (data: unknown) => {
         if (!isDroneMeasurementInput(data)) {
           return;
@@ -168,7 +170,7 @@ export class SocketIoController {
       });
 
       socket.on('disconnecting', async (reason: string) => {
-        const deviceId = this._socketIdToDeviceId.get(socket.id)!;
+        const deviceId = this._socketIdToDeviceId.get(getSocketId(socket))!;
         this._deviceIdToSocketId.delete(deviceId);
         this._devices.delete(deviceId);
         this._socketIdToDeviceId.delete(socket.id);
@@ -183,4 +185,8 @@ export class SocketIoController {
       .where({ droneOrderId })
       .update({ status });
   }
+}
+
+function getSocketId(socket: SocketIO.Socket) {
+  return socket.id.includes('#') ? socket.id.split('#')[1] : socket.id;
 }

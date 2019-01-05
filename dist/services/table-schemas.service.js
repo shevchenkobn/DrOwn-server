@@ -46,27 +46,24 @@ const tablesToCreate = new Map([
             return knex.schema.createTable(table_names_1.TableName.DroneOrders, table => {
                 table.bigIncrements('droneOrderId').unsigned()
                     .primary(`pk_${table_names_1.TableName.DroneOrders}`);
-                table.string('deviceId').notNullable().unique()
+                table.string('deviceId').notNullable()
                     .references(`${table_names_1.TableName.Drones}.deviceId`).onDelete('CASCADE');
-                table.bigInteger('userId').unsigned()
-                    .references(`${table_names_1.TableName.Users}.userId`).onDelete('SET NULL');
                 table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
                 table.integer('action').unsigned().notNullable();
-                table.integer('status').unsigned().notNullable();
+                table.integer('status').unsigned().nullable();
                 table.decimal('longitude', 9, 6).nullable();
                 table.decimal('latitude', 9, 6).nullable();
             });
         }],
     [table_names_1.TableName.DroneMeasurements, knex => {
             return knex.schema.createTable(table_names_1.TableName.DroneMeasurements, table => {
-                table.string('deviceId').notNullable().unique()
+                table.string('deviceId').notNullable()
                     .references(`${table_names_1.TableName.Drones}.deviceId`).onDelete('CASCADE');
                 table.timestamp('createdAt', 6).defaultTo(knex.fn.now(6));
                 table.integer('status').unsigned().notNullable();
-                table.integer('batteryPower').unsigned().notNullable();
                 table.decimal('longitude', 9, 6).notNullable();
                 table.decimal('latitude', 9, 6).notNullable();
-                table.integer('batteryCharge').unsigned().notNullable();
+                table.decimal('batteryCharge', 9, 6).unsigned().notNullable();
             });
         }],
 ]);

@@ -8,7 +8,7 @@ import {
 } from '../models/drone-orders.model';
 import { NextFunction, Request, Response } from 'express';
 import { IUser } from '../models/users.model';
-import { appendOrderBy, getSafeSwaggerParam, getSortFields } from '../services/util.service';
+import { appendOrderBy, getSafeSwaggerParam, getSortFields, mapObject } from '../services/util.service';
 import { DroneModel, DroneStatus } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { SocketIoController } from '../controllers/socket-io.controller';
@@ -81,7 +81,7 @@ export class DroneOrdersController {
           const user = (req as any).user as IUser;
 
           const select = (req as any).swagger.params.select.value as (keyof IDroneOrder)[];
-          const droneOrder = (req as any).swagger.params.select.value as IDroneOrder;
+          const droneOrder = (req as any).swagger.params.droneOrder.value as IDroneOrder;
 
           if (
             droneOrder.action !== DroneOrderAction.MOVE_TO_LOCATION
@@ -104,9 +104,10 @@ export class DroneOrdersController {
             return;
           }
 
-          const drones = await droneModel.getOwnershipLimiterClause(user)
+          const query = droneModel.getOwnershipLimiterClause(user)
             .columns('deviceId', 'status')
             .where('deviceId', droneOrder.deviceId);
+          const drones = await query;
           if (drones.length !== 1) {
             next(new LogicError(ErrorCode.AUTH_ROLE));
             return;
@@ -121,19 +122,18 @@ export class DroneOrdersController {
           }
 
           await droneOrderModel.table.insert(droneOrder);
-          socketIoController.sendOrder(droneOrder).catch(err => {
-            console.log('didn\'t send order:', droneOrder);
-          });
-          if (select && select.length > 0) {
-            res.status(201).json(
-              (await droneOrderModel.table.columns(select)
+          const order = (await droneOrderModel.table
                 .where('deviceId', droneOrder.deviceId)
                 .whereIn('createdAt', function () {
                   this
                     .max('createdAt')
-                    .where('deviceId', droneOrder.deviceId)
-                }))[0],
-            );
+                    .where('deviceId', droneOrder.deviceId);
+                }))[0];
+          socketIoController.sendOrder(order).catch(err => {
+            console.log('didn\'t send order:', order, err);
+          });
+          if (select && select.length > 0) {
+            res.status(201).json(mapObject(order, select));
           } else {
             res.status(201).json({});
           }

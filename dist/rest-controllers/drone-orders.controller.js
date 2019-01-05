@@ -63,7 +63,7 @@ let DroneOrdersController = class DroneOrdersController {
                 try {
                     const user = req.user;
                     const select = req.swagger.params.select.value;
-                    const droneOrder = req.swagger.params.select.value;
+                    const droneOrder = req.swagger.params.droneOrder.value;
                     if (droneOrder.action !== drone_orders_model_1.DroneOrderAction.MOVE_TO_LOCATION
                         && (typeof droneOrder.latitude === 'number'
                             || typeof droneOrder.longitude === 'number')) {
@@ -76,9 +76,10 @@ let DroneOrdersController = class DroneOrdersController {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.LOCATION_BAD));
                         return;
                     }
-                    const drones = await droneModel.getOwnershipLimiterClause(user)
+                    const query = droneModel.getOwnershipLimiterClause(user)
                         .columns('deviceId', 'status')
                         .where('deviceId', droneOrder.deviceId);
+                    const drones = await query;
                     if (drones.length !== 1) {
                         next(new error_service_1.LogicError(error_service_1.ErrorCode.AUTH_ROLE));
                         return;
@@ -92,17 +93,18 @@ let DroneOrdersController = class DroneOrdersController {
                         return;
                     }
                     await droneOrderModel.table.insert(droneOrder);
-                    socketIoController.sendOrder(droneOrder).catch(err => {
-                        console.log('didn\'t send order:', droneOrder);
+                    const order = (await droneOrderModel.table
+                        .where('deviceId', droneOrder.deviceId)
+                        .whereIn('createdAt', function () {
+                        this
+                            .max('createdAt')
+                            .where('deviceId', droneOrder.deviceId);
+                    }))[0];
+                    socketIoController.sendOrder(order).catch(err => {
+                        console.log('didn\'t send order:', order, err);
                     });
                     if (select && select.length > 0) {
-                        res.status(201).json((await droneOrderModel.table.columns(select)
-                            .where('deviceId', droneOrder.deviceId)
-                            .whereIn('createdAt', function () {
-                            this
-                                .max('createdAt')
-                                .where('deviceId', droneOrder.deviceId);
-                        }))[0]);
+                        res.status(201).json(util_service_1.mapObject(order, select));
                     }
                     else {
                         res.status(201).json({});

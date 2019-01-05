@@ -18,7 +18,7 @@ let DbConnection = class DbConnection {
             },
         };
         this.knex = Knex(this.config);
-        util_service_1.bindCallbackOnExit(() => {
+        util_service_1.bindOnExitHandler(() => {
             // TODO: add logging
             console.log(`Closing database connection for ${this.config.client} at ${this.config.connection.host} to ${this.config.connection.database}`);
             this.knex.destroy(() => console.log(`Closed database connection for ${this.config.client} mysql at ${this.config.connection.host} to ${this.config.connection.database}`));

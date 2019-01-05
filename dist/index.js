@@ -27,7 +27,7 @@ Promise.all([
             methods: corsMethods,
             origin: util_service_1.normalizeOrigins(typeof whitelistOrigin === 'string' ? [whitelistOrigin] : whitelistOrigin),
             preflightContinue: false,
-            optionsSuccessStatus: 204
+            optionsSuccessStatus: 204,
         }));
         app.use(middleware.swaggerMetadata());
         app.use(middleware.swaggerSecurity({
@@ -55,7 +55,7 @@ Promise.all([
         app.use(error_service_1.errorHandler);
         app.use(error_service_1.notFoundHandler);
         const ioApp = container_1.container.get(types_1.TYPES.SocketIoController);
-        util_service_1.bindCallbackOnExit(() => {
+        util_service_1.bindOnExitHandler(() => {
             server.close();
             ioApp.close();
         });

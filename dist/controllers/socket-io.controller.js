@@ -20,12 +20,11 @@ let SocketIoController = class SocketIoController {
         this._socketIdToDeviceId = new Map();
         this._deviceIdToSocketId = new Map();
         this._devices = new Map();
-        this._server = SocketIOServer(httpServer, {
+        this._nsp = SocketIOServer(httpServer, {
             path: '/socket.io',
             serveClient: true,
-            origins: '*',
-        });
-        this._server.use(async (socket, fn) => {
+        }).of('/drones');
+        this._nsp.use(async (socket, fn) => {
             try {
                 const req = socket.request;
                 const { password, 'device-id': deviceId } = url.parse(req.url || '', true).query;
@@ -46,23 +45,25 @@ let SocketIoController = class SocketIoController {
                     return;
                 }
                 await droneModel.update({ status: drones_model_1.DroneStatus.IDLE }, { deviceId });
+                const socketId = getSocketId(socket);
                 this._devices.set(deviceId, drone);
-                this._socketIdToDeviceId.set(socket.id, deviceId);
-                this._deviceIdToSocketId.set(deviceId, socket.id);
+                this._socketIdToDeviceId.set(socketId, deviceId);
+                this._deviceIdToSocketId.set(deviceId, socketId);
+                fn();
             }
             catch (err) {
                 console.error(err);
                 fn(new error_service_1.LogicError(error_service_1.ErrorCode.SERVER)); // Send unknown error
             }
         });
-        util_service_1.bindCallbackOnExit(() => this._server.close());
+        util_service_1.bindOnExitHandler(() => this._nsp.server.close());
         this.initialize();
     }
     listen(port) {
-        return this._server.listen(port);
+        return this._nsp.server.listen(port);
     }
     close(cb) {
-        return this._server.close(cb);
+        return this._nsp.server.close(cb);
     }
     disconnect(deviceId, safe = false) {
         const socketId = this._deviceIdToSocketId.get(deviceId);
@@ -72,7 +73,7 @@ let SocketIoController = class SocketIoController {
             }
             return;
         }
-        this._server.sockets.connected[socketId].disconnect();
+        this._nsp.server.sockets.connected[socketId].disconnect();
     }
     sendOrder(order) {
         return new Promise((resolve, reject) => {
@@ -86,7 +87,7 @@ let SocketIoController = class SocketIoController {
                 return;
             }
             const { deviceId, status, ...orderInfo } = order;
-            this._server.sockets.connected[socketId].emit('order', orderInfo, (status) => {
+            this._nsp.server.sockets.connected[socketId].emit('order', orderInfo, (status) => {
                 if (!drone_orders_model_1.isOrderStatus(status)) {
                     reject(new Error(`Not a valid order acceptance status ${status}`));
                     return;
@@ -102,7 +103,8 @@ let SocketIoController = class SocketIoController {
         });
     }
     initialize() {
-        this._server.on('connection', async (socket) => {
+        this._nsp.on('connection', async (socket) => {
+            console.log(socket.id);
             socket.on('telemetry', async (data) => {
                 if (!drone_measurements_model_1.isDroneMeasurementInput(data)) {
                     return;
@@ -136,7 +138,7 @@ let SocketIoController = class SocketIoController {
                 }
             });
             socket.on('disconnecting', async (reason) => {
-                const deviceId = this._socketIdToDeviceId.get(socket.id);
+                const deviceId = this._socketIdToDeviceId.get(getSocketId(socket));
                 this._deviceIdToSocketId.delete(deviceId);
                 this._devices.delete(deviceId);
                 this._socketIdToDeviceId.delete(socket.id);
@@ -161,4 +163,7 @@ SocketIoController = tslib_1.__decorate([
         drone_orders_model_1.DroneOrdersModel])
 ], SocketIoController);
 exports.SocketIoController = SocketIoController;
+function getSocketId(socket) {
+    return socket.id.includes('#') ? socket.id.split('#')[1] : socket.id;
+}
 //# sourceMappingURL=socket-io.controller.js.map

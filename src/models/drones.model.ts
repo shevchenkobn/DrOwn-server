@@ -13,7 +13,7 @@ export enum DroneStatus {
   UNAUTHORIZED = 0,
   OFFLINE = 1,
   IDLE = 2,
-  WORKING = 3
+  WORKING = 3,
 }
 
 export interface IDroneInput {

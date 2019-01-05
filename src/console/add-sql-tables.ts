@@ -8,7 +8,7 @@ import { DbConnection } from '../services/db-connection.class';
 import { tableNames } from '../services/table-schemas.service';
 import { dropTables, createTables } from '../services/table-schemas.service';
 import { seedDatabase } from '../services/table-schemas.service';
-import { bindCallbackOnExit } from '../services/util.service';
+import { bindOnExitHandler } from '../services/util.service';
 
 const argv = yargs
   .usage('Run it to create or recreate tables in database.')
@@ -61,8 +61,7 @@ const argv = yargs
   } catch (err) {
     console.error('Error occured: ');
     console.error(err.message);
-    bindCallbackOnExit(() => process.exit(1));
   } finally {
-    process.emit('SIGINT', 'SIGINT');
+    process.emit('SIGQUIT', 'SIGQUIT');
   }
 })();

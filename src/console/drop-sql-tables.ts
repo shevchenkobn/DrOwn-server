@@ -7,7 +7,7 @@ import { container } from '../di/container';
 import { DbConnection } from '../services/db-connection.class';
 import { tableNames } from '../services/table-schemas.service';
 import { dropTables } from '../services/table-schemas.service';
-import { bindCallbackOnExit } from '../services/util.service';
+import { bindOnExitHandler } from '../services/util.service';
 
 const argv = yargs
   .usage('Run it to drop tables in database.')
@@ -40,7 +40,7 @@ const argv = yargs
   } catch (err) {
     console.error('Error occured: ');
     console.error(err.message);
-    bindCallbackOnExit(() => process.exit(1));
+    bindOnExitHandler(() => process.exit(1));
   } finally {
     process.emit('SIGINT', 'SIGINT');
   }

@@ -7,7 +7,6 @@ const container_1 = require("../di/container");
 const table_schemas_service_1 = require("../services/table-schemas.service");
 const table_schemas_service_2 = require("../services/table-schemas.service");
 const table_schemas_service_3 = require("../services/table-schemas.service");
-const util_service_1 = require("../services/util.service");
 const argv = yargs
     .usage('Run it to create or recreate tables in database.')
     .version().alias('v', 'version')
@@ -59,10 +58,9 @@ const argv = yargs
     catch (err) {
         console.error('Error occured: ');
         console.error(err.message);
-        util_service_1.bindCallbackOnExit(() => process.exit(1));
     }
     finally {
-        process.emit('SIGINT', 'SIGINT');
+        process.emit('SIGQUIT', 'SIGQUIT');
     }
 })();
 //# sourceMappingURL=add-sql-tables.js.map
