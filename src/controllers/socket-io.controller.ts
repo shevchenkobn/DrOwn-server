@@ -70,10 +70,10 @@ export class SocketIoController {
         }
         await droneModel.update({ status: DroneStatus.IDLE } as any, { deviceId });
 
-        const socketId = getSocketId(socket);
+        // const socketId = getSocketId(socket);
         this._devices.set(deviceId, drone!);
-        this._socketIdToDeviceId.set(socketId, deviceId);
-        this._deviceIdToSocketId.set(deviceId, socketId);
+        this._socketIdToDeviceId.set(socket.id, deviceId);
+        this._deviceIdToSocketId.set(deviceId, socket.id);
         fn();
       } catch (err) {
         console.error(err);
@@ -102,7 +102,8 @@ export class SocketIoController {
       }
       return;
     }
-    this._nsp.server.sockets.connected[socketId].disconnect();
+    this._nsp.sockets[socketId].disconnect();
+    console.debug(Object.keys(this._nsp.server.sockets));
   }
 
   public sendOrder(order: IDroneOrder) {
@@ -118,7 +119,7 @@ export class SocketIoController {
         return;
       }
       const { deviceId, status, ...orderInfo } = order;
-      this._nsp.server.sockets.connected[socketId].emit('order', orderInfo, (status: unknown) => {
+      this._nsp.sockets[socketId].emit('order', orderInfo, (status: unknown) => {
         if (!isOrderStatus(status)) {
           reject(new Error(`Not a valid order acceptance status ${status}`));
           return;
@@ -136,7 +137,6 @@ export class SocketIoController {
 
   protected initialize() {
     this._nsp.on('connection', async socket => {
-      console.log(socket.id);
       socket.on('telemetry', async (data: unknown) => {
         if (!isDroneMeasurementInput(data)) {
           return;
@@ -170,7 +170,7 @@ export class SocketIoController {
       });
 
       socket.on('disconnecting', async (reason: string) => {
-        const deviceId = this._socketIdToDeviceId.get(getSocketId(socket))!;
+        const deviceId = this._socketIdToDeviceId.get(socket.id)!;
         this._deviceIdToSocketId.delete(deviceId);
         this._devices.delete(deviceId);
         this._socketIdToDeviceId.delete(socket.id);

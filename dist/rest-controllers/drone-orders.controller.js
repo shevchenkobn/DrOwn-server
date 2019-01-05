@@ -8,6 +8,7 @@ const util_service_1 = require("../services/util.service");
 const drones_model_1 = require("../models/drones.model");
 const error_service_1 = require("../services/error.service");
 const socket_io_controller_1 = require("../controllers/socket-io.controller");
+const table_names_1 = require("../services/table-names");
 let DroneOrdersController = class DroneOrdersController {
     constructor(droneOrderModel, droneModel, socketIoController) {
         return {
@@ -96,7 +97,7 @@ let DroneOrdersController = class DroneOrdersController {
                     const order = (await droneOrderModel.table
                         .where('deviceId', droneOrder.deviceId)
                         .whereIn('createdAt', function () {
-                        this
+                        this.from(table_names_1.TableName.DroneOrders)
                             .max('createdAt')
                             .where('deviceId', droneOrder.deviceId);
                     }))[0];

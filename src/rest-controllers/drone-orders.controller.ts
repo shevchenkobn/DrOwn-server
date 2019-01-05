@@ -12,6 +12,7 @@ import { appendOrderBy, getSafeSwaggerParam, getSortFields, mapObject } from '..
 import { DroneModel, DroneStatus } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { SocketIoController } from '../controllers/socket-io.controller';
+import { TableName } from '../services/table-names';
 
 @injectable()
 export class DroneOrdersController {
@@ -125,7 +126,7 @@ export class DroneOrdersController {
           const order = (await droneOrderModel.table
                 .where('deviceId', droneOrder.deviceId)
                 .whereIn('createdAt', function () {
-                  this
+                  this.from(TableName.DroneOrders)
                     .max('createdAt')
                     .where('deviceId', droneOrder.deviceId);
                 }))[0];
