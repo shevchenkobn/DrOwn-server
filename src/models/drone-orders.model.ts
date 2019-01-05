@@ -18,6 +18,8 @@ export enum DroneOrderStatus {
   SKIPPED = 3,
   DONE = 4,
   TOO_FAR_GEO = 5,
+  HAS_LOAD = 6,
+  HAS_NO_LOAD = 7,
 }
 
 export interface IDroneOrderInput {

@@ -20,6 +20,8 @@ var DroneOrderStatus;
     DroneOrderStatus[DroneOrderStatus["SKIPPED"] = 3] = "SKIPPED";
     DroneOrderStatus[DroneOrderStatus["DONE"] = 4] = "DONE";
     DroneOrderStatus[DroneOrderStatus["TOO_FAR_GEO"] = 5] = "TOO_FAR_GEO";
+    DroneOrderStatus[DroneOrderStatus["HAS_LOAD"] = 6] = "HAS_LOAD";
+    DroneOrderStatus[DroneOrderStatus["HAS_NO_LOAD"] = 7] = "HAS_NO_LOAD";
 })(DroneOrderStatus = exports.DroneOrderStatus || (exports.DroneOrderStatus = {}));
 let DroneOrdersModel = class DroneOrdersModel {
     constructor(connection) {
