@@ -12,11 +12,13 @@ import { errorHandler, notFoundHandler } from './services/error.service';
 import { Server } from 'http';
 import { SocketIoController } from './controllers/socket-io.controller';
 import { createServer } from 'http';
+import * as path from 'path';
 
 export interface ServerConfig {
   host: string;
   port: number;
   swaggerDocsPrefix: string;
+  staticPath?: string;
 }
 
 export interface CorsConfig {
@@ -24,7 +26,7 @@ export interface CorsConfig {
   methods: string[];
 }
 
-const { host, port, swaggerDocsPrefix } = config.get<ServerConfig>('server');
+const { host, port, swaggerDocsPrefix, staticPath } = config.get<ServerConfig>('server');
 const { whitelist: whitelistOrigin, methods: corsMethods } = config.get<CorsConfig>('cors');
 
 const app = express();
@@ -41,7 +43,9 @@ Promise.all([
 
     app.use(cors({
       methods: corsMethods,
-      origin: normalizeOrigins(typeof whitelistOrigin === 'string' ? [whitelistOrigin] : whitelistOrigin),
+      origin: normalizeOrigins(
+        typeof whitelistOrigin === 'string' ? [whitelistOrigin] : whitelistOrigin
+      ),
       preflightContinue: false,
       optionsSuccessStatus: 204
     }));
@@ -69,6 +73,12 @@ Promise.all([
       swaggerUi: '/docs',
       swaggerUiPrefix: swaggerDocsPrefix,
     }));
+
+    if (typeof staticPath === 'string') {
+      const absPath = path.resolve(staticPath);
+      app.use(express.static(absPath));
+      console.info(`Serving static from ${absPath}`);
+    }
 
     app.use(errorHandler);
 

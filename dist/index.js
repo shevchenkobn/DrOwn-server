@@ -11,7 +11,8 @@ const handler_service_1 = require("./services/handler.service");
 const path_1 = require("path");
 const error_service_1 = require("./services/error.service");
 const http_1 = require("http");
-const { host, port, swaggerDocsPrefix } = config.get('server');
+const path = require("path");
+const { host, port, swaggerDocsPrefix, staticPath } = config.get('server');
 const { whitelist: whitelistOrigin, methods: corsMethods } = config.get('cors');
 const app = express();
 Promise.all([
@@ -46,6 +47,11 @@ Promise.all([
             swaggerUi: '/docs',
             swaggerUiPrefix: swaggerDocsPrefix,
         }));
+        if (typeof staticPath === 'string') {
+            const absPath = path.resolve(staticPath);
+            app.use(express.static(absPath));
+            console.info(`Serving static from ${absPath}`);
+        }
         app.use(error_service_1.errorHandler);
         app.use(error_service_1.notFoundHandler);
         const ioApp = container_1.container.get(types_1.TYPES.SocketIoController);
