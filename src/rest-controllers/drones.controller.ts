@@ -204,13 +204,13 @@ export class DronesController {
               next(new LogicError(ErrorCode.DRONE_STATUS_BAD));
               return;
             }
-            (droneUpdate as any).passwordHash = null;
+            (droneUpdate as any).passwordHash = '';
           }
 
           await droneModel.update(droneUpdate, whereClause);
           if (returnDrone) {
             res.json(
-              (await droneModel.select(select, whereClause))[0]
+              (await droneModel.select(select, whereClause))[0],
             );
           } else {
             res.json({});

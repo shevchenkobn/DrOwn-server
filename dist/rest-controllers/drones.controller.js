@@ -133,7 +133,7 @@ let DronesController = class DronesController {
                             next(new error_service_1.LogicError(error_service_1.ErrorCode.DRONE_STATUS_BAD));
                             return;
                         }
-                        droneUpdate.passwordHash = null;
+                        droneUpdate.passwordHash = '';
                     }
                     await droneModel.update(droneUpdate, whereClause);
                     if (returnDrone) {

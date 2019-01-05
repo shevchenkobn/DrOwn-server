@@ -1,5 +1,7 @@
 type: object
 properties:
+  status:
+    type: integer
   baseLongitude:
     $ref: '#/definitions/Longitude'
   baseLatitude:
