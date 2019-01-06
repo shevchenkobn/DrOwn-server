@@ -6,6 +6,7 @@ import { inject, injectable } from 'inversify';
 import { DroneModel, DroneStatus, IDrone } from '../models/drones.model';
 import { ErrorCode, LogicError } from '../services/error.service';
 import { bindOnExitHandler } from '../services/util.service';
+import * as BBPromise from 'bluebird';
 import {
   DroneMeasurementsModel,
   isDroneMeasurementInput,
@@ -15,7 +16,9 @@ import {
   DroneOrderStatus,
   IDroneOrder,
   isOrderStatus,
+  isOrderId,
 } from '../models/drone-orders.model';
+import { DbConnection } from '../services/db-connection.class';
 
 @injectable()
 export class SocketIoController {
@@ -23,6 +26,7 @@ export class SocketIoController {
   protected _droneModel: DroneModel;
   protected _droneMeasurementModel: DroneMeasurementsModel;
   protected _droneOrderModel: DroneOrdersModel;
+  protected _dbConnection: DbConnection;
   protected _nsp: SocketIO.Namespace;
   // TODO: add sync between nodes
   protected _socketIdToDeviceId: Map<string, string>;
@@ -34,11 +38,13 @@ export class SocketIoController {
     @inject(TYPES.DroneModel) droneModel: DroneModel,
     @inject(TYPES.DroneMeasurementModel) droneMeasurementModel: DroneMeasurementsModel,
     @inject(TYPES.DroneOrderModel) droneOrderModel: DroneOrdersModel,
+    @inject(TYPES.DbConnection) dbConnection: DbConnection,
   ) {
     this._httpServer = httpServer;
     this._droneModel = droneModel;
     this._droneOrderModel = droneOrderModel;
     this._droneMeasurementModel = droneMeasurementModel;
+    this._dbConnection = dbConnection;
 
     this._socketIdToDeviceId = new Map<string, string>();
     this._deviceIdToSocketId = new Map<string, string>();
@@ -124,11 +130,7 @@ export class SocketIoController {
           reject(new Error(`Not a valid order acceptance status ${status}`));
           return;
         }
-        this.saveOrderStatus(deviceId, status).then((affected) => {
-          if (affected === 0) {
-            console.error(new Error(`No order in the database with id ${orderInfo.droneOrderId} and status ${DroneOrderStatus[status]}`));
-            return;
-          }
+        this.saveOrderStatus(orderInfo.droneOrderId, status, deviceId).then(() => {
           resolve(status);
         }).catch(reject);
       });
@@ -152,18 +154,18 @@ export class SocketIoController {
         }
       });
 
-      socket.on('order-change', async (droneOrderId: string, status: unknown) => {
+      socket.on('order-change', async (droneOrderId: unknown, status: unknown) => {
         const deviceId = this._socketIdToDeviceId.get(socket.id)!;
+        if (!isOrderId(droneOrderId)) {
+          console.error(new Error(`Not a valid order id ${droneOrderId}`));
+          return;
+        }
         if (!isOrderStatus(status)) {
           console.error(new Error(`Not a valid order acceptance status ${status}`));
           return;
         }
         try {
-          const affected = await this.saveOrderStatus(droneOrderId, status)
-            .andWhere('deviceId', deviceId);
-          if (affected === 0) {
-            console.error(new Error(`No order in the database with id ${droneOrderId} and status ${DroneOrderStatus[status]}`));
-          }
+          await this.saveOrderStatus(droneOrderId, status, deviceId);
         } catch (err) {
           console.error(err);
         }
@@ -180,11 +182,39 @@ export class SocketIoController {
     });
   }
 
-  private saveOrderStatus(droneOrderId: string, status: DroneOrderStatus) {
-    return this._droneOrderModel.table
-      .where({ droneOrderId })
-      .update({ status });
+  private saveOrderStatus(
+    droneOrderId: string,
+    status: DroneOrderStatus,
+    deviceId: string,
+  ): BBPromise<boolean> {
+    return this._dbConnection.knex.transaction(trx => {
+      this._droneOrderModel.table
+        .transacting(trx)
+        .where({ droneOrderId })
+        .update({ status }).then(affected => {
+          if (affected === 0) {
+            trx.rollback(new Error(`Drone order with ${droneOrderId} id not found`));
+            return;
+          }
+          this._droneModel.table
+            .transacting(trx)
+            .where({ deviceId })
+            .update({
+              status: isIdleOrderStatus(status) ? DroneStatus.IDLE : DroneStatus.WORKING,
+            }).then(affected => {
+              if (affected === 0) {
+                trx.rollback(new Error(`Drone with ${deviceId} device id not found`));
+                return;
+              }
+              trx.commit(true);
+            });
+        });
+    });
   }
+}
+
+function isIdleOrderStatus(status: DroneOrderStatus) {
+  return status !== DroneOrderStatus.ENQUEUED && status !== DroneOrderStatus.STARTED;
 }
 
 function getSocketId(socket: SocketIO.Socket) {

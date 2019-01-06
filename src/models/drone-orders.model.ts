@@ -59,3 +59,8 @@ export class DroneOrdersModel {
 export function isOrderStatus(value: any): value is DroneOrderStatus {
   return typeof value === 'number' && !!DroneOrderStatus[value];
 }
+
+const orderIdRegex = /^\d{1,19}$/
+export function isOrderId(value: any): value is string {
+  return typeof value === 'string' && orderIdRegex.test(value);
+}

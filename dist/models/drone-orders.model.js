@@ -46,4 +46,9 @@ function isOrderStatus(value) {
     return typeof value === 'number' && !!DroneOrderStatus[value];
 }
 exports.isOrderStatus = isOrderStatus;
+const orderIdRegex = /^\d{1,19}$/;
+function isOrderId(value) {
+    return typeof value === 'string' && orderIdRegex.test(value);
+}
+exports.isOrderId = isOrderId;
 //# sourceMappingURL=drone-orders.model.js.map
