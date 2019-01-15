@@ -68,7 +68,7 @@ let DronesController = class DronesController {
                     const user = req.user;
                     const select = req.swagger.params.select.value;
                     const droneId = req.swagger.params.droneId.value;
-                    const hadOwnerId = select.includes('ownerId');
+                    const hadOwnerId = !select || select.length === 0 || select.includes('ownerId');
                     if (!hadOwnerId) {
                         select.push('ownerId');
                     }

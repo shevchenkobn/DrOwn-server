@@ -114,7 +114,7 @@ export class DronesController {
             req as any
           ).swagger.params.droneId.value as string;
 
-          const hadOwnerId = select.includes('ownerId');
+          const hadOwnerId = !select || select.length === 0 || select.includes('ownerId');
           if (!hadOwnerId) {
             select.push('ownerId');
           }
